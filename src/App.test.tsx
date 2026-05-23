@@ -1,11 +1,16 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 describe('KannadaOS desktop app', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('moves from onboarding to the home dashboard', async () => {
@@ -146,5 +151,43 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Downloaded/i)).toBeInTheDocument()
     expect(screen.getByText(/Waiting/i)).toBeInTheDocument()
     expect(screen.getByText(/You can start learning while models download/i)).toBeInTheDocument()
+  })
+
+  it('opens story mode, shows interactive words, and completes the story quiz', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /zero/i }))
+    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+
+    expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /First Day in Bangalore/i })).toBeInTheDocument()
+    expect(screen.getByText(/5 min read/i)).toBeInTheDocument()
+    expect(screen.getByText(/12 new words/i)).toBeInTheDocument()
+    expect(screen.getByText(/Office Lunch/i)).toBeInTheDocument()
+    expect(screen.getByText(/^Locked$/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
+
+    expect(screen.getByRole('heading', { name: /First Day in Bangalore/i })).toBeInTheDocument()
+    expect(screen.getByText(/ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ/i)).toBeInTheDocument()
+    expect(screen.getByText(/raahul bengalurige banda/i)).toBeInTheDocument()
+    expect(screen.getByText(/Rahul came to Bangalore/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'ಬಂದ' }))
+
+    const wordDialog = screen.getByRole('dialog', { name: /ಬಂದ/i })
+    expect(wordDialog).toBeInTheDocument()
+    expect(within(wordDialog).getByText(/banda/i)).toBeInTheDocument()
+    expect(within(wordDialog).getByText(/came/i)).toBeInTheDocument()
+    expect(within(wordDialog).getByRole('button', { name: /add to vocabulary/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /take quiz/i }))
+    await user.click(screen.getByRole('button', { name: /He does not know Kannada yet/i }))
+    await user.click(screen.getByRole('button', { name: /check story answer/i }))
+
+    expect(screen.getByRole('heading', { name: /Story Complete/i })).toBeInTheDocument()
+    expect(screen.getByText(/\+20 XP/i)).toBeInTheDocument()
   })
 })

@@ -53,6 +53,41 @@ export interface Scenario {
   usefulPhrases: Phrase[]
 }
 
+export interface StoryWord {
+  text: string
+  transliteration: string
+  english: string
+  note: string
+}
+
+export interface StorySentence {
+  id: string
+  kannada: string
+  transliteration: string
+  english: string
+  words: StoryWord[]
+}
+
+export interface StoryQuizQuestion {
+  prompt: string
+  answer: string
+  options: string[]
+  explanation: string
+}
+
+export interface Story {
+  id: string
+  title: string
+  subtitle: string
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced'
+  readTimeMinutes: number
+  newWordCount: number
+  locked: boolean
+  imagePath: string
+  sentences: StorySentence[]
+  quiz: StoryQuizQuestion
+}
+
 export interface GeneratedExercise {
   type: ExerciseType
   prompt: string

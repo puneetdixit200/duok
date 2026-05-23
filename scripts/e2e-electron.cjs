@@ -34,6 +34,17 @@ async function main() {
     await page.getByRole('button', { name: /ಹೋಗಬೇಕು/i }).click()
     await page.getByText(/need to go/i).waitFor()
 
+    await page.getByRole('button', { name: /stories/i }).click()
+    await page.getByRole('heading', { name: /Stories/i }).waitFor()
+    await page.getByRole('button', { name: /read first day in bangalore/i }).click()
+    await page.getByText(/ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ/i).waitFor()
+    await page.getByRole('button', { name: 'ಬಂದ' }).click()
+    await page.getByRole('dialog', { name: /ಬಂದ/i }).waitFor()
+    await page.getByRole('button', { name: /take quiz/i }).click()
+    await page.getByRole('button', { name: /He does not know Kannada yet/i }).click()
+    await page.getByRole('button', { name: /check story answer/i }).click()
+    await page.getByRole('heading', { name: /Story Complete/i }).waitFor()
+
     await page.getByRole('button', { name: /blr/i }).click()
     await page.getByText(/Auto Ride/i).waitFor()
     await page.getByRole('button', { name: /^me$/i }).click()
@@ -165,7 +176,11 @@ function waitForExit(child, timeoutMs) {
   ])
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+main()
+  .then(() => {
+    process.exit(0)
+  })
+  .catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })

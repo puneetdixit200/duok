@@ -1,4 +1,4 @@
-import type { Curriculum, ExerciseType, LessonExercise, Phrase, Scenario } from '../types'
+import type { Curriculum, ExerciseType, LessonExercise, Phrase, Scenario, Story } from '../types'
 
 export const survivalPhrases: Phrase[] = [
   {
@@ -328,6 +328,127 @@ export const bangaloreScenarios: Scenario[] = [
     },
     checklist: ['Explain issue', 'Ask when it will come', 'Say thanks'],
     usefulPhrases: [scenarioPhrase('barutte'), scenarioPhrase('matte-heli')],
+  },
+]
+
+export const stories: Story[] = [
+  {
+    id: 'first-day-bangalore',
+    title: 'First Day in Bangalore',
+    subtitle: 'Scene: Bus stop',
+    difficulty: 'Beginner',
+    readTimeMinutes: 5,
+    newWordCount: 12,
+    locked: false,
+    imagePath: 'story-bus-stop.svg',
+    sentences: [
+      {
+        id: 'first-day-1',
+        kannada: 'ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ.',
+        transliteration: 'raahul bengalurige banda',
+        english: 'Rahul came to Bangalore.',
+        words: [
+          {
+            text: 'ರಾಹುಲ್',
+            transliteration: 'raahul',
+            english: 'Rahul',
+            note: 'A learner name used in the story.',
+          },
+          {
+            text: 'ಬೆಂಗಳೂರಿಗೆ',
+            transliteration: 'bengalurige',
+            english: 'to Bangalore',
+            note: 'The -ge ending marks direction or destination.',
+          },
+          {
+            text: 'ಬಂದ',
+            transliteration: 'banda',
+            english: 'came',
+            note: 'Past tense of come, useful in introductions and stories.',
+          },
+        ],
+      },
+      {
+        id: 'first-day-2',
+        kannada: 'ಅವನಿಗೆ ಕನ್ನಡ ಬರುತ್ತಿರಲಿಲ್ಲ.',
+        transliteration: 'avanige kannada baruttirallilla',
+        english: 'He did not know Kannada yet.',
+        words: [
+          {
+            text: 'ಅವನಿಗೆ',
+            transliteration: 'avanige',
+            english: 'to him',
+            note: 'A common dative form used with knowledge and feelings.',
+          },
+          {
+            text: 'ಕನ್ನಡ',
+            transliteration: 'kannada',
+            english: 'Kannada',
+            note: 'The language spoken across Karnataka.',
+          },
+          {
+            text: 'ಬರುತ್ತಿರಲಿಲ್ಲ',
+            transliteration: 'baruttirallilla',
+            english: 'did not know',
+            note: 'Literally means it was not coming to him.',
+          },
+        ],
+      },
+      {
+        id: 'first-day-3',
+        kannada: 'ಬಸ್ ನಿಲ್ದಾಣದಲ್ಲಿ ಅವನು ಕೇಳಿದ: ಟಿಕೆಟ್ ಎಷ್ಟು?',
+        transliteration: 'bus nildaanadalli avanu kelida: ticket eshtu?',
+        english: 'At the bus stop he asked, how much is the ticket?',
+        words: [
+          {
+            text: 'ನಿಲ್ದಾಣದಲ್ಲಿ',
+            transliteration: 'nildaanadalli',
+            english: 'at the stop',
+            note: 'The -alli ending means in or at a place.',
+          },
+          {
+            text: 'ಕೇಳಿದ',
+            transliteration: 'kelida',
+            english: 'asked',
+            note: 'A useful story verb for conversations.',
+          },
+          {
+            text: 'ಎಷ್ಟು',
+            transliteration: 'eshtu',
+            english: 'how much',
+            note: 'Core shopping and transport question word.',
+          },
+        ],
+      },
+    ],
+    quiz: {
+      prompt: 'Why is Rahul nervous at the bus stop?',
+      answer: 'He does not know Kannada yet',
+      options: [
+        'He does not know Kannada yet',
+        'He forgot his phone',
+        'He already missed dinner',
+        'He wants to leave Bangalore',
+      ],
+      explanation: 'The story says ಅವನಿಗೆ ಕನ್ನಡ ಬರುತ್ತಿರಲಿಲ್ಲ, meaning he did not know Kannada yet.',
+    },
+  },
+  {
+    id: 'office-lunch',
+    title: 'Office Lunch',
+    subtitle: 'Scene: Tech park cafeteria',
+    difficulty: 'Intermediate',
+    readTimeMinutes: 7,
+    newWordCount: 16,
+    locked: true,
+    imagePath: 'story-bus-stop.svg',
+    sentences: [],
+    quiz: {
+      prompt: 'What does the coworker ask?',
+      answer: 'Did you eat?',
+      options: ['Did you eat?', 'Where is the bus?', 'What is the fare?', 'Can you adjust?'],
+      explanation: 'Office lunch unlocks after the beginner story.',
+    },
   },
 ]
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { bangaloreScenarios, getLevelOneCurriculum, lessonExercises, survivalPhrases } from './domain/curriculum'
+import { bangaloreScenarios, getLevelOneCurriculum, lessonExercises, stories, survivalPhrases } from './domain/curriculum'
 import {
   applyExerciseResult,
   hydrateProgress,
@@ -7,11 +7,12 @@ import {
   type ProgressState,
 } from './domain/progress'
 import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
-import type { LessonExercise } from './types'
+import type { LessonExercise, StoryWord } from './types'
 import './styles.css'
 
-type Tab = 'home' | 'chat' | 'practice' | 'blr' | 'me'
+type Tab = 'home' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
 type Screen = 'onboarding' | 'app' | 'lesson' | 'models'
+type StoryMode = 'list' | 'reader' | 'quiz' | 'complete'
 
 interface ChatMessage {
   id: string
@@ -113,6 +114,11 @@ function App() {
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [generatedExercise, setGeneratedExercise] = useState('')
   const [modelSetupStarted, setModelSetupStarted] = useState(false)
+  const [storyMode, setStoryMode] = useState<StoryMode>('list')
+  const [selectedStoryId, setSelectedStoryId] = useState(stories[0].id)
+  const [selectedStoryWord, setSelectedStoryWord] = useState<StoryWord | null>(null)
+  const [selectedStoryAnswer, setSelectedStoryAnswer] = useState('')
+  const [storyFeedback, setStoryFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [lessonIndex, setLessonIndex] = useState(0)
   const [totalLessonXp, setTotalLessonXp] = useState(0)
   const [placedWords, setPlacedWords] = useState<string[]>([])
@@ -122,6 +128,7 @@ function App() {
   const [matchedPairs, setMatchedPairs] = useState<string[]>([])
 
   const activeExercise = lessonExercises[Math.min(lessonIndex, lessonExercises.length - 1)]
+  const activeStory = stories.find((story) => story.id === selectedStoryId) ?? stories[0]
   const completedInCurrentLesson = Math.min(
     lessonIndex + (feedback === 'correct' ? 1 : 0),
     lessonExercises.length,
@@ -271,6 +278,36 @@ function App() {
       },
     ])
     setChatInput('')
+  }
+
+  function openStory(storyId: string) {
+    setSelectedStoryId(storyId)
+    setSelectedStoryWord(null)
+    setSelectedStoryAnswer('')
+    setStoryFeedback(null)
+    setStoryMode('reader')
+  }
+
+  function checkStoryAnswer() {
+    if (selectedStoryAnswer === activeStory.quiz.answer) {
+      setStoryFeedback('correct')
+      setStoryMode('complete')
+      setProgress((current) =>
+        applyExerciseResult(current, {
+          exerciseId: `story-${activeStory.id}`,
+          correct: true,
+          skillTag: 'story',
+          xp: 20,
+          vocabularyIds: activeStory.sentences.flatMap((sentence) =>
+            sentence.words.map((word) => `${activeStory.id}:${word.text}`),
+          ),
+          now: new Date().toISOString(),
+        }),
+      )
+      return
+    }
+
+    setStoryFeedback('wrong')
   }
 
   if (screen === 'onboarding') {
@@ -439,6 +476,7 @@ function App() {
               ['home', 'Dashboard'],
               ['chat', 'Chat'],
               ['practice', 'Practice'],
+              ['stories', 'Stories'],
               ['blr', 'BLR'],
               ['me', 'Me'],
             ].map(([id, label]) => (
@@ -548,6 +586,170 @@ function App() {
                 <p>Targets your weakest skill with Ollama or local fallback.</p>
               </article>
             </div>
+          </div>
+        </section>
+      )
+    }
+
+    if (tab === 'stories') {
+      if (storyMode === 'reader') {
+        return (
+          <section className="panel story-reader-panel" aria-labelledby="story-reader-title">
+            <header className="section-header">
+              <div>
+                <p className="eyebrow">{activeStory.subtitle}</p>
+                <h2 id="story-reader-title">{activeStory.title}</h2>
+              </div>
+              <button className="secondary-action" onClick={() => setStoryMode('list')} type="button">
+                Back to Stories
+              </button>
+            </header>
+            <div className="story-sentence-stack">
+              {activeStory.sentences.map((sentence, index) => (
+                <article className="story-sentence-card" key={sentence.id}>
+                  <span className="metric-pill">Sentence {index + 1}</span>
+                  <strong lang="kn">{sentence.kannada}</strong>
+                  <em>{sentence.transliteration}</em>
+                  <p>{sentence.english}</p>
+                  <div className="story-word-row">
+                    {sentence.words.map((word) => (
+                      <button
+                        className="word-token"
+                        key={`${sentence.id}-${word.text}`}
+                        onClick={() => setSelectedStoryWord(word)}
+                        type="button"
+                      >
+                        {word.text}
+                      </button>
+                    ))}
+                  </div>
+                  <button className="mini-button" type="button">
+                    Play sentence audio
+                  </button>
+                </article>
+              ))}
+            </div>
+            {selectedStoryWord && (
+              <aside className="word-popover" role="dialog" aria-label={selectedStoryWord.text}>
+                <div>
+                  <strong lang="kn">{selectedStoryWord.text}</strong>
+                  <span>{selectedStoryWord.transliteration}</span>
+                </div>
+                <p>{selectedStoryWord.english}</p>
+                <small>{selectedStoryWord.note}</small>
+                <button className="secondary-action" type="button">
+                  Add to Vocabulary
+                </button>
+              </aside>
+            )}
+            <button className="primary-action" onClick={() => setStoryMode('quiz')} type="button">
+              Take Quiz
+            </button>
+          </section>
+        )
+      }
+
+      if (storyMode === 'quiz') {
+        return (
+          <section className="panel story-reader-panel" aria-labelledby="story-quiz-title">
+            <header className="section-header">
+              <div>
+                <p className="eyebrow">story quiz</p>
+                <h2 id="story-quiz-title">{activeStory.title}</h2>
+              </div>
+              <span className="metric-pill">+20 XP</span>
+            </header>
+            <article className="story-quiz-card">
+              <h3>{activeStory.quiz.prompt}</h3>
+              <div className="option-stack">
+                {activeStory.quiz.options.map((option) => (
+                  <button
+                    className={selectedStoryAnswer === option ? 'answer-option selected' : 'answer-option'}
+                    key={option}
+                    onClick={() => setSelectedStoryAnswer(option)}
+                    type="button"
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="primary-action"
+                disabled={!selectedStoryAnswer}
+                onClick={checkStoryAnswer}
+                type="button"
+              >
+                Check Story Answer
+              </button>
+              {storyFeedback === 'wrong' && (
+                <div className="feedback wrong" role="status">
+                  <strong>Try again</strong>
+                  <span>{activeStory.quiz.explanation}</span>
+                </div>
+              )}
+            </article>
+          </section>
+        )
+      }
+
+      if (storyMode === 'complete') {
+        return (
+          <section className="panel story-reader-panel" aria-labelledby="story-complete-title">
+            <article className="lesson-card lesson-complete">
+              <p className="eyebrow">story complete</p>
+              <h2 id="story-complete-title">Story Complete</h2>
+              <div className="star-row" aria-label="Three stars earned">
+                <span>★</span>
+                <span>★</span>
+                <span>★</span>
+              </div>
+              <article className="xp-card">
+                <strong>+20 XP</strong>
+                <span>Total: {progress.xp} XP</span>
+              </article>
+              <button className="primary-action" onClick={() => setStoryMode('list')} type="button">
+                Continue Stories
+              </button>
+            </article>
+          </section>
+        )
+      }
+
+      return (
+        <section className="panel" aria-labelledby="stories-title">
+          <header className="section-header">
+            <div>
+              <p className="eyebrow">Story Mode</p>
+              <h2 id="stories-title">Stories</h2>
+            </div>
+            <span className="metric-pill">1 unlocked</span>
+          </header>
+          <div className="story-grid">
+            {stories.map((story) => (
+              <article className={story.locked ? 'story-card locked' : 'story-card'} key={story.id}>
+                <img src={story.imagePath} alt="" />
+                <div className="story-card-body">
+                  <span className={`difficulty-badge ${story.difficulty.toLowerCase()}`}>{story.difficulty}</span>
+                  <h3>{story.title}</h3>
+                  <p>{story.subtitle}</p>
+                  <div className="story-meta">
+                    <span>{story.readTimeMinutes} min read</span>
+                    <span>{story.newWordCount} new words</span>
+                  </div>
+                  {story.locked ? (
+                    <span className="locked-label">Locked</span>
+                  ) : (
+                    <button
+                      className="secondary-action"
+                      onClick={() => openStory(story.id)}
+                      type="button"
+                    >
+                      Read {story.title}
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
           </div>
         </section>
       )
