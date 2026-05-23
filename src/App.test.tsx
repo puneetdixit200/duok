@@ -152,6 +152,54 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
   })
 
+  it('shows unlocked achievements and learner-owned stats in profile', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem(
+      'kannadaos:progress',
+      JSON.stringify({
+        xp: 92,
+        dailyXp: 10,
+        hearts: 4,
+        gems: 132,
+        streakDays: 7,
+        lastPracticeDate: '2026-05-23',
+        completedExerciseIds: [
+          'survival-translate-1',
+          'survival-arrange-1',
+          'survival-fill-1',
+          'survival-listening-1',
+          'survival-speaking-1',
+          'survival-match-1',
+          'story-first-day-bangalore',
+        ],
+        weakAreas: {},
+        reviewQueue: {
+          hogbeku: {
+            vocabularyId: 'hogbeku',
+            dueAt: '2026-05-25T09:00:00.000Z',
+            strength: 0.85,
+            attempts: 3,
+          },
+        },
+      }),
+    )
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /me/i }))
+
+    const stats = screen.getByTestId('profile-stats')
+    expect(within(stats).getByLabelText('92 XP')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('1 Words')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('7 Streak')).toBeInTheDocument()
+    expect(screen.getByText(/Getting Started/i)).toBeInTheDocument()
+    expect(screen.getByText(/6\/6 lesson exercises/i)).toBeInTheDocument()
+    expect(screen.getByText(/One Week/i)).toBeInTheDocument()
+    expect(screen.getByText(/7\/7 streak days/i)).toBeInTheDocument()
+    expect(screen.getByText(/Review Pro/i)).toBeInTheDocument()
+    expect(screen.getByText(/1 practiced word/i)).toBeInTheDocument()
+  })
+
   it('adapts practice to weak areas and due review after a wrong lesson answer', async () => {
     const user = userEvent.setup()
     render(<App />)

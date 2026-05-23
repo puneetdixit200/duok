@@ -3,6 +3,7 @@ import {
   applyExerciseResult,
   createInitialProgress,
   getAdaptiveDifficulty,
+  getAchievementSummaries,
   getDueReviewItems,
   getWeakSkillSummaries,
   hydrateProgress,
@@ -95,5 +96,39 @@ describe('learner progress', () => {
       level: 'gentle',
       reason: '2 weak skills and 1 due review',
     })
+  })
+
+  it('summarizes unlocked achievements from learner progress', () => {
+    const progress = {
+      ...createInitialProgress(),
+      xp: 92,
+      streakDays: 7,
+      completedExerciseIds: [
+        'survival-translate-1',
+        'survival-arrange-1',
+        'survival-fill-1',
+        'survival-listening-1',
+        'survival-speaking-1',
+        'survival-match-1',
+        'story-first-day-bangalore',
+      ],
+      reviewQueue: {
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: '2026-05-25T09:00:00.000Z',
+          strength: 0.85,
+          attempts: 3,
+        },
+      },
+    }
+
+    expect(getAchievementSummaries(progress)).toEqual([
+      expect.objectContaining({ code: 'first_word', unlocked: true, progressLabel: '7 activities' }),
+      expect.objectContaining({ code: 'first_lesson', unlocked: true, progressLabel: '6/6 lesson exercises' }),
+      expect.objectContaining({ code: 'voice_ready', unlocked: true }),
+      expect.objectContaining({ code: 'story_starter', unlocked: true }),
+      expect.objectContaining({ code: 'streak_7', unlocked: true, progressLabel: '7/7 streak days' }),
+      expect.objectContaining({ code: 'review_pro', unlocked: true, progressLabel: '1 practiced word' }),
+    ])
   })
 })

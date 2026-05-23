@@ -10,6 +10,7 @@ import {
 import {
   applyExerciseResult,
   getAdaptiveDifficulty,
+  getAchievementSummaries,
   getDueReviewItems,
   getWeakSkillSummaries,
   hydrateProgress,
@@ -869,20 +870,23 @@ function App() {
     }
 
     if (tab === 'me') {
+      const achievementSummaries = getAchievementSummaries(progress)
+      const learnedWordCount = Object.keys(progress.reviewQueue).length
+      const learnerLevel = Math.max(4, Math.floor(progress.xp / 80) + 1)
       return (
         <section className="panel" aria-labelledby="profile-title">
           <header className="profile-header">
             <div className="avatar">R</div>
             <div>
               <h2 id="profile-title">Rahul</h2>
-              <p>Level 4 Learner</p>
-              <strong>12 day streak</strong>
+              <p>Level {learnerLevel} Learner</p>
+              <strong>{progress.streakDays} day streak</strong>
             </div>
           </header>
           <div className="stats-grid" data-testid="profile-stats">
-            <Stat value={Math.max(340, progress.xp)} label="XP" />
-            <Stat value={87} label="Words" />
-            <Stat value={45} label="Hours" />
+            <Stat value={progress.xp} label="XP" />
+            <Stat value={learnedWordCount} label="Words" />
+            <Stat value={progress.streakDays} label="Streak" />
           </div>
           <section className="chart-card" aria-label="Progress chart">
             <span style={{ height: '32%' }} />
@@ -892,12 +896,18 @@ function App() {
             <span style={{ height: '64%' }} />
             <span style={{ height: '86%' }} />
           </section>
-          <div className="achievement-grid">
-            {['First Lesson', 'One Week', 'Voice Ready', 'BLR Explorer', 'Story Starter', 'Review Pro'].map(
-              (achievement) => (
-                <span key={achievement}>{achievement}</span>
-              ),
-            )}
+          <div className="achievement-grid" aria-label="Achievements">
+            {achievementSummaries.map((achievement) => (
+              <article
+                className={achievement.unlocked ? 'achievement-card unlocked' : 'achievement-card'}
+                key={achievement.code}
+              >
+                <strong>{achievement.name}</strong>
+                <span>{achievement.unlocked ? 'Unlocked' : 'Locked'}</span>
+                <small>{achievement.description}</small>
+                <p>{achievement.progressLabel}</p>
+              </article>
+            ))}
           </div>
           <div className="settings-list">
             <button className="secondary-action" onClick={() => setScreen('models')} type="button">

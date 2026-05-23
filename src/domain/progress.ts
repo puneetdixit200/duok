@@ -42,6 +42,14 @@ export interface AdaptiveDifficulty {
   reason: string
 }
 
+export interface AchievementSummary {
+  code: string
+  name: string
+  description: string
+  unlocked: boolean
+  progressLabel: string
+}
+
 export function createInitialProgress(): ProgressState {
   return {
     xp: 0,
@@ -95,6 +103,58 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
         },
     reviewQueue,
   }
+}
+
+export function getAchievementSummaries(state: ProgressState): AchievementSummary[] {
+  const survivalExerciseCount = state.completedExerciseIds.filter((exerciseId) =>
+    exerciseId.startsWith('survival-'),
+  ).length
+  const practicedWordCount = Object.keys(state.reviewQueue).length
+
+  return [
+    {
+      code: 'first_word',
+      name: 'First Word',
+      description: 'Complete any Kannada activity.',
+      unlocked: state.completedExerciseIds.length > 0,
+      progressLabel: `${state.completedExerciseIds.length} ${state.completedExerciseIds.length === 1 ? 'activity' : 'activities'}`,
+    },
+    {
+      code: 'first_lesson',
+      name: 'Getting Started',
+      description: 'Complete the six-exercise survival lesson.',
+      unlocked: survivalExerciseCount >= 6,
+      progressLabel: `${Math.min(6, survivalExerciseCount)}/6 lesson exercises`,
+    },
+    {
+      code: 'voice_ready',
+      name: 'Voice Ready',
+      description: 'Finish a pronunciation exercise.',
+      unlocked: state.completedExerciseIds.includes('survival-speaking-1'),
+      progressLabel: state.completedExerciseIds.includes('survival-speaking-1') ? 'Pronunciation scored' : 'Pronunciation pending',
+    },
+    {
+      code: 'story_starter',
+      name: 'Story Starter',
+      description: 'Complete your first Kannada story.',
+      unlocked: state.completedExerciseIds.some((exerciseId) => exerciseId.startsWith('story-')),
+      progressLabel: state.completedExerciseIds.some((exerciseId) => exerciseId.startsWith('story-')) ? '1 story complete' : 'No stories complete',
+    },
+    {
+      code: 'streak_7',
+      name: 'One Week',
+      description: 'Build a seven-day learning streak.',
+      unlocked: state.streakDays >= 7,
+      progressLabel: `${Math.min(7, state.streakDays)}/7 streak days`,
+    },
+    {
+      code: 'review_pro',
+      name: 'Review Pro',
+      description: 'Practice words enough to strengthen memory.',
+      unlocked: Object.values(state.reviewQueue).some((item) => item.attempts >= 3 && item.strength >= 0.7),
+      progressLabel: `${practicedWordCount} practiced ${practicedWordCount === 1 ? 'word' : 'words'}`,
+    },
+  ]
 }
 
 export function getDueReviewItems(state: ProgressState, now: string): string[] {
