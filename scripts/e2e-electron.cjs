@@ -113,8 +113,11 @@ async function main() {
     await page.getByRole('heading', { name: /On-device Runtime/i }).waitFor()
     await page.getByText(/0 of 3 runtime components ready/i).waitFor()
     await page.getByLabel(/Aya GGUF model path/i).fill(runtimePaths.llmModelPath)
+    await page.getByLabel(/Llama.cpp executable path/i).fill(runtimePaths.llamaBinaryPath)
     await page.getByLabel(/Whisper model path/i).fill(runtimePaths.whisperModelPath)
+    await page.getByLabel(/Whisper.cpp executable path/i).fill(runtimePaths.whisperBinaryPath)
     await page.getByLabel(/Piper voice path/i).fill(runtimePaths.piperVoicePath)
+    await page.getByLabel(/Piper executable path/i).fill(runtimePaths.piperBinaryPath)
     await page.getByRole('button', { name: /check local runtime/i }).click()
     await page.getByText(/3 of 3 runtime components ready/i).waitFor()
     await page.getByText(/Llama.cpp LLM/i).waitFor()
@@ -156,10 +159,14 @@ function createRuntimePlaceholders(runtimeDir) {
     llmModelPath: path.join(runtimeDir, 'aya-8b-q4_K_M.gguf'),
     whisperModelPath: path.join(runtimeDir, 'whisper-small.bin'),
     piperVoicePath: path.join(runtimeDir, 'kn_IN-piper-medium.onnx'),
+    llamaBinaryPath: path.join(runtimeDir, 'llama-cli'),
+    whisperBinaryPath: path.join(runtimeDir, 'whisper-cli'),
+    piperBinaryPath: path.join(runtimeDir, 'piper'),
   }
 
   Object.values(runtimePaths).forEach((modelPath) => {
     fs.writeFileSync(modelPath, 'placeholder model file')
+    fs.chmodSync(modelPath, 0o755)
   })
 
   return runtimePaths

@@ -7,6 +7,9 @@ describe('local runtime readiness', () => {
       '/models/aya-8b-q4_K_M.gguf',
       '/models/whisper-small.bin',
       '/models/kn_IN-piper-medium.onnx',
+      '/bin/llama-cli',
+      '/bin/whisper-cli',
+      '/bin/piper',
     ])
 
     const summary = await inspectLocalRuntime(
@@ -14,6 +17,9 @@ describe('local runtime readiness', () => {
         llmModelPath: '/models/aya-8b-q4_K_M.gguf',
         whisperModelPath: '/models/whisper-small.bin',
         piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
       },
       async (modelPath) => existingPaths.has(modelPath),
     )
@@ -21,9 +27,32 @@ describe('local runtime readiness', () => {
     expect(summary.readyCount).toBe(3)
     expect(summary.statusText).toBe('3 of 3 runtime components ready')
     expect(summary.components).toEqual([
-      expect.objectContaining({ id: 'llm', label: 'Llama.cpp LLM', ready: true, status: 'Ready' }),
-      expect.objectContaining({ id: 'stt', label: 'Whisper.cpp STT', ready: true, status: 'Ready' }),
-      expect.objectContaining({ id: 'tts', label: 'Piper TTS', ready: true, status: 'Ready' }),
+      expect.objectContaining({ id: 'llm', label: 'Llama.cpp LLM', binaryPath: '/bin/llama-cli', ready: true, status: 'Ready' }),
+      expect.objectContaining({ id: 'stt', label: 'Whisper.cpp STT', binaryPath: '/bin/whisper-cli', ready: true, status: 'Ready' }),
+      expect.objectContaining({ id: 'tts', label: 'Piper TTS', binaryPath: '/bin/piper', ready: true, status: 'Ready' }),
+    ])
+  })
+
+  it('requires native executable paths in addition to model assets', async () => {
+    const existingPaths = new Set(['/models/aya-8b-q4_K_M.gguf', '/models/whisper-small.bin', '/bin/piper', '/models/voice.onnx'])
+    const summary = await inspectLocalRuntime(
+      {
+        llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '',
+        whisperBinaryPath: '/bin/missing-whisper',
+        piperBinaryPath: '/bin/piper',
+      },
+      async (runtimePath) => existingPaths.has(runtimePath),
+    )
+
+    expect(summary.readyCount).toBe(1)
+    expect(summary.statusText).toBe('1 of 3 runtime components ready')
+    expect(summary.components).toEqual([
+      expect.objectContaining({ id: 'llm', ready: false, status: 'Executable not set' }),
+      expect.objectContaining({ id: 'stt', ready: false, status: 'Executable missing' }),
+      expect.objectContaining({ id: 'tts', ready: true, status: 'Ready' }),
     ])
   })
 
@@ -33,6 +62,9 @@ describe('local runtime readiness', () => {
         llmModelPath: '/models/missing.gguf',
         whisperModelPath: '',
         piperVoicePath: '/models/missing.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
       },
       async () => false,
     )

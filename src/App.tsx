@@ -779,6 +779,14 @@ function App() {
                 />
               </label>
               <label className="runtime-field">
+                <span>Llama.cpp executable path</span>
+                <input
+                  onChange={(event) => updateRuntimePath('llamaBinaryPath', event.target.value)}
+                  placeholder="/usr/local/bin/llama-cli"
+                  value={runtimeConfig.llamaBinaryPath}
+                />
+              </label>
+              <label className="runtime-field">
                 <span>Whisper model path</span>
                 <input
                   onChange={(event) => updateRuntimePath('whisperModelPath', event.target.value)}
@@ -787,11 +795,27 @@ function App() {
                 />
               </label>
               <label className="runtime-field">
+                <span>Whisper.cpp executable path</span>
+                <input
+                  onChange={(event) => updateRuntimePath('whisperBinaryPath', event.target.value)}
+                  placeholder="/usr/local/bin/whisper-cli"
+                  value={runtimeConfig.whisperBinaryPath}
+                />
+              </label>
+              <label className="runtime-field">
                 <span>Piper voice path</span>
                 <input
                   onChange={(event) => updateRuntimePath('piperVoicePath', event.target.value)}
                   placeholder="/models/kn_IN-piper-medium.onnx"
                   value={runtimeConfig.piperVoicePath}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>Piper executable path</span>
+                <input
+                  onChange={(event) => updateRuntimePath('piperBinaryPath', event.target.value)}
+                  placeholder="/usr/local/bin/piper"
+                  value={runtimeConfig.piperBinaryPath}
                 />
               </label>
             </div>
@@ -821,6 +845,7 @@ function App() {
                     {component.status}
                   </strong>
                   {component.modelPath && <small>{component.modelPath}</small>}
+                  {component.binaryPath && <small>{component.binaryPath}</small>}
                   <p>{component.nextAction}</p>
                 </article>
               ))}
@@ -1660,6 +1685,9 @@ function hydrateLocalRuntimeConfig(serialized: string | null): LocalRuntimeConfi
       llmModelPath: typeof parsed.llmModelPath === 'string' ? parsed.llmModelPath : '',
       whisperModelPath: typeof parsed.whisperModelPath === 'string' ? parsed.whisperModelPath : '',
       piperVoicePath: typeof parsed.piperVoicePath === 'string' ? parsed.piperVoicePath : '',
+      llamaBinaryPath: typeof parsed.llamaBinaryPath === 'string' ? parsed.llamaBinaryPath : '',
+      whisperBinaryPath: typeof parsed.whisperBinaryPath === 'string' ? parsed.whisperBinaryPath : '',
+      piperBinaryPath: typeof parsed.piperBinaryPath === 'string' ? parsed.piperBinaryPath : '',
     }
   } catch {
     return emptyLocalRuntimeConfig

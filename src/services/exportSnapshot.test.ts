@@ -17,6 +17,9 @@ describe('export snapshot', () => {
         llmModelPath: '/models/aya.gguf',
         whisperModelPath: '',
         piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '',
+        whisperBinaryPath: '',
+        piperBinaryPath: '',
       },
       conversationStore: {
         'auto-ride': [
@@ -55,7 +58,14 @@ describe('export snapshot', () => {
       exportedAt: '2026-05-23T15:45:00.000Z',
       progress: { completedExerciseIds: [], reviewQueue: {} },
       reminder: { enabled: false, time: '7:30 PM', permission: 'default' },
-      runtimeConfig: { llmModelPath: '', whisperModelPath: '', piperVoicePath: '' },
+      runtimeConfig: {
+        llmModelPath: '',
+        whisperModelPath: '',
+        piperVoicePath: '',
+        llamaBinaryPath: '',
+        whisperBinaryPath: '',
+        piperBinaryPath: '',
+      },
       conversationStore: {},
       pronunciationHistory: [],
     })

@@ -4,12 +4,16 @@ export interface LocalRuntimeConfig {
   llmModelPath: string
   whisperModelPath: string
   piperVoicePath: string
+  llamaBinaryPath: string
+  whisperBinaryPath: string
+  piperBinaryPath: string
 }
 
 export interface LocalRuntimeComponent {
   id: LocalRuntimeComponentId
   label: string
   modelPath: string
+  binaryPath: string
   ready: boolean
   status: string
   nextAction: string
@@ -26,15 +30,21 @@ export const emptyLocalRuntimeConfig: LocalRuntimeConfig = {
   llmModelPath: '',
   whisperModelPath: '',
   piperVoicePath: '',
+  llamaBinaryPath: '',
+  whisperBinaryPath: '',
+  piperBinaryPath: '',
 }
 
 interface RuntimeComponentDefinition {
   id: LocalRuntimeComponentId
   label: string
   pathKey: keyof LocalRuntimeConfig
+  binaryPathKey: keyof LocalRuntimeConfig
   missingPathAction: string
   missingFileStatus: string
   missingFileAction: string
+  missingBinaryPathAction: string
+  missingBinaryFileAction: string
 }
 
 const runtimeComponentDefinitions: RuntimeComponentDefinition[] = [
@@ -42,25 +52,34 @@ const runtimeComponentDefinitions: RuntimeComponentDefinition[] = [
     id: 'llm',
     label: 'Llama.cpp LLM',
     pathKey: 'llmModelPath',
+    binaryPathKey: 'llamaBinaryPath',
     missingPathAction: 'Choose an Aya GGUF model path.',
     missingFileStatus: 'Model file missing',
     missingFileAction: 'Point to a downloaded GGUF model before switching off Ollama.',
+    missingBinaryPathAction: 'Choose a llama.cpp executable path.',
+    missingBinaryFileAction: 'Point to the local llama.cpp llama-cli executable.',
   },
   {
     id: 'stt',
     label: 'Whisper.cpp STT',
     pathKey: 'whisperModelPath',
+    binaryPathKey: 'whisperBinaryPath',
     missingPathAction: 'Choose a Whisper model path.',
     missingFileStatus: 'Model file missing',
     missingFileAction: 'Point to whisper-small.bin or another offline Whisper model.',
+    missingBinaryPathAction: 'Choose a whisper.cpp executable path.',
+    missingBinaryFileAction: 'Point to the local whisper.cpp executable.',
   },
   {
     id: 'tts',
     label: 'Piper TTS',
     pathKey: 'piperVoicePath',
+    binaryPathKey: 'piperBinaryPath',
     missingPathAction: 'Choose a Piper voice path.',
     missingFileStatus: 'Voice file missing',
     missingFileAction: 'Point to a Kannada Piper ONNX voice file.',
+    missingBinaryPathAction: 'Choose a Piper executable path.',
+    missingBinaryFileAction: 'Point to the local Piper executable.',
   },
 ]
 
@@ -71,12 +90,14 @@ export async function inspectLocalRuntime(
   const components = await Promise.all(
     runtimeComponentDefinitions.map(async (definition) => {
       const modelPath = config[definition.pathKey].trim()
+      const binaryPath = config[definition.binaryPathKey].trim()
 
       if (!modelPath) {
         return {
           id: definition.id,
           label: definition.label,
           modelPath,
+          binaryPath,
           ready: false,
           status: 'Path not set',
           nextAction: definition.missingPathAction,
@@ -90,9 +111,36 @@ export async function inspectLocalRuntime(
           id: definition.id,
           label: definition.label,
           modelPath,
+          binaryPath,
           ready: false,
           status: definition.missingFileStatus,
           nextAction: definition.missingFileAction,
+        }
+      }
+
+      if (!binaryPath) {
+        return {
+          id: definition.id,
+          label: definition.label,
+          modelPath,
+          binaryPath,
+          ready: false,
+          status: 'Executable not set',
+          nextAction: definition.missingBinaryPathAction,
+        }
+      }
+
+      const binaryExists = await pathExists(binaryPath)
+
+      if (!binaryExists) {
+        return {
+          id: definition.id,
+          label: definition.label,
+          modelPath,
+          binaryPath,
+          ready: false,
+          status: 'Executable missing',
+          nextAction: definition.missingBinaryFileAction,
         }
       }
 
@@ -100,6 +148,7 @@ export async function inspectLocalRuntime(
         id: definition.id,
         label: definition.label,
         modelPath,
+        binaryPath,
         ready: true,
         status: 'Ready',
         nextAction: 'Ready for offline native runtime.',
@@ -121,14 +170,44 @@ export async function inspectLocalRuntime(
 export function createMissingLocalRuntimeSummary(
   config: LocalRuntimeConfig = emptyLocalRuntimeConfig,
 ): LocalRuntimeSummary {
-  const components = runtimeComponentDefinitions.map((definition) => ({
-    id: definition.id,
-    label: definition.label,
-    modelPath: config[definition.pathKey].trim(),
-    ready: false,
-    status: config[definition.pathKey].trim() ? definition.missingFileStatus : 'Path not set',
-    nextAction: config[definition.pathKey].trim() ? definition.missingFileAction : definition.missingPathAction,
-  }))
+  const components = runtimeComponentDefinitions.map((definition) => {
+    const modelPath = config[definition.pathKey].trim()
+    const binaryPath = config[definition.binaryPathKey].trim()
+
+    if (!modelPath) {
+      return {
+        id: definition.id,
+        label: definition.label,
+        modelPath,
+        binaryPath,
+        ready: false,
+        status: 'Path not set',
+        nextAction: definition.missingPathAction,
+      }
+    }
+
+    if (!binaryPath) {
+      return {
+        id: definition.id,
+        label: definition.label,
+        modelPath,
+        binaryPath,
+        ready: false,
+        status: 'Executable not set',
+        nextAction: definition.missingBinaryPathAction,
+      }
+    }
+
+    return {
+      id: definition.id,
+      label: definition.label,
+      modelPath,
+      binaryPath,
+      ready: false,
+      status: definition.missingFileStatus,
+      nextAction: definition.missingFileAction,
+    }
+  })
 
   return {
     readyCount: 0,

@@ -415,6 +415,7 @@ describe('KannadaOS desktop app', () => {
           id: 'llm',
           label: 'Llama.cpp LLM',
           modelPath: '/models/aya-8b-q4_K_M.gguf',
+          binaryPath: '/bin/llama-cli',
           ready: true,
           status: 'Ready',
           nextAction: 'Ready for offline native runtime.',
@@ -423,6 +424,7 @@ describe('KannadaOS desktop app', () => {
           id: 'stt',
           label: 'Whisper.cpp STT',
           modelPath: '/models/whisper-small.bin',
+          binaryPath: '/bin/whisper-cli',
           ready: true,
           status: 'Ready',
           nextAction: 'Ready for offline native runtime.',
@@ -431,6 +433,7 @@ describe('KannadaOS desktop app', () => {
           id: 'tts',
           label: 'Piper TTS',
           modelPath: '/models/kn_IN-piper-medium.onnx',
+          binaryPath: '/bin/piper',
           ready: true,
           status: 'Ready',
           nextAction: 'Ready for offline native runtime.',
@@ -452,14 +455,20 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/0 of 3 runtime components ready/i)).toBeInTheDocument()
 
     await user.type(screen.getByLabelText(/Aya GGUF model path/i), '/models/aya-8b-q4_K_M.gguf')
+    await user.type(screen.getByLabelText(/Llama.cpp executable path/i), '/bin/llama-cli')
     await user.type(screen.getByLabelText(/Whisper model path/i), '/models/whisper-small.bin')
+    await user.type(screen.getByLabelText(/Whisper.cpp executable path/i), '/bin/whisper-cli')
     await user.type(screen.getByLabelText(/Piper voice path/i), '/models/kn_IN-piper-medium.onnx')
+    await user.type(screen.getByLabelText(/Piper executable path/i), '/bin/piper')
     await user.click(screen.getByRole('button', { name: /check local runtime/i }))
 
     expect(inspectLocalRuntime).toHaveBeenCalledWith({
       llmModelPath: '/models/aya-8b-q4_K_M.gguf',
       whisperModelPath: '/models/whisper-small.bin',
       piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+      llamaBinaryPath: '/bin/llama-cli',
+      whisperBinaryPath: '/bin/whisper-cli',
+      piperBinaryPath: '/bin/piper',
     })
     expect(await screen.findByText(/3 of 3 runtime components ready/i)).toBeInTheDocument()
     expect(screen.getByText(/Llama.cpp LLM/i)).toBeInTheDocument()
