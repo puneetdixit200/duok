@@ -183,6 +183,7 @@ function App() {
   const [runtimeSmokeSummary, setRuntimeSmokeSummary] = useState<LocalRuntimeSmokeSummary | null>(null)
   const [pronunciationPhraseId, setPronunciationPhraseId] = useState(pronunciationPhrases[0].id)
   const [pronunciationTranscript, setPronunciationTranscript] = useState('')
+  const [pronunciationAudioPath, setPronunciationAudioPath] = useState('')
   const [pronunciationAudioStatus, setPronunciationAudioStatus] = useState('')
   const [pronunciationResult, setPronunciationResult] = useState<PronunciationScoreResult | null>(null)
   const [pronunciationHistory, setPronunciationHistory] = useState<PronunciationAttempt[]>(() =>
@@ -575,12 +576,37 @@ function App() {
   function selectPronunciationPhrase(phraseId: string) {
     setPronunciationPhraseId(phraseId)
     setPronunciationTranscript('')
+    setPronunciationAudioPath('')
     setPronunciationAudioStatus('')
     setPronunciationResult(null)
   }
 
   function playPronunciationReference() {
     setPronunciationAudioStatus(`Reference audio: ${activePronunciationPhrase.transliteration}`)
+  }
+
+  async function transcribePronunciationAudio() {
+    const audioPath = pronunciationAudioPath.trim()
+    if (!audioPath) {
+      setPronunciationAudioStatus('Add an audio file path first.')
+      return
+    }
+
+    if (!window.kannadaOS?.transcribeNativeAudio) {
+      setPronunciationAudioStatus('Whisper bridge unavailable in browser preview.')
+      return
+    }
+
+    setPronunciationAudioStatus('Whisper transcription running...')
+
+    const result = await window.kannadaOS.transcribeNativeAudio({ runtimeConfig, audioPath })
+    if (result.ok) {
+      setPronunciationTranscript(result.text)
+      setPronunciationAudioStatus('Whisper transcript ready.')
+      return
+    }
+
+    setPronunciationAudioStatus(result.error ?? 'Whisper transcription failed.')
   }
 
   function scorePronunciationPractice() {
@@ -1140,6 +1166,17 @@ function App() {
             <div className="pronunciation-controls">
               <button className="secondary-action" onClick={playPronunciationReference} type="button">
                 Play Reference
+              </button>
+              <label className="transcript-field">
+                <span>Audio file path</span>
+                <input
+                  onChange={(event) => setPronunciationAudioPath(event.target.value)}
+                  placeholder="/recordings/namaskara.wav"
+                  value={pronunciationAudioPath}
+                />
+              </label>
+              <button className="secondary-action" onClick={transcribePronunciationAudio} type="button">
+                Transcribe with Whisper
               </button>
               <label className="transcript-field">
                 <span>Transcribed speech</span>

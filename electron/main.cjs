@@ -4,6 +4,7 @@ const {
   generateNativeExerciseInMain,
   inspectLocalRuntimeInMain,
   runLocalRuntimeSmokeInMain,
+  transcribeNativeAudioInMain,
 } = require('./local-runtime.cjs')
 const {
   getLearnerDataStorePath,
@@ -21,6 +22,9 @@ ipcMain.handle('local-runtime:inspect', (_event, config) => inspectLocalRuntimeI
 ipcMain.handle('local-runtime:smoke', (_event, config) => runLocalRuntimeSmokeInMain(config))
 ipcMain.handle('local-runtime:generate-exercise', (_event, request) =>
   generateNativeExerciseInMain(request?.runtimeConfig, request?.prompt),
+)
+ipcMain.handle('local-runtime:transcribe-audio', (_event, request) =>
+  transcribeNativeAudioInMain(request?.runtimeConfig, request?.audioPath),
 )
 ipcMain.handle('learner-store:load', () => loadLearnerDataFromDisk(getLearnerDataStorePath(app)))
 ipcMain.handle('learner-store:save', (_event, values) =>

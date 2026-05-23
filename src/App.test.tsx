@@ -377,6 +377,46 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
   })
 
+  it('transcribes pronunciation audio through the desktop Whisper bridge', async () => {
+    const user = userEvent.setup()
+    const transcribeNativeAudio = vi.fn().mockResolvedValue({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
+    vi.stubGlobal('kannadaOS', {
+      platform: 'darwin',
+      transcribeNativeAudio,
+    })
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem(
+      'kannadaos:local-runtime',
+      JSON.stringify({
+        llmModelPath: '/models/aya.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      }),
+    )
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    await user.type(screen.getByLabelText(/Audio file path/i), '/tmp/namaskara.wav')
+    await user.click(screen.getByRole('button', { name: /transcribe with whisper/i }))
+
+    expect(transcribeNativeAudio).toHaveBeenCalledWith({
+      runtimeConfig: {
+        llmModelPath: '/models/aya.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      },
+      audioPath: '/tmp/namaskara.wav',
+    })
+    expect(await screen.findByDisplayValue('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
+    expect(screen.getByText(/Whisper transcript ready/i)).toBeInTheDocument()
+  })
+
   it('opens model management from profile and shows required model setup states', async () => {
     const user = userEvent.setup()
     render(<App />)

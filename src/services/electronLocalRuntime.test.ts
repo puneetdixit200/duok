@@ -8,6 +8,7 @@ const {
   generateNativeExerciseInMain,
   inspectLocalRuntimeInMain,
   runLocalRuntimeSmokeInMain,
+  transcribeNativeAudioInMain,
 } = require('../../electron/local-runtime.cjs') as {
   generateNativeExerciseInMain: (
     config: LocalRuntimeConfig,
@@ -29,6 +30,12 @@ const {
     statusText: string
     components: Array<{ id: string; ok: boolean; status: string }>
   }>
+  transcribeNativeAudioInMain: (
+    config: LocalRuntimeConfig,
+    audioPath: string,
+    commandRunner: (binaryPath: string, args: string[]) => Promise<{ ok: boolean; output: string }>,
+    pathExists: (runtimePath: string) => boolean,
+  ) => Promise<{ ok: boolean; text: string; error?: string }>
 }
 
 describe('electron local runtime inspection', () => {
@@ -113,5 +120,33 @@ describe('electron local runtime inspection', () => {
       ok: true,
       response: '{"type":"translate","prompt":"Translate","kannada":"ಹೋಗಬೇಕು","answer":"need to go","options":["need to go"]}',
     })
+  })
+
+  it('transcribes audio through whisper.cpp and normalizes timestamped output', async () => {
+    const calls: Array<{ binaryPath: string; args: string[] }> = []
+    const result = await transcribeNativeAudioInMain(
+      {
+        llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      },
+      '/tmp/namaskara.wav',
+      async (binaryPath, args) => {
+        calls.push({ binaryPath, args })
+        return { ok: true, output: '[00:00:00.000 --> 00:00:01.100]  ನಮಸ್ಕಾರ ಸಾರ್' }
+      },
+      () => true,
+    )
+
+    expect(calls).toEqual([
+      {
+        binaryPath: '/bin/whisper-cli',
+        args: ['-m', '/models/whisper-small.bin', '-f', '/tmp/namaskara.wav', '-l', 'kn'],
+      },
+    ])
+    expect(result).toEqual({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
   })
 })

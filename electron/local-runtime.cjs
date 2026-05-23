@@ -217,6 +217,56 @@ async function generateNativeExerciseInMain(
   }
 }
 
+async function transcribeNativeAudioInMain(
+  config = {},
+  audioPath = '',
+  commandRunner = runExecutableCompletion,
+  pathExists = fs.existsSync,
+) {
+  const normalizedAudioPath = normalizePath(audioPath)
+  const readiness = inspectLocalRuntimeInMain(config, pathExists)
+  const stt = readiness.components.find((component) => component.id === 'stt')
+
+  if (!stt?.ready) {
+    return {
+      ok: false,
+      text: '',
+      error: stt?.nextAction ?? 'Whisper.cpp runtime is not ready.',
+    }
+  }
+
+  if (!normalizedAudioPath) {
+    return {
+      ok: false,
+      text: '',
+      error: 'Audio file path is empty.',
+    }
+  }
+
+  if (!pathExistsSafely(normalizedAudioPath, pathExists)) {
+    return {
+      ok: false,
+      text: '',
+      error: 'Audio file missing.',
+    }
+  }
+
+  const result = await commandRunner(stt.binaryPath, ['-m', stt.modelPath, '-f', normalizedAudioPath, '-l', 'kn'])
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      text: '',
+      error: result.output || 'Native Whisper transcription failed.',
+    }
+  }
+
+  const text = normalizeWhisperTranscript(result.output)
+  return text
+    ? { ok: true, text }
+    : { ok: false, text: '', error: 'Whisper produced no transcript.' }
+}
+
 function runExecutableSmoke(binaryPath, args) {
   return new Promise((resolve) => {
     execFile(binaryPath, args, { timeout: 3000 }, (error, stdout, stderr) => {
@@ -259,8 +309,22 @@ function pathExistsSafely(modelPath, pathExists) {
   }
 }
 
+function normalizeWhisperTranscript(output) {
+  return String(output)
+    .split(/\r?\n/)
+    .map((line) =>
+      line
+        .replace(/\[[^\]]+\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
+    .filter(Boolean)
+    .join(' ')
+}
+
 module.exports = {
   generateNativeExerciseInMain,
   inspectLocalRuntimeInMain,
   runLocalRuntimeSmokeInMain,
+  transcribeNativeAudioInMain,
 }

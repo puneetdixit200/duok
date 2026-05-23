@@ -133,6 +133,16 @@ async function main() {
     await page.getByLabel(/Back to app/i).click()
     await page.getByRole('button', { name: /generate ai exercise/i }).click()
     await page.getByText(/Native: Native commute drill ಹೋಗಬೇಕು/i).waitFor()
+    await page.getByRole('button', { name: /practice/i }).click()
+    await page.getByLabel(/Audio file path/i).fill(runtimePaths.sampleAudioPath)
+    await page.getByRole('button', { name: /transcribe with whisper/i }).click()
+    await page.getByText(/Whisper transcript ready/i).waitFor()
+    await page.waitForFunction(() => {
+      const input = [...document.querySelectorAll('input')].find((element) =>
+        element.labels?.[0]?.textContent?.includes('Transcribed speech'),
+      )
+      return input?.value === 'ನಮಸ್ಕಾರ ಸಾರ್'
+    })
 
     const ollama = await probeOllama()
     if (ollama.online) {
@@ -166,6 +176,7 @@ function createRuntimePlaceholders(runtimeDir) {
     llamaBinaryPath: path.join(runtimeDir, 'llama-cli'),
     whisperBinaryPath: path.join(runtimeDir, 'whisper-cli'),
     piperBinaryPath: path.join(runtimeDir, 'piper'),
+    sampleAudioPath: path.join(runtimeDir, 'namaskara.wav'),
   }
 
   Object.entries(runtimePaths).forEach(([key, runtimePath]) => {
@@ -181,6 +192,16 @@ function createRuntimePlaceholders(runtimeDir) {
               'fi',
               '',
             ].join('\n')
+          : key === 'whisperBinaryPath'
+            ? [
+                '#!/bin/sh',
+                'if [ "$1" = "--help" ]; then',
+                '  echo KannadaOS runtime smoke',
+                'else',
+                '  echo "[00:00:00.000 --> 00:00:01.100]  ನಮಸ್ಕಾರ ಸಾರ್"',
+                'fi',
+                '',
+              ].join('\n')
           : '#!/bin/sh\necho KannadaOS runtime smoke\n'
       fs.writeFileSync(runtimePath, script)
       fs.chmodSync(runtimePath, 0o755)

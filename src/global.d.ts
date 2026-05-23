@@ -2,6 +2,17 @@ import type { LocalRuntimeConfig, LocalRuntimeSmokeSummary, LocalRuntimeSummary 
 import type { LearnerDataPayload, LearnerStorageValues } from './services/learnerStore'
 import type { NativeExerciseRequest, NativeExerciseResponse } from './services/nativeExercise'
 
+interface NativeTranscriptionRequest {
+  runtimeConfig: LocalRuntimeConfig
+  audioPath: string
+}
+
+interface NativeTranscriptionResponse {
+  ok: boolean
+  text: string
+  error?: string
+}
+
 declare global {
   interface Window {
     kannadaOS?: {
@@ -9,6 +20,7 @@ declare global {
       inspectLocalRuntime?: (config: LocalRuntimeConfig) => Promise<LocalRuntimeSummary>
       smokeLocalRuntime?: (config: LocalRuntimeConfig) => Promise<LocalRuntimeSmokeSummary>
       generateNativeExercise?: (request: NativeExerciseRequest) => Promise<NativeExerciseResponse>
+      transcribeNativeAudio?: (request: NativeTranscriptionRequest) => Promise<NativeTranscriptionResponse>
       loadLearnerData?: () => Promise<LearnerDataPayload | null>
       saveLearnerData?: (values: LearnerStorageValues) => Promise<LearnerDataPayload>
     }
