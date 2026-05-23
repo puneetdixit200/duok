@@ -240,8 +240,37 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/1 word due today/i)).toBeInTheDocument()
     expect(screen.getByText(/Adaptive difficulty: Gentle/i)).toBeInTheDocument()
     expect(screen.getByText(/Greetings needs review/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i)).toHaveLength(2)
+    expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(2)
     expect(screen.getByText(/Strength 25%/i)).toBeInTheDocument()
+  })
+
+  it('scores pronunciation practice and persists the latest attempt', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    const { unmount } = render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    expect(screen.getByRole('heading', { name: /Pronunciation Lab/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /play reference/i }))
+    expect(screen.getByText(/Reference audio: namaskara saar/i)).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(/Transcribed speech/i), 'ನಮಸ್ಕಾರ ಸಾರ್')
+    await user.click(screen.getByRole('button', { name: /score pronunciation/i }))
+
+    const pronunciationResult = screen.getByLabelText(/Pronunciation result/i)
+    expect(within(pronunciationResult).getByText(/Score 98/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Clear pronunciation/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/No problem syllables/i)).toBeInTheDocument()
+    expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+
+    unmount()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    expect(screen.getByText(/Last score 98/i)).toBeInTheDocument()
+    expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
   })
 
   it('opens model management from profile and shows required model setup states', async () => {

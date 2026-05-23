@@ -8,6 +8,7 @@ KannadaOS is a desktop MVP for the offline Kannada learning system described in 
 - Home dashboard with streak, XP goal, hearts, gems, and a Duolingo-style level map.
 - Lesson flow for all six MVP exercise types: translate, arrange words, fill in the blank, listening, speaking, and match pairs, followed by a lesson-complete screen.
 - Adaptive Practice screen with flashcard review, due review counts, weak-area detection, and difficulty adjustment.
+- Pronunciation Lab with reference playback status, transcript scoring, syllable-level feedback, and persisted latest attempts.
 - Story Mode with illustrated story cards, locked stories, sentence reader, tap-for-word meanings, and a comprehension quiz.
 - Bangalore Mode with BMTC, auto, darshini, kirana, office, and PG owner scenarios.
 - Tutor chat with selectable real-world scenarios, tutor personalities, voice-input simulation, and a deterministic offline correction fallback.
@@ -29,18 +30,18 @@ npm run package:mac
 npm run package:win
 ```
 
-`npm run dev` starts Vite and Electron together. `npm run test:e2e` builds the renderer, launches Electron, completes onboarding, answers a lesson, checks chat fallback plus scenario/persona voice input, opens adaptive practice, completes a story quiz, opens Bangalore Mode, opens profile achievements and daily reminders, verifies model setup controls, checks local native model paths through IPC, and probes Ollama live status.
+`npm run dev` starts Vite and Electron together. `npm run test:e2e` builds the renderer, launches Electron, completes onboarding, answers a lesson, checks chat fallback plus scenario/persona voice input, opens adaptive practice, scores pronunciation, completes a story quiz, opens Bangalore Mode, opens profile achievements and daily reminders, verifies model setup controls, checks local native model paths through IPC, and probes Ollama live status.
 
 ## Latest Verification
 
 Run on May 23, 2026:
 
-- `npm test`: 6 files, 26 tests passed.
+- `npm test`: 7 files, 30 tests passed.
 - `npm run lint`: passed.
 - `npm run build`: TypeScript and Vite production build passed.
-- `npm run test:e2e`: passed across onboarding, all six lesson exercise types, lesson completion, chat scenario/persona voice input, adaptive practice, Story Mode quiz, Bangalore Mode, profile achievements, daily reminder settings, model setup controls, local runtime IPC path checks, and live Ollama smoke with `llama3.1:8b` and `qwen2.5:0.5b`.
-- Electron visual smoke: model-management screen rendered the new on-device runtime panel and verified 3 of 3 temp model paths ready.
+- `npm run test:e2e`: passed across onboarding, all six lesson exercise types, lesson completion, chat scenario/persona voice input, adaptive practice, Pronunciation Lab scoring, Story Mode quiz, Bangalore Mode, profile achievements, daily reminder settings, model setup controls, local runtime IPC path checks, and live Ollama smoke with `llama3.1:8b` and `qwen2.5:0.5b`.
 - `npm run package:mac`: created `KannadaOS-0.1.0-arm64.dmg` and `KannadaOS-0.1.0-arm64-mac.zip`.
 - `npm run package:win`: created Windows portable `KannadaOS 0.1.0.exe`.
+- Electron visual smoke: Practice tab rendered Pronunciation Lab scoring, and model-management rendered the on-device runtime panel with 3 of 3 temp model paths ready.
 
 Release artifacts are generated under `release/` and are intentionally ignored because they are large rebuildable outputs.

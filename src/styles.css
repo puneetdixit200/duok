@@ -521,6 +521,14 @@ h2 {
   background: linear-gradient(180deg, #ffbc8a, #7c3aed);
 }
 
+.waveform.compact {
+  min-height: 70px;
+}
+
+.waveform.compact span {
+  width: 7px;
+}
+
 .score-card {
   display: grid;
   gap: 4px;
@@ -828,6 +836,104 @@ h2 {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) 1fr;
   gap: 18px;
+}
+
+.pronunciation-lab {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #3d3d5c;
+  border-left: 5px solid #ff6b2c;
+  border-radius: 14px;
+  background: #171728;
+}
+
+.pronunciation-phrase-grid,
+.pronunciation-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.pronunciation-phrase-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pronunciation-target {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #30304d;
+  border-radius: 14px;
+  background: #202037;
+}
+
+.pronunciation-target strong {
+  display: block;
+  color: white;
+  font-size: 28px;
+}
+
+.pronunciation-target small,
+.pronunciation-history {
+  color: #c9c7d6;
+}
+
+.pronunciation-controls {
+  grid-template-columns: auto minmax(220px, 1fr) auto;
+  align-items: end;
+}
+
+.transcript-field {
+  display: grid;
+  gap: 6px;
+}
+
+.transcript-field span {
+  color: #c9c7d6;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.transcript-field input {
+  min-height: 44px;
+  border: 1px solid #3d3d5c;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #11111d;
+  color: #f7f7fb;
+}
+
+.pronunciation-result {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.pronunciation-result strong {
+  color: #6ee7b7;
+  font-size: 28px;
+}
+
+.pronunciation-result p,
+.pronunciation-result span,
+.pronunciation-result small,
+.pronunciation-history {
+  margin: 0;
+}
+
+.pronunciation-result span {
+  color: #ffbc8a;
+  font-weight: 900;
+}
+
+.pronunciation-result small {
+  color: #c9c7d6;
 }
 
 .flashcard {
@@ -1186,6 +1292,9 @@ h2 {
   .model-grid,
   .runtime-path-grid,
   .runtime-component-grid,
+  .pronunciation-phrase-grid,
+  .pronunciation-target,
+  .pronunciation-controls,
   .story-grid,
   .stats-grid,
   .completion-stats,
@@ -1216,6 +1325,9 @@ h2 {
   .model-grid,
   .runtime-path-grid,
   .runtime-component-grid,
+  .pronunciation-phrase-grid,
+  .pronunciation-target,
+  .pronunciation-controls,
   .story-grid,
   .stats-grid,
   .completion-stats,

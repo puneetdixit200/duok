@@ -25,7 +25,8 @@ import {
   type LocalRuntimeConfig,
   type LocalRuntimeSummary,
 } from './services/localRuntime'
-import type { LessonExercise, Scenario, StoryWord, TutorPersona } from './types'
+import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
+import type { LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
 type Tab = 'home' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
@@ -55,12 +56,29 @@ interface ReminderPreference {
   permission: 'default' | 'granted' | 'denied'
 }
 
+interface PronunciationAttempt {
+  id: string
+  phraseId: string
+  phrase: string
+  transcript: string
+  score: number
+  level: PronunciationScoreResult['level']
+  feedback: string
+  tip: string
+  problemParts: string[]
+  createdAt: string
+}
+
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
 const reminderKey = 'kannadaos:reminder'
 const runtimeKey = 'kannadaos:local-runtime'
+const pronunciationKey = 'kannadaos:pronunciation-history'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
+const pronunciationPhrases = survivalPhrases.filter((phrase) =>
+  ['namaskara-saar', 'ticket-eshtu', 'swalpa-adjust-maadi'].includes(phrase.id),
+)
 const defaultReminderPreference: ReminderPreference = {
   enabled: false,
   time: '7:30 PM',
@@ -142,6 +160,13 @@ function App() {
     createMissingLocalRuntimeSummary(hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))),
   )
   const [runtimeCheckStatus, setRuntimeCheckStatus] = useState<'idle' | 'checking' | 'checked' | 'error'>('idle')
+  const [pronunciationPhraseId, setPronunciationPhraseId] = useState(pronunciationPhrases[0].id)
+  const [pronunciationTranscript, setPronunciationTranscript] = useState('')
+  const [pronunciationAudioStatus, setPronunciationAudioStatus] = useState('')
+  const [pronunciationResult, setPronunciationResult] = useState<PronunciationScoreResult | null>(null)
+  const [pronunciationHistory, setPronunciationHistory] = useState<PronunciationAttempt[]>(() =>
+    hydratePronunciationHistory(localStorage.getItem(pronunciationKey)),
+  )
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
@@ -174,6 +199,9 @@ function App() {
     bangaloreScenarios.find((scenario) => scenario.id === selectedScenarioId) ?? defaultChatScenario
   const selectedTutorPersona =
     tutorPersonas.find((persona) => persona.id === selectedTutorPersonaId) ?? defaultTutorPersona
+  const activePronunciationPhrase =
+    pronunciationPhrases.find((phrase) => phrase.id === pronunciationPhraseId) ?? pronunciationPhrases[0]
+  const latestPronunciationAttempt = pronunciationHistory[0]
   const completedInCurrentLesson = Math.min(
     lessonIndex + (feedback === 'correct' ? 1 : 0),
     lessonExercises.length,
@@ -190,6 +218,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem(runtimeKey, JSON.stringify(runtimeConfig))
   }, [runtimeConfig])
+
+  useEffect(() => {
+    localStorage.setItem(pronunciationKey, JSON.stringify(pronunciationHistory))
+  }, [pronunciationHistory])
 
   useEffect(() => {
     let active = true
@@ -386,6 +418,43 @@ function App() {
       setRuntimeSummary(createMissingLocalRuntimeSummary(runtimeConfig))
       setRuntimeCheckStatus('error')
     }
+  }
+
+  function selectPronunciationPhrase(phraseId: string) {
+    setPronunciationPhraseId(phraseId)
+    setPronunciationTranscript('')
+    setPronunciationAudioStatus('')
+    setPronunciationResult(null)
+  }
+
+  function playPronunciationReference() {
+    setPronunciationAudioStatus(`Reference audio: ${activePronunciationPhrase.transliteration}`)
+  }
+
+  function scorePronunciationPractice() {
+    const transcript = pronunciationTranscript.trim() || getSimulatedPronunciationTranscript(activePronunciationPhrase)
+    const result = scorePronunciation({
+      expectedText: activePronunciationPhrase.kannada,
+      expectedTransliteration: activePronunciationPhrase.transliteration,
+      transcript,
+      targetParts: getPronunciationParts(activePronunciationPhrase.kannada),
+    })
+    const attempt: PronunciationAttempt = {
+      id: `pronunciation-${Date.now()}`,
+      phraseId: activePronunciationPhrase.id,
+      phrase: activePronunciationPhrase.kannada,
+      transcript,
+      score: result.score,
+      level: result.level,
+      feedback: result.feedback,
+      tip: result.tip,
+      problemParts: result.problemParts,
+      createdAt: new Date().toISOString(),
+    }
+
+    setPronunciationTranscript(transcript)
+    setPronunciationResult(result)
+    setPronunciationHistory((current) => [attempt, ...current].slice(0, 5))
   }
 
   function openStory(storyId: string) {
@@ -810,6 +879,79 @@ function App() {
               </article>
             </div>
           </div>
+          <section className="pronunciation-lab" aria-labelledby="pronunciation-lab-title">
+            <header className="runtime-header">
+              <div>
+                <p className="eyebrow">speech practice</p>
+                <h2 id="pronunciation-lab-title">Pronunciation Lab</h2>
+              </div>
+              <span className="metric-pill">
+                {latestPronunciationAttempt ? `Last score ${latestPronunciationAttempt.score}` : 'No attempts yet'}
+              </span>
+            </header>
+            <div className="pronunciation-phrase-grid" aria-label="Pronunciation phrases">
+              {pronunciationPhrases.map((phrase) => (
+                <button
+                  className={activePronunciationPhrase.id === phrase.id ? 'selector-chip active' : 'selector-chip'}
+                  key={phrase.id}
+                  onClick={() => selectPronunciationPhrase(phrase.id)}
+                  type="button"
+                >
+                  <strong lang="kn">{phrase.kannada}</strong>
+                  <small>{phrase.transliteration}</small>
+                </button>
+              ))}
+            </div>
+            <article className="pronunciation-target">
+              <div>
+                <span className="model-category">target phrase</span>
+                <strong lang="kn">{activePronunciationPhrase.kannada}</strong>
+                <small>{activePronunciationPhrase.english}</small>
+              </div>
+              <div className="waveform compact" aria-hidden="true">
+                {Array.from({ length: 14 }, (_, index) => (
+                  <span key={index} style={{ height: `${18 + ((index * 11) % 42)}px` }} />
+                ))}
+              </div>
+            </article>
+            <div className="pronunciation-controls">
+              <button className="secondary-action" onClick={playPronunciationReference} type="button">
+                Play Reference
+              </button>
+              <label className="transcript-field">
+                <span>Transcribed speech</span>
+                <input
+                  onChange={(event) => setPronunciationTranscript(event.target.value)}
+                  value={pronunciationTranscript}
+                />
+              </label>
+              <button className="primary-action" onClick={scorePronunciationPractice} type="button">
+                Score Pronunciation
+              </button>
+            </div>
+            {pronunciationAudioStatus && (
+              <p className="voice-status" role="status">
+                {pronunciationAudioStatus}
+              </p>
+            )}
+            {pronunciationResult && (
+              <article className="pronunciation-result" aria-label="Pronunciation result">
+                <strong>Score {pronunciationResult.score}</strong>
+                <p>{pronunciationResult.feedback}</p>
+                <span>
+                  {pronunciationResult.problemParts.length
+                    ? `Problem syllables: ${pronunciationResult.problemParts.join(', ')}`
+                    : 'No problem syllables'}
+                </span>
+                <small>{pronunciationResult.tip}</small>
+              </article>
+            )}
+            {latestPronunciationAttempt && (
+              <p className="pronunciation-history">
+                Latest attempt: {latestPronunciationAttempt.transcript}
+              </p>
+            )}
+          </section>
         </section>
       )
     }
@@ -1367,6 +1509,51 @@ function hydrateLocalRuntimeConfig(serialized: string | null): LocalRuntimeConfi
   } catch {
     return emptyLocalRuntimeConfig
   }
+}
+
+function hydratePronunciationHistory(serialized: string | null): PronunciationAttempt[] {
+  if (!serialized) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as Partial<PronunciationAttempt>[]
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed
+      .filter((attempt): attempt is PronunciationAttempt =>
+        typeof attempt.id === 'string' &&
+        typeof attempt.phraseId === 'string' &&
+        typeof attempt.phrase === 'string' &&
+        typeof attempt.transcript === 'string' &&
+        typeof attempt.score === 'number' &&
+        typeof attempt.feedback === 'string' &&
+        typeof attempt.tip === 'string' &&
+        Array.isArray(attempt.problemParts) &&
+        typeof attempt.createdAt === 'string' &&
+        (attempt.level === 'clear' || attempt.level === 'steady' || attempt.level === 'needs-practice'),
+      )
+      .slice(0, 5)
+  } catch {
+    return []
+  }
+}
+
+function getPronunciationParts(kannada: string): string[] {
+  return kannada
+    .replace(/[?]/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
+function getSimulatedPronunciationTranscript(phrase: Phrase): string {
+  if (phrase.id === 'namaskara-saar') {
+    return 'ನಮಸ್ಕಾರ'
+  }
+
+  return phrase.kannada.replace(/[?]/g, '')
 }
 
 function parseMatchPairs(answer: string) {
