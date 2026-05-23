@@ -595,6 +595,15 @@ function App() {
     })
 
     if (result.ok) {
+      if (result.audioUrl) {
+        try {
+          await new Audio(result.audioUrl).play()
+        } catch {
+          setPronunciationAudioStatus(`Piper audio ready: ${result.audioPath} (playback unavailable)`)
+          return
+        }
+      }
+
       setPronunciationAudioStatus(`Piper audio ready: ${result.audioPath}`)
       return
     }

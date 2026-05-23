@@ -379,7 +379,16 @@ describe('KannadaOS desktop app', () => {
 
   it('synthesizes pronunciation reference audio through the desktop Piper bridge', async () => {
     const user = userEvent.setup()
-    const synthesizeNativeSpeech = vi.fn().mockResolvedValue({ ok: true, audioPath: '/tmp/reference.wav' })
+    const playReference = vi.fn().mockResolvedValue(undefined)
+    const AudioMock = vi.fn(function mockAudio(this: { play: typeof playReference }) {
+      this.play = playReference
+    })
+    vi.stubGlobal('Audio', AudioMock)
+    const synthesizeNativeSpeech = vi.fn().mockResolvedValue({
+      ok: true,
+      audioPath: '/tmp/reference.wav',
+      audioUrl: 'file:///tmp/reference.wav',
+    })
     vi.stubGlobal('kannadaOS', {
       platform: 'darwin',
       synthesizeNativeSpeech,
@@ -412,6 +421,8 @@ describe('KannadaOS desktop app', () => {
       },
       text: 'ನಮಸ್ಕಾರ ಸಾರ್',
     })
+    expect(AudioMock).toHaveBeenCalledWith('file:///tmp/reference.wav')
+    expect(playReference).toHaveBeenCalledTimes(1)
     expect(await screen.findByText(/Piper audio ready: \/tmp\/reference.wav/i)).toBeInTheDocument()
   })
 

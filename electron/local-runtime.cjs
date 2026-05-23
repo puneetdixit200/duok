@@ -1,5 +1,6 @@
 const fs = require('node:fs')
 const path = require('node:path')
+const { pathToFileURL } = require('node:url')
 const { execFile } = require('node:child_process')
 
 const runtimeComponentDefinitions = [
@@ -331,6 +332,7 @@ async function synthesizeNativeSpeechInMain(
   return {
     ok: true,
     audioPath,
+    audioUrl: pathToFileURL(audioPath).href,
   }
 }
 

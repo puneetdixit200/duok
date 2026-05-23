@@ -184,6 +184,10 @@ describe('electron local runtime inspection', () => {
       args: ['--model', '/models/kn_IN-piper-medium.onnx', '--output_file', result.audioPath],
       input: 'ನಮಸ್ಕಾರ ಸಾರ್',
     })
-    expect(result).toEqual({ ok: true, audioPath: expect.stringMatching(/^\/tmp\/kannadaos-audio\/piper-/) })
+    expect(result).toEqual({
+      ok: true,
+      audioPath: expect.stringMatching(/^\/tmp\/kannadaos-audio\/piper-/),
+      audioUrl: expect.stringMatching(/^file:\/\/\/tmp\/kannadaos-audio\/piper-/),
+    })
   })
 })

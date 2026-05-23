@@ -21,6 +21,7 @@ interface NativeSpeechRequest {
 interface NativeSpeechResponse {
   ok: boolean
   audioPath: string
+  audioUrl?: string
   error?: string
 }
 
