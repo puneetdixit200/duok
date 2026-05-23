@@ -6,7 +6,7 @@ KannadaOS is a desktop MVP for the offline Kannada learning system described in 
 
 - Onboarding with learner level selection.
 - Home dashboard with streak, XP goal, hearts, gems, and a Duolingo-style level map.
-- Lesson flow for the first survival Kannada exercise with answer checking, XP, hearts, and review scheduling.
+- Lesson flow for all six MVP exercise types: translate, arrange words, fill in the blank, listening, speaking, and match pairs, followed by a lesson-complete screen.
 - Practice screen with flashcard review and weak-area cards.
 - Bangalore Mode with BMTC, auto, darshini, kirana, office, and PG owner scenarios.
 - Tutor chat with a deterministic offline correction fallback.
@@ -32,10 +32,10 @@ npm run package:win
 
 Run on May 23, 2026:
 
-- `npm test`: 4 files, 13 tests passed.
+- `npm test`: 4 files, 14 tests passed.
 - `npm run lint`: passed.
 - `npm run build`: TypeScript and Vite production build passed.
-- `npm run test:e2e`: passed; live Ollama smoke reported `qwen2.5:0.5b`.
+- `npm run test:e2e`: passed across onboarding, all six lesson exercise types, lesson completion, chat, practice, Bangalore Mode, profile, and live Ollama smoke with `qwen2.5:0.5b`.
 - `npm run package:mac`: created `KannadaOS-0.1.0-arm64.dmg` and `KannadaOS-0.1.0-arm64-mac.zip`.
 - `npm run package:win`: created Windows portable `KannadaOS 0.1.0.exe`.
 

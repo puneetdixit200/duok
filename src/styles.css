@@ -431,6 +431,33 @@ h2 {
   gap: 10px;
 }
 
+.word-bank,
+.match-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.word-bank {
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+}
+
+.match-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.match-grid > div {
+  display: grid;
+  gap: 10px;
+}
+
+.match-grid p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #ffbc8a;
+  font-weight: 800;
+  text-align: center;
+}
+
 .answer-option {
   min-height: 56px;
   padding: 0 18px;
@@ -451,6 +478,79 @@ h2 {
 .feedback.wrong {
   background: rgba(244, 63, 94, 0.18);
   color: #fda4af;
+}
+
+.listening-card,
+.speaking-card,
+.xp-card {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  padding: 20px;
+  border: 1px solid #30304d;
+  border-radius: 14px;
+  background: #202037;
+}
+
+.speaker-button {
+  width: min(260px, 100%);
+  min-height: 64px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff6b2c, #ffbc8a);
+  color: #111018;
+  font-weight: 900;
+}
+
+.waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 92px;
+}
+
+.waveform span {
+  width: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffbc8a, #7c3aed);
+}
+
+.score-card {
+  display: grid;
+  gap: 4px;
+  width: min(420px, 100%);
+  padding: 14px;
+  border-left: 5px solid #ff6b2c;
+  border-radius: 10px;
+  background: rgba(255, 107, 44, 0.12);
+}
+
+.lesson-complete {
+  text-align: center;
+}
+
+.star-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  color: #ffd600;
+  font-size: 42px;
+}
+
+.xp-card {
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+}
+
+.xp-card strong {
+  font-size: 34px;
+}
+
+.completion-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
 .chat-panel {
@@ -654,6 +754,7 @@ h2 {
   .level-map,
   .scenario-grid,
   .stats-grid,
+  .completion-stats,
   .achievement-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -675,6 +776,8 @@ h2 {
   .level-map,
   .scenario-grid,
   .stats-grid,
+  .completion-stats,
+  .match-grid,
   .achievement-grid {
     grid-template-columns: 1fr;
   }

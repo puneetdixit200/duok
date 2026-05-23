@@ -22,10 +22,8 @@ async function main() {
     await page.getByRole('button', { name: /zero/i }).click()
     await page.getByRole('button', { name: /start learning/i }).click()
     await page.getByRole('button', { name: /continue: greetings/i }).click()
-    await page.getByRole('button', { name: 'Hello sir' }).click()
-    await page.getByRole('button', { name: /check/i }).click()
-    await page.getByText('+2 XP').waitFor()
-    await page.getByLabel('Close lesson').click()
+    await completeLesson(page)
+    await page.getByRole('button', { name: /^continue$/i }).click()
 
     await page.getByRole('button', { name: /chat/i }).click()
     await page.getByPlaceholder(/type in kannada/i).fill('Majestic hogbeku')
@@ -61,6 +59,53 @@ async function main() {
   } finally {
     await closeElectron(app)
   }
+}
+
+async function completeLesson(page) {
+  await page.getByText('translate', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Hello sir' }).click()
+  await page.getByRole('button', { name: /check/i }).click()
+  await page.getByRole('button', { name: /next exercise/i }).click()
+
+  await page.getByText('arrange', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'ನಮಸ್ಕಾರ' }).click()
+  await page.getByRole('button', { name: 'ಸಾರ್' }).click()
+  await page.getByRole('button', { name: 'ಹೇಗಿದ್ದೀರಾ' }).click()
+  await page.getByRole('button', { name: /check/i }).click()
+  await page.getByRole('button', { name: /next exercise/i }).click()
+
+  await page.getByText('fillBlank', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'ಹೋಗಬೇಕು' }).click()
+  await page.getByRole('button', { name: /check/i }).click()
+  await page.getByRole('button', { name: /next exercise/i }).click()
+
+  await page.getByText('listening', { exact: true }).waitFor()
+  await page.getByRole('button', { name: /play reference audio/i }).click()
+  await page.getByText(/Playing reference audio/i).waitFor()
+  await page.getByRole('button', { name: 'ಟಿಕೆಟ್ ಎಷ್ಟು?' }).click()
+  await page.getByRole('button', { name: /check/i }).click()
+  await page.getByRole('button', { name: /next exercise/i }).click()
+
+  await page.getByText('speaking', { exact: true }).waitFor()
+  await page.getByRole('button', { name: /record phrase/i }).click()
+  await page.getByText(/Score: 87%/i).waitFor()
+  await page.getByRole('button', { name: /check/i }).click()
+  await page.getByRole('button', { name: /next exercise/i }).click()
+
+  await page.getByText('matchPairs', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'ನಮಸ್ಕಾರ' }).click()
+  await page.getByRole('button', { name: 'Hello' }).click()
+  await page.getByRole('button', { name: 'ಧನ್ಯವಾದ' }).click()
+  await page.getByRole('button', { name: 'Thank you' }).click()
+  await page.getByRole('button', { name: 'ಹೋಗು' }).click()
+  await page.getByRole('button', { name: 'Go' }).click()
+  await page.getByRole('button', { name: 'ಬಾ' }).click()
+  await page.getByRole('button', { name: 'Come' }).click()
+  await page.getByRole('button', { name: /check/i }).click()
+
+  await page.getByRole('heading', { name: /Lesson Complete/i }).waitFor()
+  await page.getByText('+18 XP').waitFor()
+  await page.getByLabel('6 Correct').waitFor()
 }
 
 async function probeOllama() {

@@ -47,8 +47,19 @@ function App() {
   const [flashcardBack, setFlashcardBack] = useState(false)
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [generatedExercise, setGeneratedExercise] = useState('')
+  const [lessonIndex, setLessonIndex] = useState(0)
+  const [totalLessonXp, setTotalLessonXp] = useState(0)
+  const [placedWords, setPlacedWords] = useState<string[]>([])
+  const [audioStatus, setAudioStatus] = useState('')
+  const [speakingScore, setSpeakingScore] = useState<number | null>(null)
+  const [selectedMatch, setSelectedMatch] = useState<{ left?: string; right?: string }>({})
+  const [matchedPairs, setMatchedPairs] = useState<string[]>([])
 
-  const activeExercise = lessonExercises[0]
+  const activeExercise = lessonExercises[Math.min(lessonIndex, lessonExercises.length - 1)]
+  const completedInCurrentLesson = Math.min(
+    lessonIndex + (feedback === 'correct' ? 1 : 0),
+    lessonExercises.length,
+  )
 
   useEffect(() => {
     localStorage.setItem(progressKey, serializeProgress(progress))
@@ -71,9 +82,25 @@ function App() {
     setScreen('app')
   }
 
+  function openLesson() {
+    setLessonIndex(0)
+    setTotalLessonXp(0)
+    resetExerciseInteraction()
+    setScreen('lesson')
+  }
+
   function checkAnswer(exercise: LessonExercise) {
+    if (feedback) {
+      return
+    }
+
     const correct = selectedAnswer === exercise.answer
     setFeedback(correct ? 'correct' : 'wrong')
+
+    if (correct) {
+      setTotalLessonXp((current) => current + exercise.xp)
+    }
+
     setProgress((current) =>
       applyExerciseResult(current, {
         exerciseId: exercise.id,
@@ -84,6 +111,73 @@ function App() {
         now: new Date().toISOString(),
       }),
     )
+
+    if (correct && lessonIndex === lessonExercises.length - 1) {
+      setLessonIndex(lessonExercises.length)
+      setSelectedAnswer('')
+      setFeedback(null)
+    }
+  }
+
+  function goToNextExercise() {
+    if (lessonIndex + 1 >= lessonExercises.length) {
+      setLessonIndex(lessonExercises.length)
+      resetExerciseInteraction()
+      return
+    }
+
+    setLessonIndex((current) => current + 1)
+    resetExerciseInteraction()
+  }
+
+  function resetExerciseInteraction() {
+    setSelectedAnswer('')
+    setFeedback(null)
+    setPlacedWords([])
+    setAudioStatus('')
+    setSpeakingScore(null)
+    setSelectedMatch({})
+    setMatchedPairs([])
+  }
+
+  function selectArrangeWord(word: string) {
+    if (placedWords.includes(word)) {
+      return
+    }
+
+    const nextWords = [...placedWords, word]
+    setPlacedWords(nextWords)
+    setSelectedAnswer(nextWords.join(' '))
+  }
+
+  function recordPhrase(exercise: LessonExercise) {
+    setSpeakingScore(87)
+    setSelectedAnswer(exercise.answer)
+  }
+
+  function handleMatchSelection(value: string, side: 'left' | 'right', exercise: LessonExercise) {
+    const nextSelection = { ...selectedMatch, [side]: value }
+    const pairs = parseMatchPairs(exercise.answer)
+
+    if (nextSelection.left && nextSelection.right) {
+      const pairId = `${nextSelection.left}=${nextSelection.right}`
+      const isCorrect = pairs.some(
+        (pair) => pair.left === nextSelection.left && pair.right === nextSelection.right,
+      )
+
+      if (isCorrect && !matchedPairs.includes(pairId)) {
+        const nextMatches = [...matchedPairs, pairId]
+        setMatchedPairs(nextMatches)
+        if (nextMatches.length === pairs.length) {
+          setSelectedAnswer(exercise.answer)
+        }
+      }
+
+      setSelectedMatch({})
+      return
+    }
+
+    setSelectedMatch(nextSelection)
   }
 
   async function generateAiExercise() {
@@ -151,39 +245,52 @@ function App() {
   }
 
   if (screen === 'lesson') {
+    if (lessonIndex >= lessonExercises.length) {
+      return (
+        <main className="app-shell lesson-shell">
+          <section className="lesson-card lesson-complete" aria-labelledby="lesson-complete-title">
+            <p className="eyebrow">lesson complete</p>
+            <h1 id="lesson-complete-title">Lesson Complete!</h1>
+            <div className="star-row" aria-label="Three stars earned">
+              <span>★</span>
+              <span>★</span>
+              <span>★</span>
+            </div>
+            <article className="xp-card">
+              <strong>+{totalLessonXp} XP</strong>
+              <span>Total: {progress.xp} XP</span>
+            </article>
+            <div className="completion-stats">
+              <Stat value={100} label="Accuracy" />
+              <Stat value={lessonExercises.length} label="Correct" />
+              <Stat value={0} label="Wrong" />
+            </div>
+            <button className="primary-action" onClick={() => setScreen('app')} type="button">
+              Continue
+            </button>
+          </section>
+        </main>
+      )
+    }
+
     return (
       <main className="app-shell lesson-shell">
         <header className="lesson-topbar">
           <button className="icon-button" onClick={() => setScreen('app')} type="button" aria-label="Close lesson">
             x
           </button>
-          <div className="lesson-progress" aria-label="Lesson progress: 1 of 6 exercises complete">
-            <span style={{ width: feedback ? '34%' : '18%' }} />
+          <div
+            className="lesson-progress"
+            aria-label={`Lesson progress: ${completedInCurrentLesson} of ${lessonExercises.length} exercises complete`}
+          >
+            <span style={{ width: `${Math.max(12, (completedInCurrentLesson / lessonExercises.length) * 100)}%` }} />
           </div>
           <strong>Heart {progress.hearts}</strong>
         </header>
         <section className="lesson-card" aria-labelledby="lesson-title">
           <p className="eyebrow">{activeExercise.type}</p>
           <h1 id="lesson-title">{activeExercise.prompt}</h1>
-          <div className="phrase-card">
-            <strong lang="kn">{activeExercise.kannada}</strong>
-            <span>{activeExercise.transliteration}</span>
-            <button type="button" className="mini-button">
-              Listen
-            </button>
-          </div>
-          <div className="option-stack">
-            {activeExercise.options.map((option) => (
-              <button
-                className={selectedAnswer === option ? 'answer-option selected' : 'answer-option'}
-                key={option}
-                onClick={() => setSelectedAnswer(option)}
-                type="button"
-              >
-                {option}
-              </button>
-            ))}
-          </div>
+          {renderExerciseContent(activeExercise)}
           <button
             className="primary-action"
             disabled={!selectedAnswer}
@@ -197,6 +304,11 @@ function App() {
               <strong>{feedback === 'correct' ? 'Correct' : 'Try again'}</strong>
               <span>{feedback === 'correct' ? `+${activeExercise.xp} XP` : activeExercise.explanation}</span>
             </div>
+          )}
+          {feedback === 'correct' && (
+            <button className="secondary-action" onClick={goToNextExercise} type="button">
+              Next Exercise
+            </button>
           )}
         </section>
       </main>
@@ -414,7 +526,7 @@ function App() {
             {Math.min(10, progress.dailyXp)}/10
           </div>
         </section>
-        <button className="continue-card" onClick={() => setScreen('lesson')} type="button">
+        <button className="continue-card" onClick={openLesson} type="button">
           <span>Continue: Greetings</span>
           <small>Lesson 3 of 8 - {curriculum.phrases.length} survival phrases loaded</small>
           <i>
@@ -432,15 +544,157 @@ function App() {
       </section>
     )
   }
+
+  function renderExerciseContent(exercise: LessonExercise) {
+    if (exercise.type === 'arrange') {
+      return (
+        <>
+          <div className="phrase-card">
+            <small>{exercise.english}</small>
+            <strong lang="kn">{placedWords.length ? placedWords.join(' ') : 'Tap words below'}</strong>
+          </div>
+          <div className="word-bank" aria-label="Word bank">
+            {exercise.options.map((word) => (
+              <button
+                className={placedWords.includes(word) ? 'answer-option selected' : 'answer-option'}
+                disabled={placedWords.includes(word)}
+                key={word}
+                onClick={() => selectArrangeWord(word)}
+                type="button"
+              >
+                {word}
+              </button>
+            ))}
+          </div>
+        </>
+      )
+    }
+
+    if (exercise.type === 'listening') {
+      return (
+        <>
+          <div className="listening-card">
+            <button
+              className="speaker-button"
+              onClick={() => setAudioStatus('Playing reference audio')}
+              type="button"
+            >
+              Play reference audio
+            </button>
+            {audioStatus && <p role="status">{audioStatus}</p>}
+          </div>
+          {renderOptions(exercise)}
+        </>
+      )
+    }
+
+    if (exercise.type === 'speaking') {
+      return (
+        <>
+          <div className="phrase-card">
+            <strong lang="kn">{exercise.kannada}</strong>
+            <span>{exercise.transliteration}</span>
+          </div>
+          <div className="speaking-card">
+            <div className="waveform" aria-hidden="true">
+              {Array.from({ length: 18 }, (_, index) => (
+                <span key={index} style={{ height: `${20 + ((index * 13) % 48)}px` }} />
+              ))}
+            </div>
+            <button className="speaker-button" onClick={() => recordPhrase(exercise)} type="button">
+              Record phrase
+            </button>
+            {speakingScore !== null && (
+              <div className="score-card" role="status">
+                <strong>Score: {speakingScore}%</strong>
+                <span>Tip: Extend the aa sound in saar.</span>
+              </div>
+            )}
+          </div>
+        </>
+      )
+    }
+
+    if (exercise.type === 'matchPairs') {
+      const pairs = parseMatchPairs(exercise.answer)
+      return (
+        <div className="match-grid" aria-label="Match pairs">
+          <div>
+            {pairs.map((pair) => (
+              <button
+                className={selectedMatch.left === pair.left ? 'answer-option selected' : 'answer-option'}
+                key={pair.left}
+                onClick={() => handleMatchSelection(pair.left, 'left', exercise)}
+                type="button"
+              >
+                {pair.left}
+              </button>
+            ))}
+          </div>
+          <div>
+            {pairs.map((pair) => (
+              <button
+                className={selectedMatch.right === pair.right ? 'answer-option selected' : 'answer-option'}
+                key={pair.right}
+                onClick={() => handleMatchSelection(pair.right, 'right', exercise)}
+                type="button"
+              >
+                {pair.right}
+              </button>
+            ))}
+          </div>
+          <p>{matchedPairs.length} of {pairs.length} matched</p>
+        </div>
+      )
+    }
+
+    return (
+      <>
+        <div className="phrase-card">
+          <strong lang="kn">{exercise.kannada}</strong>
+          {exercise.transliteration && <span>{exercise.transliteration}</span>}
+          {exercise.english && <small>{exercise.english}</small>}
+          <button type="button" className="mini-button">
+            Listen
+          </button>
+        </div>
+        {renderOptions(exercise)}
+      </>
+    )
+  }
+
+  function renderOptions(exercise: LessonExercise) {
+    return (
+      <div className="option-stack">
+        {exercise.options.map((option) => (
+          <button
+            className={selectedAnswer === option ? 'answer-option selected' : 'answer-option'}
+            key={option}
+            onClick={() => setSelectedAnswer(option)}
+            type="button"
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    )
+  }
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <article className="stat-card">
+    <article className="stat-card" aria-label={`${value} ${label}`}>
       <strong>{value}</strong>
       <span>{label}</span>
     </article>
   )
+}
+
+function parseMatchPairs(answer: string) {
+  return answer.split(';').map((pair) => {
+    const [left, right] = pair.split('=')
+    return { left, right }
+  })
 }
 
 export default App
