@@ -1,4 +1,5 @@
 const fs = require('node:fs')
+const path = require('node:path')
 const { execFile } = require('node:child_process')
 
 const runtimeComponentDefinitions = [
@@ -267,6 +268,72 @@ async function transcribeNativeAudioInMain(
     : { ok: false, text: '', error: 'Whisper produced no transcript.' }
 }
 
+async function synthesizeNativeSpeechInMain(
+  config = {},
+  text = '',
+  outputDirectory = '',
+  commandRunner = runExecutableWithInput,
+  pathExists = fs.existsSync,
+) {
+  const speechText = typeof text === 'string' ? text.trim() : ''
+  const normalizedOutputDirectory = normalizePath(outputDirectory)
+  const readiness = inspectLocalRuntimeInMain(config, pathExists)
+  const tts = readiness.components.find((component) => component.id === 'tts')
+
+  if (!tts?.ready) {
+    return {
+      ok: false,
+      audioPath: '',
+      error: tts?.nextAction ?? 'Piper runtime is not ready.',
+    }
+  }
+
+  if (!speechText) {
+    return {
+      ok: false,
+      audioPath: '',
+      error: 'Speech text is empty.',
+    }
+  }
+
+  if (!normalizedOutputDirectory) {
+    return {
+      ok: false,
+      audioPath: '',
+      error: 'Audio output directory is not configured.',
+    }
+  }
+
+  fs.mkdirSync(normalizedOutputDirectory, { recursive: true })
+  const audioPath = path.join(normalizedOutputDirectory, `piper-${Date.now()}.wav`)
+  const result = await commandRunner(
+    tts.binaryPath,
+    ['--model', tts.modelPath, '--output_file', audioPath],
+    speechText,
+  )
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      audioPath: '',
+      error: result.output || 'Native Piper synthesis failed.',
+    }
+  }
+
+  if (!pathExistsSafely(audioPath, pathExists)) {
+    return {
+      ok: false,
+      audioPath: '',
+      error: 'Piper did not create an audio file.',
+    }
+  }
+
+  return {
+    ok: true,
+    audioPath,
+  }
+}
+
 function runExecutableSmoke(binaryPath, args) {
   return new Promise((resolve) => {
     execFile(binaryPath, args, { timeout: 3000 }, (error, stdout, stderr) => {
@@ -294,6 +361,23 @@ function runExecutableCompletion(binaryPath, args) {
 
       resolve({ ok: false, output: output || error?.message || 'Native command produced no output.' })
     })
+  })
+}
+
+function runExecutableWithInput(binaryPath, args, input) {
+  return new Promise((resolve) => {
+    const child = execFile(binaryPath, args, { timeout: 45000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      const output = [stdout, stderr].filter(Boolean).join('\n').trim()
+
+      if (!error) {
+        resolve({ ok: true, output })
+        return
+      }
+
+      resolve({ ok: false, output: output || error.message })
+    })
+
+    child.stdin?.end(`${input}\n`)
   })
 }
 
@@ -326,5 +410,6 @@ module.exports = {
   generateNativeExerciseInMain,
   inspectLocalRuntimeInMain,
   runLocalRuntimeSmokeInMain,
+  synthesizeNativeSpeechInMain,
   transcribeNativeAudioInMain,
 }

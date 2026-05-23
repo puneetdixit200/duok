@@ -143,6 +143,8 @@ async function main() {
       )
       return input?.value === 'ನಮಸ್ಕಾರ ಸಾರ್'
     })
+    await page.getByRole('button', { name: /play reference/i }).click()
+    await page.getByText(/Piper audio ready:/i).waitFor()
 
     const ollama = await probeOllama()
     if (ollama.online) {
@@ -202,7 +204,24 @@ function createRuntimePlaceholders(runtimeDir) {
                 'fi',
                 '',
               ].join('\n')
-          : '#!/bin/sh\necho KannadaOS runtime smoke\n'
+            : [
+                '#!/bin/sh',
+                'if [ "$1" = "--help" ]; then',
+                '  echo KannadaOS runtime smoke',
+                '  exit 0',
+                'fi',
+                'out=""',
+                'while [ "$#" -gt 0 ]; do',
+                '  if [ "$1" = "--output_file" ]; then',
+                '    shift',
+                '    out="$1"',
+                '  fi',
+                '  shift',
+                'done',
+                'printf "fake wav" > "$out"',
+                'echo "wrote $out"',
+                '',
+              ].join('\n')
       fs.writeFileSync(runtimePath, script)
       fs.chmodSync(runtimePath, 0o755)
       return

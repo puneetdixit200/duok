@@ -8,6 +8,7 @@ const {
   generateNativeExerciseInMain,
   inspectLocalRuntimeInMain,
   runLocalRuntimeSmokeInMain,
+  synthesizeNativeSpeechInMain,
   transcribeNativeAudioInMain,
 } = require('../../electron/local-runtime.cjs') as {
   generateNativeExerciseInMain: (
@@ -30,6 +31,13 @@ const {
     statusText: string
     components: Array<{ id: string; ok: boolean; status: string }>
   }>
+  synthesizeNativeSpeechInMain: (
+    config: LocalRuntimeConfig,
+    text: string,
+    outputDirectory: string,
+    commandRunner: (binaryPath: string, args: string[], input: string) => Promise<{ ok: boolean; output: string }>,
+    pathExists: (runtimePath: string) => boolean,
+  ) => Promise<{ ok: boolean; audioPath: string; error?: string }>
   transcribeNativeAudioInMain: (
     config: LocalRuntimeConfig,
     audioPath: string,
@@ -148,5 +156,34 @@ describe('electron local runtime inspection', () => {
       },
     ])
     expect(result).toEqual({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
+  })
+
+  it('synthesizes speech through Piper with the configured voice model', async () => {
+    const calls: Array<{ binaryPath: string; args: string[]; input: string }> = []
+    const result = await synthesizeNativeSpeechInMain(
+      {
+        llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      },
+      'ನಮಸ್ಕಾರ ಸಾರ್',
+      '/tmp/kannadaos-audio',
+      async (binaryPath, args, input) => {
+        calls.push({ binaryPath, args, input })
+        return { ok: true, output: 'wrote wav' }
+      },
+      () => true,
+    )
+
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toEqual({
+      binaryPath: '/bin/piper',
+      args: ['--model', '/models/kn_IN-piper-medium.onnx', '--output_file', result.audioPath],
+      input: 'ನಮಸ್ಕಾರ ಸಾರ್',
+    })
+    expect(result).toEqual({ ok: true, audioPath: expect.stringMatching(/^\/tmp\/kannadaos-audio\/piper-/) })
   })
 })

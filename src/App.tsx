@@ -581,8 +581,25 @@ function App() {
     setPronunciationResult(null)
   }
 
-  function playPronunciationReference() {
-    setPronunciationAudioStatus(`Reference audio: ${activePronunciationPhrase.transliteration}`)
+  async function playPronunciationReference() {
+    const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
+    if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      setPronunciationAudioStatus(`Reference audio: ${activePronunciationPhrase.transliteration}`)
+      return
+    }
+
+    setPronunciationAudioStatus('Piper synthesis running...')
+    const result = await synthesizeNativeSpeech({
+      runtimeConfig,
+      text: activePronunciationPhrase.kannada,
+    })
+
+    if (result.ok) {
+      setPronunciationAudioStatus(`Piper audio ready: ${result.audioPath}`)
+      return
+    }
+
+    setPronunciationAudioStatus(result.error ?? 'Piper synthesis failed.')
   }
 
   async function transcribePronunciationAudio() {

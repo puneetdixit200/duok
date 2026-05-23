@@ -13,6 +13,17 @@ interface NativeTranscriptionResponse {
   error?: string
 }
 
+interface NativeSpeechRequest {
+  runtimeConfig: LocalRuntimeConfig
+  text: string
+}
+
+interface NativeSpeechResponse {
+  ok: boolean
+  audioPath: string
+  error?: string
+}
+
 declare global {
   interface Window {
     kannadaOS?: {
@@ -21,6 +32,7 @@ declare global {
       smokeLocalRuntime?: (config: LocalRuntimeConfig) => Promise<LocalRuntimeSmokeSummary>
       generateNativeExercise?: (request: NativeExerciseRequest) => Promise<NativeExerciseResponse>
       transcribeNativeAudio?: (request: NativeTranscriptionRequest) => Promise<NativeTranscriptionResponse>
+      synthesizeNativeSpeech?: (request: NativeSpeechRequest) => Promise<NativeSpeechResponse>
       loadLearnerData?: () => Promise<LearnerDataPayload | null>
       saveLearnerData?: (values: LearnerStorageValues) => Promise<LearnerDataPayload>
     }
