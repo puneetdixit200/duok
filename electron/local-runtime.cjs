@@ -175,6 +175,48 @@ async function runLocalRuntimeSmokeInMain(
   }
 }
 
+async function generateNativeExerciseInMain(
+  config = {},
+  prompt = '',
+  commandRunner = runExecutableCompletion,
+  pathExists = fs.existsSync,
+) {
+  const readiness = inspectLocalRuntimeInMain(config, pathExists)
+  const llm = readiness.components.find((component) => component.id === 'llm')
+
+  if (!llm?.ready) {
+    return {
+      ok: false,
+      response: '',
+      error: llm?.nextAction ?? 'Llama.cpp runtime is not ready.',
+    }
+  }
+
+  if (typeof prompt !== 'string' || !prompt.trim()) {
+    return {
+      ok: false,
+      response: '',
+      error: 'Prompt is empty.',
+    }
+  }
+
+  const args = ['-m', llm.modelPath, '-p', prompt, '-n', '512', '--temp', '0.7']
+  const result = await commandRunner(llm.binaryPath, args)
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      response: result.output || '',
+      error: result.output || 'Native llama.cpp generation failed.',
+    }
+  }
+
+  return {
+    ok: true,
+    response: result.output,
+  }
+}
+
 function runExecutableSmoke(binaryPath, args) {
   return new Promise((resolve) => {
     execFile(binaryPath, args, { timeout: 3000 }, (error, stdout, stderr) => {
@@ -186,6 +228,21 @@ function runExecutableSmoke(binaryPath, args) {
       }
 
       resolve({ ok: false, output: error.message })
+    })
+  })
+}
+
+function runExecutableCompletion(binaryPath, args) {
+  return new Promise((resolve) => {
+    execFile(binaryPath, args, { timeout: 45000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      const output = [stdout, stderr].filter(Boolean).join('\n').trim()
+
+      if (!error && output) {
+        resolve({ ok: true, output })
+        return
+      }
+
+      resolve({ ok: false, output: output || error?.message || 'Native command produced no output.' })
     })
   })
 }
@@ -203,6 +260,7 @@ function pathExistsSafely(modelPath, pathExists) {
 }
 
 module.exports = {
+  generateNativeExerciseInMain,
   inspectLocalRuntimeInMain,
   runLocalRuntimeSmokeInMain,
 }

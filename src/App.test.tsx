@@ -450,11 +450,23 @@ describe('KannadaOS desktop app', () => {
         { id: 'tts', label: 'Piper TTS', ok: true, status: 'Command responded', nextAction: 'Native command smoke passed.' },
       ],
     })
+    const generateNativeExercise = vi.fn().mockResolvedValue({
+      ok: true,
+      response: JSON.stringify({
+        type: 'translate',
+        prompt: 'Native generated prompt',
+        kannada: 'ಹೋಗಬೇಕು',
+        answer: 'need to go',
+        options: ['need to go'],
+        explanation: 'From native llama.cpp.',
+      }),
+    })
 
     vi.stubGlobal('kannadaOS', {
       platform: 'darwin',
       inspectLocalRuntime,
       smokeLocalRuntime,
+      generateNativeExercise,
     })
     localStorage.setItem('kannadaos:onboarded', 'true')
     render(<App />)
@@ -498,6 +510,12 @@ describe('KannadaOS desktop app', () => {
       piperBinaryPath: '/bin/piper',
     })
     expect(await screen.findByText(/3 of 3 native commands responded/i)).toBeInTheDocument()
+
+    await user.click(screen.getByLabelText(/Back to app/i))
+    await user.click(screen.getByRole('button', { name: /generate ai exercise/i }))
+
+    expect(generateNativeExercise).toHaveBeenCalled()
+    expect(await screen.findByText(/Native: Native generated prompt ಹೋಗಬೇಕು/i)).toBeInTheDocument()
   })
 
   it('opens story mode, shows interactive words, and completes the story quiz', async () => {

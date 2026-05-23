@@ -9,7 +9,7 @@ interface GenerateOptions {
 }
 
 export interface ExerciseGenerationResult {
-  source: 'ollama' | 'fallback'
+  source: 'native' | 'ollama' | 'fallback'
   exercise: GeneratedExercise
   error?: string
 }
@@ -38,7 +38,7 @@ export async function generateExerciseWithOllama({
       body: JSON.stringify({
         model,
         stream: false,
-        prompt: buildPrompt(weakArea),
+        prompt: buildExercisePrompt(weakArea),
       }),
     })
 
@@ -47,7 +47,7 @@ export async function generateExerciseWithOllama({
     }
 
     const payload = (await response.json()) as { response?: string }
-    const exercise = parseExercise(payload.response ?? '')
+    const exercise = parseGeneratedExerciseResponse(payload.response ?? '')
     return { source: 'ollama', exercise }
   } catch (error) {
     return {
@@ -67,7 +67,7 @@ export async function checkOllamaStatus(fetchImpl: typeof fetch = fetch): Promis
   }
 }
 
-function buildPrompt(weakArea: string): string {
+export function buildExercisePrompt(weakArea: string): string {
   return [
     'Return only valid JSON for a Kannada learning exercise.',
     'No markdown except a single JSON object if absolutely necessary.',
@@ -77,7 +77,7 @@ function buildPrompt(weakArea: string): string {
   ].join('\n')
 }
 
-function parseExercise(raw: string): GeneratedExercise {
+export function parseGeneratedExerciseResponse(raw: string): GeneratedExercise {
   const parsed = JSON.parse(repairJson(extractJson(raw))) as Partial<GeneratedExercise>
 
   if (
@@ -110,7 +110,7 @@ function repairJson(raw: string): string {
   return raw.replace(/,\s*([}\]])/g, '$1')
 }
 
-function fallbackExercise(weakArea: string): GeneratedExercise {
+export function fallbackExercise(weakArea: string): GeneratedExercise {
   const local = lessonExercises.find((exercise) => exercise.skillTag === weakArea) ?? lessonExercises[0]
   return {
     type: local.type,

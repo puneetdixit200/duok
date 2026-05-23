@@ -131,6 +131,8 @@ async function main() {
     await page.getByText(/Downloaded/i).waitFor()
     await page.getByText(/Waiting/i).waitFor()
     await page.getByLabel(/Back to app/i).click()
+    await page.getByRole('button', { name: /generate ai exercise/i }).click()
+    await page.getByText(/Native: Native commute drill ಹೋಗಬೇಕು/i).waitFor()
 
     const ollama = await probeOllama()
     if (ollama.online) {
@@ -168,7 +170,19 @@ function createRuntimePlaceholders(runtimeDir) {
 
   Object.entries(runtimePaths).forEach(([key, runtimePath]) => {
     if (key.endsWith('BinaryPath')) {
-      fs.writeFileSync(runtimePath, '#!/bin/sh\necho KannadaOS runtime smoke\n')
+      const script =
+        key === 'llamaBinaryPath'
+          ? [
+              '#!/bin/sh',
+              'if [ "$1" = "--help" ]; then',
+              '  echo KannadaOS runtime smoke',
+              'else',
+              '  echo \'{"type":"translate","prompt":"Native commute drill","kannada":"ಹೋಗಬೇಕು","answer":"need to go","options":["need to go"],"explanation":"Generated through the native llama.cpp bridge."}\'',
+              'fi',
+              '',
+            ].join('\n')
+          : '#!/bin/sh\necho KannadaOS runtime smoke\n'
+      fs.writeFileSync(runtimePath, script)
       fs.chmodSync(runtimePath, 0o755)
       return
     }

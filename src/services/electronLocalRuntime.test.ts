@@ -4,7 +4,17 @@ import { describe, expect, it } from 'vitest'
 import type { LocalRuntimeConfig, LocalRuntimeSummary } from './localRuntime'
 
 const require = createRequire(import.meta.url)
-const { inspectLocalRuntimeInMain, runLocalRuntimeSmokeInMain } = require('../../electron/local-runtime.cjs') as {
+const {
+  generateNativeExerciseInMain,
+  inspectLocalRuntimeInMain,
+  runLocalRuntimeSmokeInMain,
+} = require('../../electron/local-runtime.cjs') as {
+  generateNativeExerciseInMain: (
+    config: LocalRuntimeConfig,
+    prompt: string,
+    commandRunner: (binaryPath: string, args: string[]) => Promise<{ ok: boolean; output: string }>,
+    pathExists: (runtimePath: string) => boolean,
+  ) => Promise<{ ok: boolean; response: string; error?: string }>
   inspectLocalRuntimeInMain: (
     config: LocalRuntimeConfig,
     pathExists: (modelPath: string) => boolean,
@@ -72,5 +82,36 @@ describe('electron local runtime inspection', () => {
       expect.objectContaining({ id: 'stt', ok: true, status: 'Command responded' }),
       expect.objectContaining({ id: 'tts', ok: false, status: 'Smoke failed' }),
     ])
+  })
+
+  it('runs llama.cpp generation with the configured model and prompt', async () => {
+    const calls: Array<{ binaryPath: string; args: string[] }> = []
+    const result = await generateNativeExerciseInMain(
+      {
+        llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      },
+      'Return JSON for verbs.',
+      async (binaryPath, args) => {
+        calls.push({ binaryPath, args })
+        return { ok: true, output: '{"type":"translate","prompt":"Translate","kannada":"ಹೋಗಬೇಕು","answer":"need to go","options":["need to go"]}' }
+      },
+      () => true,
+    )
+
+    expect(calls).toEqual([
+      {
+        binaryPath: '/bin/llama-cli',
+        args: ['-m', '/models/aya-8b-q4_K_M.gguf', '-p', 'Return JSON for verbs.', '-n', '512', '--temp', '0.7'],
+      },
+    ])
+    expect(result).toEqual({
+      ok: true,
+      response: '{"type":"translate","prompt":"Translate","kannada":"ಹೋಗಬೇಕು","answer":"need to go","options":["need to go"]}',
+    })
   })
 })

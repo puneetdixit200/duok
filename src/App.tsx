@@ -18,6 +18,7 @@ import {
   type ProgressState,
 } from './domain/progress'
 import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
+import { generateExerciseWithNativeRuntime } from './services/nativeExercise'
 import {
   createMissingLocalRuntimeSummary,
   emptyLocalRuntimeConfig,
@@ -451,9 +452,24 @@ function App() {
 
   async function generateAiExercise() {
     const weakArea = Object.keys(progress.weakAreas)[0] ?? 'verbs'
-    const result = await generateExerciseWithOllama({ weakArea })
+    const nativeGenerator = window.kannadaOS?.generateNativeExercise
+    const smokeSummary = runtimeSmokeSummary
+    const canUseNative =
+      runtimeSummary.readyCount === runtimeSummary.totalCount &&
+      smokeSummary !== null &&
+      smokeSummary.passedCount === smokeSummary.totalCount &&
+      nativeGenerator
+    const nativeResult = canUseNative
+      ? await generateExerciseWithNativeRuntime({
+          runtimeConfig,
+          weakArea,
+          generateNativeExercise: nativeGenerator,
+        })
+      : null
+    const result =
+      nativeResult?.source === 'native' ? nativeResult : await generateExerciseWithOllama({ weakArea })
     setGeneratedExercise(
-      `${result.source === 'ollama' ? 'Ollama' : 'Offline'}: ${result.exercise.prompt} ${result.exercise.kannada}`,
+      `${formatGeneratedExerciseSource(result.source)}: ${result.exercise.prompt} ${result.exercise.kannada}`,
     )
   }
 
@@ -1836,6 +1852,18 @@ function formatLearnerStoreStatus(status: LearnerStoreStatus) {
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function formatGeneratedExerciseSource(source: 'native' | 'ollama' | 'fallback') {
+  if (source === 'native') {
+    return 'Native'
+  }
+
+  if (source === 'ollama') {
+    return 'Ollama'
+  }
+
+  return 'Offline'
 }
 
 export default App
