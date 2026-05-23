@@ -106,6 +106,25 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Majestic-ge hogbeku/i)).toBeInTheDocument()
   })
 
+  it('persists chat history across app reloads', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    const { unmount } = render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+    await user.type(screen.getByPlaceholderText(/type in kannada/i), 'Majestic hogbeku')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    expect(await screen.findByText(/Majestic-ge hogbeku/i)).toBeInTheDocument()
+
+    unmount()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+
+    expect(screen.getByText('Majestic hogbeku')).toBeInTheDocument()
+    expect(screen.getByText(/Majestic-ge hogbeku/i)).toBeInTheDocument()
+  })
+
   it('switches chat scenarios, tutor persona, and voice input', async () => {
     const user = userEvent.setup()
     render(<App />)

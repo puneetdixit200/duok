@@ -33,6 +33,10 @@ async function main() {
     await page.getByPlaceholder(/type in kannada/i).fill('Majestic hogbeku')
     await page.getByRole('button', { name: /send/i }).click()
     await page.getByText(/Majestic-ge hogbeku/i).waitFor()
+    await page.reload()
+    await page.getByRole('button', { name: /chat/i }).click()
+    await page.getByText('Majestic hogbeku').waitFor()
+    await page.getByText(/Majestic-ge hogbeku/i).waitFor()
     await page.getByRole('button', { name: /BMTC Bus/i }).click()
     await page.getByRole('heading', { name: /BMTC Bus/i }).waitFor()
     await page.getByRole('button', { name: /Grammar Teacher/i }).click()
@@ -62,6 +66,10 @@ async function main() {
     await page.getByRole('button', { name: /He does not know Kannada yet/i }).click()
     await page.getByRole('button', { name: /check story answer/i }).click()
     await page.getByRole('heading', { name: /Story Complete/i }).waitFor()
+    await page.waitForFunction(() => {
+      const progress = JSON.parse(localStorage.getItem('kannadaos:progress') || '{}')
+      return progress.xp === 38
+    })
 
     await page.getByRole('button', { name: /blr/i }).click()
     await page.getByText(/Auto Ride/i).waitFor()
@@ -79,6 +87,7 @@ async function main() {
     await page.getByText(/Export ready:/i).waitFor()
     await page.getByTestId('export-preview').getByText(/"schemaVersion": 1/i).waitFor()
     await page.getByTestId('export-preview').getByText(/"appName": "KannadaOS"/i).waitFor()
+    await page.getByTestId('export-preview').getByText(/"conversationMessages": 6/i).waitFor()
     await page.getByRole('button', { name: /manage ai models/i }).click()
     await page.getByRole('heading', { name: /Setting up your AI Teacher/i }).waitFor()
     await page.getByText(/Aya 8B Q4/i).waitFor()

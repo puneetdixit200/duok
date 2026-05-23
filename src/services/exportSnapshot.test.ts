@@ -18,6 +18,12 @@ describe('export snapshot', () => {
         whisperModelPath: '',
         piperVoicePath: '/models/voice.onnx',
       },
+      conversationStore: {
+        'auto-ride': [
+          { id: 'user-1', speaker: 'learner', text: 'Majestic hogbeku' },
+          { id: 'tutor-1', speaker: 'tutor', text: 'Majestic-ge hogbeku is better.' },
+        ],
+      },
       pronunciationHistory: [
         {
           phraseId: 'namaskara-saar',
@@ -35,11 +41,13 @@ describe('export snapshot', () => {
         completedActivities: 2,
         practicedWords: 1,
         runtimePathsConfigured: 2,
+        conversationMessages: 2,
         pronunciationAttempts: 1,
       },
     })
     expect(snapshot.settings.reminder).toEqual({ enabled: true, time: '8:30 PM', permission: 'granted' })
     expect(snapshot.settings.runtimeConfig.llmModelPath).toBe('/models/aya.gguf')
+    expect(snapshot.conversationStore['auto-ride']).toHaveLength(2)
   })
 
   it('serializes export snapshots as pretty JSON for file or clipboard use', () => {
@@ -48,6 +56,7 @@ describe('export snapshot', () => {
       progress: { completedExerciseIds: [], reviewQueue: {} },
       reminder: { enabled: false, time: '7:30 PM', permission: 'default' },
       runtimeConfig: { llmModelPath: '', whisperModelPath: '', piperVoicePath: '' },
+      conversationStore: {},
       pronunciationHistory: [],
     })
 

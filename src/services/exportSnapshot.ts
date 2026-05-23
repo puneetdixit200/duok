@@ -1,10 +1,12 @@
 import type { LocalRuntimeConfig } from './localRuntime'
+import type { ConversationStore } from './conversationLog'
 
 export interface ExportSnapshotInput {
   exportedAt: string
   progress: unknown
   reminder: unknown
   runtimeConfig: LocalRuntimeConfig
+  conversationStore: ConversationStore
   pronunciationHistory: unknown[]
 }
 
@@ -16,6 +18,7 @@ export interface ExportSnapshot {
     completedActivities: number
     practicedWords: number
     runtimePathsConfigured: number
+    conversationMessages: number
     pronunciationAttempts: number
   }
   progress: unknown
@@ -23,6 +26,7 @@ export interface ExportSnapshot {
     reminder: unknown
     runtimeConfig: LocalRuntimeConfig
   }
+  conversationStore: ConversationStore
   pronunciationHistory: unknown[]
 }
 
@@ -33,6 +37,10 @@ export function buildExportSnapshot(input: ExportSnapshotInput): ExportSnapshot 
     : 0
   const practicedWords = isRecord(progress.reviewQueue) ? Object.keys(progress.reviewQueue).length : 0
   const runtimePathsConfigured = Object.values(input.runtimeConfig).filter((value) => value.trim()).length
+  const conversationMessages = Object.values(input.conversationStore).reduce(
+    (total, messages) => total + messages.length,
+    0,
+  )
 
   return {
     schemaVersion: 1,
@@ -42,6 +50,7 @@ export function buildExportSnapshot(input: ExportSnapshotInput): ExportSnapshot 
       completedActivities,
       practicedWords,
       runtimePathsConfigured,
+      conversationMessages,
       pronunciationAttempts: input.pronunciationHistory.length,
     },
     progress: input.progress,
@@ -49,6 +58,7 @@ export function buildExportSnapshot(input: ExportSnapshotInput): ExportSnapshot 
       reminder: input.reminder,
       runtimeConfig: input.runtimeConfig,
     },
+    conversationStore: input.conversationStore,
     pronunciationHistory: input.pronunciationHistory,
   }
 }

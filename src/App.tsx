@@ -27,6 +27,13 @@ import {
 } from './services/localRuntime'
 import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
 import { buildExportSnapshot, serializeExportSnapshot } from './services/exportSnapshot'
+import {
+  appendScenarioMessages,
+  getScenarioMessages,
+  hydrateConversationStore,
+  serializeConversationStore,
+  type ConversationStore,
+} from './services/conversationLog'
 import type { LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
@@ -80,6 +87,7 @@ const onboardedKey = 'kannadaos:onboarded'
 const reminderKey = 'kannadaos:reminder'
 const runtimeKey = 'kannadaos:local-runtime'
 const pronunciationKey = 'kannadaos:pronunciation-history'
+const conversationKey = 'kannadaos:conversation-log'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
 const pronunciationPhrases = survivalPhrases.filter((phrase) =>
@@ -175,13 +183,20 @@ function App() {
   )
   const [exportPayload, setExportPayload] = useState('')
   const [exportStatus, setExportStatus] = useState<ExportStatus | null>(null)
+  const [conversationStore, setConversationStore] = useState<ConversationStore>(() =>
+    hydrateConversationStore(localStorage.getItem(conversationKey)),
+  )
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
   const [selectedScenarioId, setSelectedScenarioId] = useState(defaultChatScenario.id)
   const [selectedTutorPersonaId, setSelectedTutorPersonaId] = useState(defaultTutorPersona.id)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
-    createOpeningMessage(defaultChatScenario),
+    ...getScenarioMessages(
+      hydrateConversationStore(localStorage.getItem(conversationKey)),
+      defaultChatScenario.id,
+      [createOpeningMessage(defaultChatScenario)],
+    ),
   ])
   const [voiceStatus, setVoiceStatus] = useState('')
   const [flashcardBack, setFlashcardBack] = useState(false)
@@ -230,6 +245,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem(pronunciationKey, JSON.stringify(pronunciationHistory))
   }, [pronunciationHistory])
+
+  useEffect(() => {
+    localStorage.setItem(conversationKey, serializeConversationStore(conversationStore))
+  }, [conversationStore])
 
   useEffect(() => {
     let active = true
@@ -361,11 +380,13 @@ function App() {
     }
 
     const tutorReply = buildTutorReply(trimmed, selectedScenario, selectedTutorPersona)
-    setChatMessages((messages) => [
-      ...messages,
+    const nextMessages: ChatMessage[] = [
+      ...chatMessages,
       { id: `learner-${Date.now()}`, speaker: 'learner', text: trimmed },
       { id: `tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
-    ])
+    ]
+    setChatMessages(nextMessages)
+    setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, nextMessages))
     setChatInput('')
     setVoiceStatus('')
   }
@@ -373,7 +394,7 @@ function App() {
   function selectChatScenario(scenarioId: string) {
     const scenario = bangaloreScenarios.find((item) => item.id === scenarioId) ?? defaultChatScenario
     setSelectedScenarioId(scenario.id)
-    setChatMessages([createOpeningMessage(scenario)])
+    setChatMessages(getScenarioMessages(conversationStore, scenario.id, [createOpeningMessage(scenario)]))
     setChatInput('')
     setVoiceStatus('')
   }
@@ -382,8 +403,8 @@ function App() {
     const voiceLine = getScenarioVoiceLine(selectedScenario)
     const tutorReply = buildTutorReply(voiceLine.text, selectedScenario, selectedTutorPersona)
     setVoiceStatus(`Voice input transcribed: ${voiceLine.transliteration}`)
-    setChatMessages((messages) => [
-      ...messages,
+    const nextMessages: ChatMessage[] = [
+      ...chatMessages,
       {
         id: `voice-${Date.now()}`,
         speaker: 'learner',
@@ -391,7 +412,9 @@ function App() {
         subtext: voiceLine.transliteration,
       },
       { id: `voice-tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
-    ])
+    ]
+    setChatMessages(nextMessages)
+    setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, nextMessages))
   }
 
   function toggleDailyReminder() {
@@ -471,6 +494,7 @@ function App() {
       progress,
       reminder,
       runtimeConfig,
+      conversationStore,
       pronunciationHistory,
     })
 
