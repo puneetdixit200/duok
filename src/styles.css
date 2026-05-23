@@ -1,0 +1,689 @@
+:root {
+  color: #f7f7fb;
+  background: #101018;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 107, 44, 0.18), transparent 26rem),
+    linear-gradient(135deg, #101018 0%, #181522 48%, #111820 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.app-shell,
+.desktop-frame {
+  min-height: 100vh;
+}
+
+.onboarding-shell {
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.splash-panel {
+  width: min(720px, 100%);
+  padding: 40px;
+  border: 1px solid #33344a;
+  border-radius: 18px;
+  background: rgba(25, 25, 42, 0.92);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.34);
+}
+
+.logo-mark,
+.brand-mark,
+.avatar {
+  display: inline-grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ff6b2c, #7c3aed);
+  color: white;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #ffbc8a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2 {
+  margin-bottom: 8px;
+  color: #ffffff;
+  letter-spacing: 0;
+}
+
+.lead {
+  max-width: 56ch;
+  color: #c9c7d6;
+  font-size: 18px;
+}
+
+.level-grid {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0;
+}
+
+.choice-card,
+.answer-option,
+.continue-card,
+.flashcard,
+.nav-button,
+.secondary-action,
+.primary-action,
+.mini-button,
+.suggestion-row button,
+.icon-button {
+  border: 1px solid #3d3d5c;
+  border-radius: 10px;
+  color: #f7f7fb;
+  background: #1c1c30;
+}
+
+.choice-card {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  text-align: left;
+}
+
+.choice-card small,
+.continue-card small,
+.message small,
+.scenario-card small,
+.flashcard small {
+  color: #9b9ab0;
+}
+
+.choice-card.selected,
+.answer-option.selected {
+  border-color: #ff6b2c;
+  background: rgba(255, 107, 44, 0.14);
+}
+
+.primary-action,
+.secondary-action,
+.mini-button {
+  min-height: 44px;
+  padding: 0 18px;
+  font-weight: 800;
+}
+
+.primary-action {
+  border-color: #ff6b2c;
+  background: linear-gradient(135deg, #ff6b2c, #ff8a3d);
+  color: #111018;
+}
+
+.secondary-action,
+.mini-button {
+  background: #25253d;
+}
+
+.desktop-frame {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+}
+
+.sidebar {
+  display: flex;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  border-right: 1px solid #30304d;
+  background: rgba(17, 17, 29, 0.94);
+}
+
+.brand-lockup,
+.section-header,
+.profile-header,
+.top-counters,
+.lesson-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand-lockup {
+  justify-content: flex-start;
+  margin-bottom: 32px;
+}
+
+.brand-lockup strong {
+  display: block;
+  margin: 0;
+  color: #ffffff;
+  font-size: 22px;
+}
+
+.brand-lockup p,
+.profile-header p {
+  margin: 0;
+  color: #9b9ab0;
+}
+
+.nav-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-button {
+  min-height: 48px;
+  padding: 0 14px;
+  text-align: left;
+}
+
+.nav-button.active {
+  border-color: #ff6b2c;
+  background: rgba(255, 107, 44, 0.16);
+  color: #ffbc8a;
+}
+
+.model-status,
+.panel,
+.lesson-card {
+  border: 1px solid #30304d;
+  border-radius: 16px;
+  background: rgba(26, 26, 46, 0.92);
+}
+
+.model-status {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.model-status span {
+  color: #9b9ab0;
+  font-size: 13px;
+}
+
+.model-status p {
+  margin: 0;
+  color: #c9c7d6;
+  font-size: 13px;
+}
+
+.workspace {
+  padding: 28px;
+}
+
+.panel {
+  min-height: calc(100vh - 56px);
+  padding: 24px;
+}
+
+.streak-banner,
+.continue-card,
+.phrase-card,
+.accent-card,
+.scenario-card,
+.stat-card,
+.chart-card,
+.message,
+.feedback,
+.blr-hero {
+  border-radius: 14px;
+}
+
+.streak-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 24px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #ff6b2c, #e23d2f 55%, #ffd600);
+  color: #111018;
+}
+
+.streak-banner strong {
+  font-size: 24px;
+}
+
+.streak-banner p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.ring {
+  display: grid;
+  min-width: 72px;
+  height: 72px;
+  place-items: center;
+  border: 6px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  font-weight: 900;
+}
+
+.continue-card {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 20px;
+  border-left: 5px solid #ff6b2c;
+  text-align: left;
+}
+
+.continue-card span {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.continue-card i,
+.lesson-progress {
+  display: block;
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: #30304d;
+}
+
+.continue-card b,
+.lesson-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff6b2c, #ffbc8a);
+}
+
+.level-map,
+.scenario-grid,
+.stats-grid,
+.achievement-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.level-map {
+  grid-template-columns: repeat(6, minmax(92px, 1fr));
+  align-items: start;
+}
+
+.map-node {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 120px;
+  color: #9b9ab0;
+}
+
+.map-node span {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid #3d3d5c;
+  background: #25253d;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.map-node.done span {
+  border-color: #10b981;
+  background: #10b981;
+  color: #082017;
+}
+
+.map-node.current {
+  color: white;
+}
+
+.map-node.current span {
+  width: 64px;
+  height: 64px;
+  border-color: white;
+  background: linear-gradient(135deg, #ff6b2c, #7c3aed);
+  box-shadow: 0 0 24px rgba(255, 107, 44, 0.34);
+}
+
+.lesson-shell {
+  padding: 28px;
+}
+
+.lesson-topbar {
+  margin: 0 auto 24px;
+  max-width: 840px;
+}
+
+.lesson-progress {
+  flex: 1;
+}
+
+.icon-button {
+  width: 44px;
+  height: 44px;
+  text-transform: uppercase;
+}
+
+.lesson-card {
+  display: grid;
+  max-width: 760px;
+  gap: 18px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.phrase-card {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px;
+  background: #25253d;
+}
+
+.phrase-card strong {
+  font-size: clamp(30px, 5vw, 48px);
+}
+
+.phrase-card span {
+  color: #9b9ab0;
+  font-style: italic;
+}
+
+.option-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.answer-option {
+  min-height: 56px;
+  padding: 0 18px;
+  text-align: left;
+}
+
+.feedback {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.feedback.correct {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+}
+
+.feedback.wrong {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fda4af;
+}
+
+.chat-panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 16px;
+}
+
+.chat-stream {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  overflow: auto;
+  max-height: 58vh;
+}
+
+.message {
+  max-width: 72%;
+  padding: 14px;
+  background: #25253d;
+}
+
+.message p {
+  margin-bottom: 6px;
+}
+
+.message.learner {
+  justify-self: end;
+  border: 1px solid #ff6b2c;
+  background: rgba(255, 107, 44, 0.12);
+}
+
+.suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestion-row button {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.chat-input {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.chat-input input {
+  min-height: 52px;
+  border: 1px solid #3d3d5c;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: #11111d;
+  color: white;
+}
+
+.review-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) 1fr;
+  gap: 18px;
+}
+
+.flashcard {
+  display: grid;
+  min-height: 360px;
+  place-items: center;
+  padding: 28px;
+  text-align: center;
+}
+
+.flashcard span {
+  color: white;
+  font-size: clamp(34px, 5vw, 60px);
+  font-weight: 900;
+}
+
+.flashcard strong {
+  color: #ffbc8a;
+  font-size: 24px;
+}
+
+.practice-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.accent-card {
+  padding: 18px;
+  border: 1px solid #30304d;
+  background: #1c1c30;
+}
+
+.accent-card.rose {
+  border-left: 5px solid #f43f5e;
+}
+
+.accent-card.purple {
+  border-left: 5px solid #7c3aed;
+}
+
+.accent-card.saffron {
+  border-left: 5px solid #ff6b2c;
+}
+
+.blr-hero {
+  margin-bottom: 18px;
+  padding: 24px;
+  background: linear-gradient(135deg, #ff6b2c, #7c3aed);
+}
+
+.blr-hero h3 {
+  font-size: 32px;
+}
+
+.scenario-grid {
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.scenario-card {
+  display: grid;
+  gap: 8px;
+  min-height: 168px;
+  padding: 16px;
+  background: #202037;
+}
+
+.scenario-card span {
+  color: #ffbc8a;
+  font-weight: 900;
+}
+
+.profile-header {
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.stat-card {
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+  background: #202037;
+}
+
+.stat-card strong {
+  font-size: 30px;
+}
+
+.stat-card span {
+  color: #9b9ab0;
+}
+
+.chart-card {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  height: 220px;
+  margin: 18px 0;
+  padding: 18px;
+  background: #11111d;
+}
+
+.chart-card span {
+  flex: 1;
+  min-height: 22px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, #ff6b2c, #7c3aed);
+}
+
+.achievement-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.achievement-grid span,
+.metric-pill,
+.top-counters span {
+  border: 1px solid #3d3d5c;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #202037;
+  color: #c9c7d6;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .desktop-frame,
+  .review-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+  }
+
+  .level-map,
+  .scenario-grid,
+  .stats-grid,
+  .achievement-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .workspace,
+  .lesson-shell,
+  .onboarding-shell {
+    padding: 14px;
+  }
+
+  .splash-panel,
+  .panel,
+  .lesson-card {
+    padding: 18px;
+  }
+
+  .level-map,
+  .scenario-grid,
+  .stats-grid,
+  .achievement-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header,
+  .streak-banner,
+  .chat-input {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+}
