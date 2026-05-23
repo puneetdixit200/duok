@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { bangaloreScenarios, getLevelOneCurriculum, lessonExercises, stories, survivalPhrases } from './domain/curriculum'
 import {
   applyExerciseResult,
+  getAdaptiveDifficulty,
+  getDueReviewItems,
+  getWeakSkillSummaries,
   hydrateProgress,
   serializeProgress,
   type ProgressState,
@@ -556,15 +559,24 @@ function App() {
     }
 
     if (tab === 'practice') {
-      const card = survivalPhrases.find((phrase) => phrase.id === 'hogbeku')!
+      const now = new Date().toISOString()
+      const dueReviewIds = getDueReviewItems(progress, now)
+      const weakSkillSummaries = getWeakSkillSummaries(progress)
+      const adaptiveDifficulty = getAdaptiveDifficulty(progress, now)
+      const dueReviewPhrases = dueReviewIds
+        .map((vocabularyId) => survivalPhrases.find((phrase) => phrase.id === vocabularyId))
+        .filter((phrase): phrase is (typeof survivalPhrases)[number] => Boolean(phrase))
+      const card = dueReviewPhrases[0] ?? survivalPhrases.find((phrase) => phrase.id === 'hogbeku')!
       return (
         <section className="panel" aria-labelledby="practice-title">
           <header className="section-header">
             <div>
-              <p className="eyebrow">3 weak areas</p>
+              <p className="eyebrow">{weakSkillSummaries.length} weak areas</p>
               <h2 id="practice-title">Practice</h2>
             </div>
-            <span className="metric-pill">12 words due today</span>
+            <span className="metric-pill">
+              {dueReviewIds.length} {dueReviewIds.length === 1 ? 'word' : 'words'} due today
+            </span>
           </header>
           <div className="review-layout">
             <button className="flashcard" onClick={() => setFlashcardBack((value) => !value)} type="button">
@@ -573,14 +585,27 @@ function App() {
               {flashcardBack ? <small>{card.context}</small> : <small>Tap to flip</small>}
             </button>
             <div className="practice-stack">
+              <article className="accent-card saffron">
+                <strong>Adaptive difficulty: {titleCase(adaptiveDifficulty.level)}</strong>
+                <p>{adaptiveDifficulty.reason}</p>
+              </article>
               <article className="accent-card rose">
-                <strong>Verbs need review</strong>
-                <p>ಹೋಗಬೇಕು, ಬರುತ್ತೆ, ಬೇಕು</p>
+                <strong>Due Review Queue</strong>
+                <p>{formatDueReviewSummary(dueReviewIds, progress)}</p>
               </article>
-              <article className="accent-card purple">
-                <strong>Pronunciation Practice</strong>
-                <p>5 phrases with waveform scoring</p>
-              </article>
+              {weakSkillSummaries.length > 0 ? (
+                weakSkillSummaries.map((skill) => (
+                  <article className="accent-card purple" key={skill.skillTag}>
+                    <strong>{skill.label} needs review</strong>
+                    <p>{skill.mistakes} recent {skill.mistakes === 1 ? 'miss' : 'misses'} - {skill.priority} priority</p>
+                  </article>
+                ))
+              ) : (
+                <article className="accent-card purple">
+                  <strong>Pronunciation Practice</strong>
+                  <p>5 phrases with waveform scoring</p>
+                </article>
+              )}
               <article className="accent-card saffron">
                 <strong>AI Exercises</strong>
                 <p>Targets your weakest skill with Ollama or local fallback.</p>
@@ -1016,6 +1041,25 @@ function parseMatchPairs(answer: string) {
     const [left, right] = pair.split('=')
     return { left, right }
   })
+}
+
+function formatDueReviewSummary(dueReviewIds: string[], progress: ProgressState) {
+  if (!dueReviewIds.length) {
+    return 'No due words. Keep building streak confidence.'
+  }
+
+  return dueReviewIds
+    .map((vocabularyId) => {
+      const phrase = survivalPhrases.find((item) => item.id === vocabularyId)
+      const label = phrase?.kannada ?? vocabularyId.split(':').at(-1) ?? vocabularyId
+      const strength = Math.round((progress.reviewQueue[vocabularyId]?.strength ?? 0) * 100)
+      return `${label} - Strength ${strength}%`
+    })
+    .join(', ')
+}
+
+function titleCase(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
 export default App

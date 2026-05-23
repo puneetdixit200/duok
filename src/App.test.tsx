@@ -126,6 +126,25 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
   })
 
+  it('adapts practice to weak areas and due review after a wrong lesson answer', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /zero/i }))
+    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /close lesson/i }))
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    expect(screen.getByText(/1 word due today/i)).toBeInTheDocument()
+    expect(screen.getByText(/Adaptive difficulty: Gentle/i)).toBeInTheDocument()
+    expect(screen.getByText(/Greetings needs review/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i)).toHaveLength(2)
+    expect(screen.getByText(/Strength 25%/i)).toBeInTheDocument()
+  })
+
   it('opens model management from profile and shows required model setup states', async () => {
     const user = userEvent.setup()
     render(<App />)

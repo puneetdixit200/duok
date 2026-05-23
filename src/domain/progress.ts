@@ -26,6 +26,22 @@ export interface ExerciseResult {
   now: string
 }
 
+export type WeakSkillPriority = 'low' | 'medium' | 'high'
+
+export interface WeakSkillSummary {
+  skillTag: string
+  label: string
+  mistakes: number
+  priority: WeakSkillPriority
+}
+
+export type AdaptiveDifficultyLevel = 'gentle' | 'steady' | 'challenge'
+
+export interface AdaptiveDifficulty {
+  level: AdaptiveDifficultyLevel
+  reason: string
+}
+
 export function createInitialProgress(): ProgressState {
   return {
     xp: 0,
@@ -89,6 +105,49 @@ export function getDueReviewItems(state: ProgressState, now: string): string[] {
     .sort()
 }
 
+export function getWeakSkillSummaries(state: ProgressState, limit = 3): WeakSkillSummary[] {
+  return Object.entries(state.weakAreas)
+    .filter(([, mistakes]) => mistakes > 0)
+    .sort(([leftTag, leftMistakes], [rightTag, rightMistakes]) => {
+      if (rightMistakes !== leftMistakes) {
+        return rightMistakes - leftMistakes
+      }
+      return leftTag.localeCompare(rightTag)
+    })
+    .slice(0, limit)
+    .map(([skillTag, mistakes]) => ({
+      skillTag,
+      label: formatSkillLabel(skillTag),
+      mistakes,
+      priority: getWeakSkillPriority(mistakes),
+    }))
+}
+
+export function getAdaptiveDifficulty(state: ProgressState, now: string): AdaptiveDifficulty {
+  const weakSkillCount = getWeakSkillSummaries(state).length
+  const dueReviewCount = getDueReviewItems(state, now).length
+  const highestMistakeCount = Math.max(0, ...Object.values(state.weakAreas))
+
+  if (state.hearts <= 2 || dueReviewCount > 0 || highestMistakeCount >= 3) {
+    return {
+      level: 'gentle',
+      reason: describePracticePressure(weakSkillCount, dueReviewCount),
+    }
+  }
+
+  if (state.xp >= 80 && weakSkillCount === 0) {
+    return {
+      level: 'challenge',
+      reason: 'Strong recent accuracy',
+    }
+  }
+
+  return {
+    level: 'steady',
+    reason: weakSkillCount > 0 ? describePracticePressure(weakSkillCount, dueReviewCount) : 'Balanced practice',
+  }
+}
+
 export function serializeProgress(state: ProgressState): string {
   return JSON.stringify(state)
 }
@@ -109,4 +168,37 @@ function addDays(isoDate: string, days: number): string {
   const date = new Date(isoDate)
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString()
+}
+
+function getWeakSkillPriority(mistakes: number): WeakSkillPriority {
+  if (mistakes >= 3) {
+    return 'high'
+  }
+
+  if (mistakes >= 2) {
+    return 'medium'
+  }
+
+  return 'low'
+}
+
+function formatSkillLabel(skillTag: string): string {
+  return skillTag
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function describePracticePressure(weakSkillCount: number, dueReviewCount: number): string {
+  const parts: string[] = []
+
+  if (weakSkillCount > 0) {
+    parts.push(`${weakSkillCount} weak ${weakSkillCount === 1 ? 'skill' : 'skills'}`)
+  }
+
+  if (dueReviewCount > 0) {
+    parts.push(`${dueReviewCount} due ${dueReviewCount === 1 ? 'review' : 'reviews'}`)
+  }
+
+  return parts.length ? parts.join(' and ') : 'Low confidence practice'
 }

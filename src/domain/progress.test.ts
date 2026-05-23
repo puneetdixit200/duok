@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   applyExerciseResult,
   createInitialProgress,
+  getAdaptiveDifficulty,
   getDueReviewItems,
+  getWeakSkillSummaries,
   hydrateProgress,
   serializeProgress,
 } from './progress'
@@ -58,5 +60,40 @@ describe('learner progress', () => {
 
     expect(restored).toEqual(progress)
     expect(getDueReviewItems(restored, '2026-05-25T09:00:00.000Z')).toEqual(['ticket-eshtu'])
+  })
+
+  it('summarizes weak skills and lowers adaptive difficulty when review pressure is high', () => {
+    const progress = {
+      ...createInitialProgress(),
+      hearts: 2,
+      xp: 36,
+      weakAreas: {
+        verbs: 3,
+        listening: 1,
+      },
+      reviewQueue: {
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: now,
+          strength: 0.2,
+          attempts: 3,
+        },
+        'ticket-eshtu': {
+          vocabularyId: 'ticket-eshtu',
+          dueAt: '2026-05-30T09:00:00.000Z',
+          strength: 0.8,
+          attempts: 1,
+        },
+      },
+    }
+
+    expect(getWeakSkillSummaries(progress)).toEqual([
+      { skillTag: 'verbs', label: 'Verbs', mistakes: 3, priority: 'high' },
+      { skillTag: 'listening', label: 'Listening', mistakes: 1, priority: 'low' },
+    ])
+    expect(getAdaptiveDifficulty(progress, now)).toEqual({
+      level: 'gentle',
+      reason: '2 weak skills and 1 due review',
+    })
   })
 })

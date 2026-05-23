@@ -33,6 +33,7 @@ async function main() {
     await page.getByRole('button', { name: /practice/i }).click()
     await page.getByRole('button', { name: /ಹೋಗಬೇಕು/i }).click()
     await page.getByText(/need to go/i).waitFor()
+    await page.getByText(/Adaptive difficulty: Steady/i).waitFor()
 
     await page.getByRole('button', { name: /stories/i }).click()
     await page.getByRole('heading', { name: /Stories/i }).waitFor()
