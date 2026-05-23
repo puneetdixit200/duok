@@ -106,6 +106,32 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Majestic-ge hogbeku/i)).toBeInTheDocument()
   })
 
+  it('switches chat scenarios, tutor persona, and voice input', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /zero/i }))
+    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+
+    await user.click(screen.getByRole('button', { name: /BMTC Bus/i }))
+
+    expect(screen.getByRole('heading', { name: /BMTC Bus/i })).toBeInTheDocument()
+    expect(screen.getByText(/ಟಿಕೆಟ್! ಟಿಕೆಟ್!/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Grammar Teacher/i }))
+    await user.click(screen.getByRole('button', { name: /ಟಿಕೆಟ್ ಎಷ್ಟು/i }))
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    expect(screen.getByText(/Grammar Teacher: Good fare question/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/ಟಿಕೆಟ್ ಎಷ್ಟು/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText(/add the destination first/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /record voice/i }))
+
+    expect(screen.getByText(/Voice input transcribed: koramangala-ge ticket beku/i)).toBeInTheDocument()
+  })
+
   it('renders practice flashcards, Bangalore scenarios, and profile stats', async () => {
     const user = userEvent.setup()
     render(<App />)

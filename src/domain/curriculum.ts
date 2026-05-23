@@ -1,4 +1,4 @@
-import type { Curriculum, ExerciseType, LessonExercise, Phrase, Scenario, Story } from '../types'
+import type { Curriculum, ExerciseType, LessonExercise, Phrase, Scenario, Story, TutorPersona } from '../types'
 
 export const survivalPhrases: Phrase[] = [
   {
@@ -252,9 +252,9 @@ export const bangaloreScenarios: Scenario[] = [
     difficulty: 'Beginner',
     situation: 'You boarded 500D at Majestic and need a ticket to Koramangala.',
     openingLine: {
-      kannada: 'ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?',
-      transliteration: 'ellige hogbeku?',
-      english: 'Where do you need to go?',
+      kannada: 'ಟಿಕೆಟ್! ಟಿಕೆಟ್! ಎಲ್ಲಿಗೆ?',
+      transliteration: 'ticket! ticket! ellige?',
+      english: 'Ticket! Ticket! Where to?',
     },
     checklist: ['Greet conductor', 'Say destination', 'Ask the fare', 'Pay and get ticket'],
     usefulPhrases: [scenarioPhrase('ticket-eshtu'), scenarioPhrase('nidhanavagi-heli')],
@@ -328,6 +328,27 @@ export const bangaloreScenarios: Scenario[] = [
     },
     checklist: ['Explain issue', 'Ask when it will come', 'Say thanks'],
     usefulPhrases: [scenarioPhrase('barutte'), scenarioPhrase('matte-heli')],
+  },
+]
+
+export const tutorPersonas: TutorPersona[] = [
+  {
+    id: 'friendly-anna',
+    name: 'Friendly Anna',
+    style: 'Casual, patient, and Bangalore-friendly.',
+    correctionStyle: 'Gentle corrections with a usable phrase.',
+  },
+  {
+    id: 'grammar-teacher',
+    name: 'Grammar Teacher',
+    style: 'Formal and precise with endings and cases.',
+    correctionStyle: 'Direct correction with one grammar note.',
+  },
+  {
+    id: 'conversation-coach',
+    name: 'Conversation Coach',
+    style: 'Fast roleplay with minimal English.',
+    correctionStyle: 'Only fixes mistakes that block real conversation.',
   },
 ]
 

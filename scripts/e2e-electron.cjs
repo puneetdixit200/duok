@@ -29,6 +29,11 @@ async function main() {
     await page.getByPlaceholder(/type in kannada/i).fill('Majestic hogbeku')
     await page.getByRole('button', { name: /send/i }).click()
     await page.getByText(/Majestic-ge hogbeku/i).waitFor()
+    await page.getByRole('button', { name: /BMTC Bus/i }).click()
+    await page.getByRole('heading', { name: /BMTC Bus/i }).waitFor()
+    await page.getByRole('button', { name: /Grammar Teacher/i }).click()
+    await page.getByRole('button', { name: /record voice/i }).click()
+    await page.getByText(/Voice input transcribed: koramangala-ge ticket beku/i).waitFor()
 
     await page.getByRole('button', { name: /practice/i }).click()
     await page.getByRole('button', { name: /ಹೋಗಬೇಕು/i }).click()

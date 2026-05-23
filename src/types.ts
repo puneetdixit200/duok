@@ -53,6 +53,13 @@ export interface Scenario {
   usefulPhrases: Phrase[]
 }
 
+export interface TutorPersona {
+  id: string
+  name: string
+  style: string
+  correctionStyle: string
+}
+
 export interface StoryWord {
   text: string
   transliteration: string

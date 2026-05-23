@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { bangaloreScenarios, getLevelOneCurriculum, lessonExercises, stories, survivalPhrases } from './domain/curriculum'
+import {
+  bangaloreScenarios,
+  getLevelOneCurriculum,
+  lessonExercises,
+  stories,
+  survivalPhrases,
+  tutorPersonas,
+} from './domain/curriculum'
 import {
   applyExerciseResult,
   getAdaptiveDifficulty,
@@ -10,7 +17,7 @@ import {
   type ProgressState,
 } from './domain/progress'
 import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
-import type { LessonExercise, StoryWord } from './types'
+import type { LessonExercise, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
 type Tab = 'home' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
@@ -36,6 +43,8 @@ interface ModelSetupItem {
 
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
+const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
+const defaultTutorPersona = tutorPersonas[0]
 
 const pendingModels: ModelSetupItem[] = [
   {
@@ -105,14 +114,12 @@ function App() {
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: 'opening',
-      speaker: 'tutor',
-      text: 'ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?',
-      subtext: 'saar, ellige hogbeku? = Sir, where do you need to go?',
-    },
+  const [selectedScenarioId, setSelectedScenarioId] = useState(defaultChatScenario.id)
+  const [selectedTutorPersonaId, setSelectedTutorPersonaId] = useState(defaultTutorPersona.id)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
+    createOpeningMessage(defaultChatScenario),
   ])
+  const [voiceStatus, setVoiceStatus] = useState('')
   const [flashcardBack, setFlashcardBack] = useState(false)
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [generatedExercise, setGeneratedExercise] = useState('')
@@ -132,6 +139,10 @@ function App() {
 
   const activeExercise = lessonExercises[Math.min(lessonIndex, lessonExercises.length - 1)]
   const activeStory = stories.find((story) => story.id === selectedStoryId) ?? stories[0]
+  const selectedScenario =
+    bangaloreScenarios.find((scenario) => scenario.id === selectedScenarioId) ?? defaultChatScenario
+  const selectedTutorPersona =
+    tutorPersonas.find((persona) => persona.id === selectedTutorPersonaId) ?? defaultTutorPersona
   const completedInCurrentLesson = Math.min(
     lessonIndex + (feedback === 'correct' ? 1 : 0),
     lessonExercises.length,
@@ -270,17 +281,38 @@ function App() {
       return
     }
 
+    const tutorReply = buildTutorReply(trimmed, selectedScenario, selectedTutorPersona)
     setChatMessages((messages) => [
       ...messages,
       { id: `learner-${Date.now()}`, speaker: 'learner', text: trimmed },
-      {
-        id: `tutor-${Date.now()}`,
-        speaker: 'tutor',
-        text: 'Majestic-ge hogbeku is better.',
-        subtext: 'Add -ge for "to": ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು.',
-      },
+      { id: `tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
     ])
     setChatInput('')
+    setVoiceStatus('')
+  }
+
+  function selectChatScenario(scenarioId: string) {
+    const scenario = bangaloreScenarios.find((item) => item.id === scenarioId) ?? defaultChatScenario
+    setSelectedScenarioId(scenario.id)
+    setChatMessages([createOpeningMessage(scenario)])
+    setChatInput('')
+    setVoiceStatus('')
+  }
+
+  function recordVoiceInput() {
+    const voiceLine = getScenarioVoiceLine(selectedScenario)
+    const tutorReply = buildTutorReply(voiceLine.text, selectedScenario, selectedTutorPersona)
+    setVoiceStatus(`Voice input transcribed: ${voiceLine.transliteration}`)
+    setChatMessages((messages) => [
+      ...messages,
+      {
+        id: `voice-${Date.now()}`,
+        speaker: 'learner',
+        text: voiceLine.text,
+        subtext: voiceLine.transliteration,
+      },
+      { id: `voice-tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
+    ])
   }
 
   function openStory(storyId: string) {
@@ -516,13 +548,39 @@ function App() {
         <section className="panel chat-panel" aria-labelledby="chat-title">
           <header className="section-header">
             <div>
-              <p className="eyebrow">Beginner mode</p>
-              <h2 id="chat-title">Auto Driver</h2>
+              <p className="eyebrow">{selectedTutorPersona.name} - {selectedScenario.difficulty}</p>
+              <h2 id="chat-title">{selectedScenario.title}</h2>
             </div>
-            <button className="secondary-action" type="button">
-              Change Scenario
+            <button className="secondary-action" onClick={recordVoiceInput} type="button">
+              Record Voice
             </button>
           </header>
+          <div className="scenario-picker" aria-label="Chat scenarios">
+            {bangaloreScenarios.map((scenario) => (
+              <button
+                className={selectedScenario.id === scenario.id ? 'selector-chip active' : 'selector-chip'}
+                key={scenario.id}
+                onClick={() => selectChatScenario(scenario.id)}
+                type="button"
+              >
+                <strong>{scenario.title}</strong>
+                <small>{scenario.difficulty}</small>
+              </button>
+            ))}
+          </div>
+          <div className="persona-picker" aria-label="Tutor personalities">
+            {tutorPersonas.map((persona) => (
+              <button
+                className={selectedTutorPersona.id === persona.id ? 'selector-chip active' : 'selector-chip'}
+                key={persona.id}
+                onClick={() => setSelectedTutorPersonaId(persona.id)}
+                type="button"
+              >
+                <strong>{persona.name}</strong>
+                <small>{persona.correctionStyle}</small>
+              </button>
+            ))}
+          </div>
           <div className="chat-stream" aria-live="polite">
             {chatMessages.map((message) => (
               <article className={`message ${message.speaker}`} key={message.id}>
@@ -531,10 +589,12 @@ function App() {
               </article>
             ))}
           </div>
+          {voiceStatus && <p className="voice-status" role="status">{voiceStatus}</p>}
           <div className="suggestion-row">
-            {['ಎಷ್ಟು?', 'Meter?', 'Left hogi', 'Stop here'].map((suggestion) => (
-              <button key={suggestion} onClick={() => setChatInput(suggestion)} type="button">
-                {suggestion}
+            {selectedScenario.usefulPhrases.map((phrase) => (
+              <button key={phrase.id} onClick={() => setChatInput(phrase.kannada)} type="button">
+                <strong lang="kn">{phrase.kannada}</strong>
+                <small>{phrase.english}</small>
               </button>
             ))}
           </div>
@@ -1034,6 +1094,60 @@ function Stat({ value, label }: { value: number; label: string }) {
       <span>{label}</span>
     </article>
   )
+}
+
+function createOpeningMessage(scenario: Scenario): ChatMessage {
+  return {
+    id: `opening-${scenario.id}`,
+    speaker: 'tutor',
+    text: scenario.openingLine.kannada,
+    subtext: `${scenario.openingLine.transliteration} = ${scenario.openingLine.english}`,
+  }
+}
+
+function buildTutorReply(input: string, scenario: Scenario, persona: TutorPersona): Pick<ChatMessage, 'text' | 'subtext'> {
+  const normalized = input.toLowerCase()
+
+  if (scenario.id === 'auto-ride' && normalized.includes('majestic') && normalized.includes('hogbeku')) {
+    return {
+      text: 'Majestic-ge hogbeku is better.',
+      subtext: `${persona.name}: Add -ge for "to": ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು.`,
+    }
+  }
+
+  if (scenario.id === 'bmtc-bus') {
+    return {
+      text: `${persona.name}: Good fare question for BMTC.`,
+      subtext: 'fare question: add the destination first - Koramangala-ge ticket eshtu?',
+    }
+  }
+
+  if (normalized.includes('beda') || input.includes('ಬೇಡ')) {
+    return {
+      text: `${persona.name}: Good. ಬೇಡ is a clear way to say you do not want it.`,
+      subtext: persona.correctionStyle,
+    }
+  }
+
+  return {
+    text: `${persona.name}: Try it in the ${scenario.title} roleplay.`,
+    subtext: scenario.usefulPhrases.map((phrase) => phrase.transliteration).join(' / '),
+  }
+}
+
+function getScenarioVoiceLine(scenario: Scenario) {
+  if (scenario.id === 'bmtc-bus') {
+    return {
+      text: 'ಕೊರಮಂಗಲಕ್ಕೆ ಟಿಕೆಟ್ ಬೇಕು',
+      transliteration: 'koramangala-ge ticket beku',
+    }
+  }
+
+  const phrase = scenario.usefulPhrases[0]
+  return {
+    text: phrase.kannada,
+    transliteration: phrase.transliteration,
+  }
 }
 
 function parseMatchPairs(answer: string) {
