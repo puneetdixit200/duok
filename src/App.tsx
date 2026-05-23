@@ -42,10 +42,22 @@ interface ModelSetupItem {
   description: string
 }
 
+interface ReminderPreference {
+  enabled: boolean
+  time: string
+  permission: 'default' | 'granted' | 'denied'
+}
+
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
+const reminderKey = 'kannadaos:reminder'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
+const defaultReminderPreference: ReminderPreference = {
+  enabled: false,
+  time: '7:30 PM',
+  permission: 'default',
+}
 
 const pendingModels: ModelSetupItem[] = [
   {
@@ -112,6 +124,9 @@ function App() {
   const [progress, setProgress] = useState<ProgressState>(() =>
     hydrateProgress(localStorage.getItem(progressKey)),
   )
+  const [reminder, setReminder] = useState<ReminderPreference>(() =>
+    hydrateReminder(localStorage.getItem(reminderKey)),
+  )
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
@@ -152,6 +167,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem(progressKey, serializeProgress(progress))
   }, [progress])
+
+  useEffect(() => {
+    localStorage.setItem(reminderKey, JSON.stringify(reminder))
+  }, [reminder])
 
   useEffect(() => {
     let active = true
@@ -314,6 +333,18 @@ function App() {
       },
       { id: `voice-tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
     ])
+  }
+
+  function toggleDailyReminder() {
+    setReminder((current) => ({ ...current, enabled: !current.enabled }))
+  }
+
+  function setReminderTime(time: string) {
+    setReminder((current) => ({ ...current, time }))
+  }
+
+  function allowReminderAlerts() {
+    setReminder((current) => ({ ...current, permission: 'granted' }))
   }
 
   function openStory(storyId: string) {
@@ -909,6 +940,40 @@ function App() {
               </article>
             ))}
           </div>
+          <section className="reminder-card" aria-labelledby="daily-reminder-title">
+            <div>
+              <span className="model-category">notifications</span>
+              <h3 id="daily-reminder-title">Daily Reminder</h3>
+              <p>
+                {reminder.enabled ? `Reminder On - ${reminder.time}` : 'Reminder Off'}
+              </p>
+              <small>
+                {reminder.permission === 'granted'
+                  ? 'Alerts allowed'
+                  : reminder.permission === 'denied'
+                    ? 'Alerts blocked'
+                    : 'Alerts waiting for permission'}
+              </small>
+            </div>
+            <div className="reminder-actions">
+              <button className="secondary-action" onClick={toggleDailyReminder} type="button">
+                {reminder.enabled ? 'Disable Daily Reminder' : 'Enable Daily Reminder'}
+              </button>
+              {['7:30 PM', '8:30 PM', '9:30 PM'].map((time) => (
+                <button
+                  className={reminder.time === time ? 'selector-chip compact active' : 'selector-chip compact'}
+                  key={time}
+                  onClick={() => setReminderTime(time)}
+                  type="button"
+                >
+                  {time}
+                </button>
+              ))}
+              <button className="secondary-action" onClick={allowReminderAlerts} type="button">
+                Allow Reminder Alerts
+              </button>
+            </div>
+          </section>
           <div className="settings-list">
             <button className="secondary-action" onClick={() => setScreen('models')} type="button">
               Manage AI Models
@@ -1157,6 +1222,27 @@ function getScenarioVoiceLine(scenario: Scenario) {
   return {
     text: phrase.kannada,
     transliteration: phrase.transliteration,
+  }
+}
+
+function hydrateReminder(serialized: string | null): ReminderPreference {
+  if (!serialized) {
+    return defaultReminderPreference
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as Partial<ReminderPreference>
+    return {
+      ...defaultReminderPreference,
+      ...parsed,
+      permission:
+        parsed.permission === 'granted' || parsed.permission === 'denied' || parsed.permission === 'default'
+          ? parsed.permission
+          : defaultReminderPreference.permission,
+      time: typeof parsed.time === 'string' && parsed.time ? parsed.time : defaultReminderPreference.time,
+    }
+  } catch {
+    return defaultReminderPreference
   }
 }
 

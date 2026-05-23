@@ -200,6 +200,31 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/1 practiced word/i)).toBeInTheDocument()
   })
 
+  it('configures and persists daily reminder notifications', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    const { unmount } = render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /me/i }))
+
+    expect(screen.getByRole('heading', { name: /Daily Reminder/i })).toBeInTheDocument()
+    expect(screen.getByText(/Reminder Off/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /enable daily reminder/i }))
+    await user.click(screen.getByRole('button', { name: /8:30 PM/i }))
+    await user.click(screen.getByRole('button', { name: /allow reminder alerts/i }))
+
+    expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
+    expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
+
+    unmount()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /me/i }))
+
+    expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
+    expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
+  })
+
   it('adapts practice to weak areas and due review after a wrong lesson answer', async () => {
     const user = userEvent.setup()
     render(<App />)
