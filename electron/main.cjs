@@ -1,7 +1,10 @@
-const { app, BrowserWindow, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const path = require('node:path')
+const { inspectLocalRuntimeInMain } = require('./local-runtime.cjs')
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL)
+
+ipcMain.handle('local-runtime:inspect', (_event, config) => inspectLocalRuntimeInMain(config))
 
 function createWindow() {
   const mainWindow = new BrowserWindow({

@@ -610,6 +610,99 @@ h2 {
   text-align: center;
 }
 
+.runtime-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #3d3d5c;
+  border-left: 5px solid #10b981;
+  border-radius: 14px;
+  background: #171728;
+}
+
+.runtime-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.runtime-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.runtime-path-grid,
+.runtime-component-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.runtime-path-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.runtime-field {
+  display: grid;
+  gap: 6px;
+}
+
+.runtime-field span {
+  color: #c9c7d6;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.runtime-field input {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #3d3d5c;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #11111d;
+  color: #f7f7fb;
+}
+
+.runtime-check {
+  width: fit-content;
+}
+
+.runtime-status {
+  margin: 0;
+  color: #6ee7b7;
+  font-weight: 900;
+}
+
+.runtime-status.error {
+  color: #fda4af;
+}
+
+.runtime-component-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.runtime-component-card {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 142px;
+  padding: 14px;
+  border: 1px solid #30304d;
+  border-radius: 12px;
+  background: #202037;
+}
+
+.runtime-component-card small,
+.runtime-component-card p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #c9c7d6;
+}
+
+.runtime-component-card p {
+  color: #9b9ab0;
+}
+
 .star-row {
   display: flex;
   justify-content: center;
@@ -1091,6 +1184,8 @@ h2 {
   .scenario-picker,
   .persona-picker,
   .model-grid,
+  .runtime-path-grid,
+  .runtime-component-grid,
   .story-grid,
   .stats-grid,
   .completion-stats,
@@ -1119,6 +1214,8 @@ h2 {
   .scenario-picker,
   .persona-picker,
   .model-grid,
+  .runtime-path-grid,
+  .runtime-component-grid,
   .story-grid,
   .stats-grid,
   .completion-stats,
@@ -1130,6 +1227,7 @@ h2 {
   }
 
   .section-header,
+  .runtime-header,
   .streak-banner,
   .chat-input {
     align-items: stretch;

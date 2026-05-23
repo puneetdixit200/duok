@@ -18,6 +18,13 @@ import {
   type ProgressState,
 } from './domain/progress'
 import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
+import {
+  createMissingLocalRuntimeSummary,
+  emptyLocalRuntimeConfig,
+  inspectLocalRuntime,
+  type LocalRuntimeConfig,
+  type LocalRuntimeSummary,
+} from './services/localRuntime'
 import type { LessonExercise, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
@@ -51,6 +58,7 @@ interface ReminderPreference {
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
 const reminderKey = 'kannadaos:reminder'
+const runtimeKey = 'kannadaos:local-runtime'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
 const defaultReminderPreference: ReminderPreference = {
@@ -127,6 +135,13 @@ function App() {
   const [reminder, setReminder] = useState<ReminderPreference>(() =>
     hydrateReminder(localStorage.getItem(reminderKey)),
   )
+  const [runtimeConfig, setRuntimeConfig] = useState<LocalRuntimeConfig>(() =>
+    hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey)),
+  )
+  const [runtimeSummary, setRuntimeSummary] = useState<LocalRuntimeSummary>(() =>
+    createMissingLocalRuntimeSummary(hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))),
+  )
+  const [runtimeCheckStatus, setRuntimeCheckStatus] = useState<'idle' | 'checking' | 'checked' | 'error'>('idle')
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
@@ -171,6 +186,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem(reminderKey, JSON.stringify(reminder))
   }, [reminder])
+
+  useEffect(() => {
+    localStorage.setItem(runtimeKey, JSON.stringify(runtimeConfig))
+  }, [runtimeConfig])
 
   useEffect(() => {
     let active = true
@@ -345,6 +364,28 @@ function App() {
 
   function allowReminderAlerts() {
     setReminder((current) => ({ ...current, permission: 'granted' }))
+  }
+
+  function updateRuntimePath(key: keyof LocalRuntimeConfig, value: string) {
+    const nextConfig = { ...runtimeConfig, [key]: value }
+    setRuntimeConfig(nextConfig)
+    setRuntimeSummary(createMissingLocalRuntimeSummary(nextConfig))
+    setRuntimeCheckStatus('idle')
+  }
+
+  async function checkLocalRuntime() {
+    setRuntimeCheckStatus('checking')
+
+    try {
+      const summary = window.kannadaOS?.inspectLocalRuntime
+        ? await window.kannadaOS.inspectLocalRuntime(runtimeConfig)
+        : await inspectLocalRuntime(runtimeConfig, async () => false)
+      setRuntimeSummary(summary)
+      setRuntimeCheckStatus('checked')
+    } catch {
+      setRuntimeSummary(createMissingLocalRuntimeSummary(runtimeConfig))
+      setRuntimeCheckStatus('error')
+    }
   }
 
   function openStory(storyId: string) {
@@ -522,6 +563,71 @@ function App() {
           >
             {modelSetupStarted ? 'Setup in Progress' : 'Start Model Setup'}
           </button>
+          <section className="runtime-card" aria-labelledby="runtime-title">
+            <header className="runtime-header">
+              <div>
+                <span className="model-category">native runtime</span>
+                <h2 id="runtime-title">On-device Runtime</h2>
+              </div>
+              <span className="metric-pill">{runtimeSummary.statusText}</span>
+            </header>
+            <div className="runtime-path-grid">
+              <label className="runtime-field">
+                <span>Aya GGUF model path</span>
+                <input
+                  onChange={(event) => updateRuntimePath('llmModelPath', event.target.value)}
+                  placeholder="/models/aya-8b-q4_K_M.gguf"
+                  value={runtimeConfig.llmModelPath}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>Whisper model path</span>
+                <input
+                  onChange={(event) => updateRuntimePath('whisperModelPath', event.target.value)}
+                  placeholder="/models/whisper-small.bin"
+                  value={runtimeConfig.whisperModelPath}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>Piper voice path</span>
+                <input
+                  onChange={(event) => updateRuntimePath('piperVoicePath', event.target.value)}
+                  placeholder="/models/kn_IN-piper-medium.onnx"
+                  value={runtimeConfig.piperVoicePath}
+                />
+              </label>
+            </div>
+            <button
+              className="primary-action runtime-check"
+              disabled={runtimeCheckStatus === 'checking'}
+              onClick={checkLocalRuntime}
+              type="button"
+            >
+              {runtimeCheckStatus === 'checking' ? 'Checking Runtime' : 'Check Local Runtime'}
+            </button>
+            {runtimeCheckStatus === 'checked' && (
+              <p className="runtime-status" role="status">
+                Local runtime scan complete.
+              </p>
+            )}
+            {runtimeCheckStatus === 'error' && (
+              <p className="runtime-status error" role="status">
+                Local runtime scan failed.
+              </p>
+            )}
+            <div className="runtime-component-grid">
+              {runtimeSummary.components.map((component) => (
+                <article className="runtime-component-card" key={component.id}>
+                  <span className="model-category">{component.label}</span>
+                  <strong className={component.ready ? 'model-state downloaded' : 'model-state'}>
+                    {component.status}
+                  </strong>
+                  {component.modelPath && <small>{component.modelPath}</small>}
+                  <p>{component.nextAction}</p>
+                </article>
+              ))}
+            </div>
+          </section>
         </section>
       </main>
     )
@@ -1243,6 +1349,23 @@ function hydrateReminder(serialized: string | null): ReminderPreference {
     }
   } catch {
     return defaultReminderPreference
+  }
+}
+
+function hydrateLocalRuntimeConfig(serialized: string | null): LocalRuntimeConfig {
+  if (!serialized) {
+    return emptyLocalRuntimeConfig
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as Partial<LocalRuntimeConfig>
+    return {
+      llmModelPath: typeof parsed.llmModelPath === 'string' ? parsed.llmModelPath : '',
+      whisperModelPath: typeof parsed.whisperModelPath === 'string' ? parsed.whisperModelPath : '',
+      piperVoicePath: typeof parsed.piperVoicePath === 'string' ? parsed.piperVoicePath : '',
+    }
+  } catch {
+    return emptyLocalRuntimeConfig
   }
 }
 

@@ -1,8 +1,12 @@
 const { _electron: electron } = require('playwright')
+const fs = require('node:fs')
+const os = require('node:os')
 const path = require('node:path')
 
 async function main() {
   const rootDir = path.join(__dirname, '..')
+  const runtimeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-runtime-'))
+  const runtimePaths = createRuntimePlaceholders(runtimeDir)
   const app = await electron.launch({ args: [rootDir], env: { ...process.env, E2E: '1' } })
   const pageErrors = []
   const consoleErrors = []
@@ -68,6 +72,16 @@ async function main() {
     await page.getByText(/Aya 8B Q4/i).waitFor()
     await page.getByText(/Whisper Small/i).waitFor()
     await page.getByText(/Piper Kannada Voice/i).waitFor()
+    await page.getByRole('heading', { name: /On-device Runtime/i }).waitFor()
+    await page.getByText(/0 of 3 runtime components ready/i).waitFor()
+    await page.getByLabel(/Aya GGUF model path/i).fill(runtimePaths.llmModelPath)
+    await page.getByLabel(/Whisper model path/i).fill(runtimePaths.whisperModelPath)
+    await page.getByLabel(/Piper voice path/i).fill(runtimePaths.piperVoicePath)
+    await page.getByRole('button', { name: /check local runtime/i }).click()
+    await page.getByText(/3 of 3 runtime components ready/i).waitFor()
+    await page.getByText(/Llama.cpp LLM/i).waitFor()
+    await page.getByText(/Whisper.cpp STT/i).waitFor()
+    await page.getByText(/Piper TTS/i).waitFor()
     await page.getByRole('button', { name: /start model setup/i }).click()
     await page.getByRole('button', { name: /setup in progress/i }).waitFor()
     await page.getByText(/78%/i).waitFor()
@@ -93,8 +107,23 @@ async function main() {
       )
     }
   } finally {
+    fs.rmSync(runtimeDir, { recursive: true, force: true })
     await closeElectron(app)
   }
+}
+
+function createRuntimePlaceholders(runtimeDir) {
+  const runtimePaths = {
+    llmModelPath: path.join(runtimeDir, 'aya-8b-q4_K_M.gguf'),
+    whisperModelPath: path.join(runtimeDir, 'whisper-small.bin'),
+    piperVoicePath: path.join(runtimeDir, 'kn_IN-piper-medium.onnx'),
+  }
+
+  Object.values(runtimePaths).forEach((modelPath) => {
+    fs.writeFileSync(modelPath, 'placeholder model file')
+  })
+
+  return runtimePaths
 }
 
 async function completeLesson(page) {

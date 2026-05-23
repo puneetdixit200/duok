@@ -271,6 +271,70 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/You can start learning while models download/i)).toBeInTheDocument()
   })
 
+  it('checks on-device runtime model paths through the desktop bridge', async () => {
+    const user = userEvent.setup()
+    const inspectLocalRuntime = vi.fn().mockResolvedValue({
+      readyCount: 3,
+      totalCount: 3,
+      statusText: '3 of 3 runtime components ready',
+      components: [
+        {
+          id: 'llm',
+          label: 'Llama.cpp LLM',
+          modelPath: '/models/aya-8b-q4_K_M.gguf',
+          ready: true,
+          status: 'Ready',
+          nextAction: 'Ready for offline native runtime.',
+        },
+        {
+          id: 'stt',
+          label: 'Whisper.cpp STT',
+          modelPath: '/models/whisper-small.bin',
+          ready: true,
+          status: 'Ready',
+          nextAction: 'Ready for offline native runtime.',
+        },
+        {
+          id: 'tts',
+          label: 'Piper TTS',
+          modelPath: '/models/kn_IN-piper-medium.onnx',
+          ready: true,
+          status: 'Ready',
+          nextAction: 'Ready for offline native runtime.',
+        },
+      ],
+    })
+
+    vi.stubGlobal('kannadaOS', {
+      platform: 'darwin',
+      inspectLocalRuntime,
+    })
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /manage ai models/i }))
+
+    expect(screen.getByRole('heading', { name: /On-device Runtime/i })).toBeInTheDocument()
+    expect(screen.getByText(/0 of 3 runtime components ready/i)).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(/Aya GGUF model path/i), '/models/aya-8b-q4_K_M.gguf')
+    await user.type(screen.getByLabelText(/Whisper model path/i), '/models/whisper-small.bin')
+    await user.type(screen.getByLabelText(/Piper voice path/i), '/models/kn_IN-piper-medium.onnx')
+    await user.click(screen.getByRole('button', { name: /check local runtime/i }))
+
+    expect(inspectLocalRuntime).toHaveBeenCalledWith({
+      llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+      whisperModelPath: '/models/whisper-small.bin',
+      piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+    })
+    expect(await screen.findByText(/3 of 3 runtime components ready/i)).toBeInTheDocument()
+    expect(screen.getByText(/Llama.cpp LLM/i)).toBeInTheDocument()
+    expect(screen.getByText(/Whisper.cpp STT/i)).toBeInTheDocument()
+    expect(screen.getByText(/Piper TTS/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/^Ready$/i)).toHaveLength(3)
+  })
+
   it('opens story mode, shows interactive words, and completes the story quiz', async () => {
     const user = userEvent.setup()
     render(<App />)
