@@ -38,6 +38,17 @@ async function main() {
     await page.getByText(/Auto Ride/i).waitFor()
     await page.getByRole('button', { name: /^me$/i }).click()
     await page.getByText(/Level 4 Learner/i).waitFor()
+    await page.getByRole('button', { name: /manage ai models/i }).click()
+    await page.getByRole('heading', { name: /Setting up your AI Teacher/i }).waitFor()
+    await page.getByText(/Aya 8B Q4/i).waitFor()
+    await page.getByText(/Whisper Small/i).waitFor()
+    await page.getByText(/Piper Kannada Voice/i).waitFor()
+    await page.getByRole('button', { name: /start model setup/i }).click()
+    await page.getByRole('button', { name: /setup in progress/i }).waitFor()
+    await page.getByText(/78%/i).waitFor()
+    await page.getByText(/Downloaded/i).waitFor()
+    await page.getByText(/Waiting/i).waitFor()
+    await page.getByLabel(/Back to app/i).click()
 
     const ollama = await probeOllama()
     if (ollama.online) {
@@ -130,10 +141,14 @@ async function closeElectron(app) {
   const child = app.process()
 
   if (child.exitCode === null && !child.killed) {
-    child.kill('SIGTERM')
+    await Promise.race([
+      app.close().catch(() => undefined),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
   }
 
-  if (child.exitCode === null) {
+  if (child.exitCode === null && !child.killed) {
+    child.kill('SIGTERM')
     await waitForExit(child, 3000)
   }
 

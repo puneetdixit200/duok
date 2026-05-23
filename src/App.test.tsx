@@ -120,4 +120,31 @@ describe('KannadaOS desktop app', () => {
     expect(within(stats).getByText(/XP/i)).toBeInTheDocument()
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
   })
+
+  it('opens model management from profile and shows required model setup states', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /zero/i }))
+    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /manage ai models/i }))
+
+    expect(screen.getByRole('heading', { name: /Setting up your AI Teacher/i })).toBeInTheDocument()
+    expect(screen.getByText(/Aya 8B Q4/i)).toBeInTheDocument()
+    expect(screen.getByText(/4.8 GB/i)).toBeInTheDocument()
+    expect(screen.getByText(/Whisper Small/i)).toBeInTheDocument()
+    expect(screen.getByText(/466 MB/i)).toBeInTheDocument()
+    expect(screen.getByText(/Piper Kannada Voice/i)).toBeInTheDocument()
+    expect(screen.getByText(/75 MB/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /start model setup/i }))
+
+    expect(screen.getByRole('button', { name: /setup in progress/i })).toBeDisabled()
+    expect(screen.getByText(/Language Model/i)).toBeInTheDocument()
+    expect(screen.getByText(/78%/i)).toBeInTheDocument()
+    expect(screen.getByText(/Downloaded/i)).toBeInTheDocument()
+    expect(screen.getByText(/Waiting/i)).toBeInTheDocument()
+    expect(screen.getByText(/You can start learning while models download/i)).toBeInTheDocument()
+  })
 })

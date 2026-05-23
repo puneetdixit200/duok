@@ -11,7 +11,7 @@ import type { LessonExercise } from './types'
 import './styles.css'
 
 type Tab = 'home' | 'chat' | 'practice' | 'blr' | 'me'
-type Screen = 'onboarding' | 'app' | 'lesson'
+type Screen = 'onboarding' | 'app' | 'lesson' | 'models'
 
 interface ChatMessage {
   id: string
@@ -20,8 +20,73 @@ interface ChatMessage {
   subtext?: string
 }
 
+interface ModelSetupItem {
+  name: string
+  category: string
+  size: string
+  status: string
+  progress: number
+  required: boolean
+  description: string
+}
+
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
+
+const pendingModels: ModelSetupItem[] = [
+  {
+    name: 'Aya 8B Q4',
+    category: 'Language Model',
+    size: '4.8 GB',
+    status: 'Ready to download',
+    progress: 0,
+    required: true,
+    description: 'Main Kannada generation model for offline tutoring.',
+  },
+  {
+    name: 'Whisper Small',
+    category: 'Speech Model',
+    size: '466 MB',
+    status: 'Queued',
+    progress: 0,
+    required: true,
+    description: 'Speech recognition for pronunciation scoring.',
+  },
+  {
+    name: 'Piper Kannada Voice',
+    category: 'Voice Model',
+    size: '75 MB',
+    status: 'Queued',
+    progress: 0,
+    required: true,
+    description: 'Text-to-speech voice for Kannada reference audio.',
+  },
+  {
+    name: 'Whisper Large V3',
+    category: 'Optional Speech Model',
+    size: '3.1 GB',
+    status: 'Optional',
+    progress: 0,
+    required: false,
+    description: 'Higher accuracy speech recognition for later setup.',
+  },
+]
+
+const activeSetupModels: ModelSetupItem[] = pendingModels.map((model) => {
+  if (model.name === 'Aya 8B Q4') {
+    return { ...model, status: 'Downloading 78%', progress: 78 }
+  }
+
+  if (model.name === 'Whisper Small') {
+    return { ...model, status: 'Downloaded', progress: 100 }
+  }
+
+  if (model.name === 'Piper Kannada Voice') {
+    return { ...model, status: 'Waiting', progress: 0 }
+  }
+
+  return model
+})
 
 function App() {
   const curriculum = useMemo(() => getLevelOneCurriculum(), [])
@@ -47,6 +112,7 @@ function App() {
   const [flashcardBack, setFlashcardBack] = useState(false)
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [generatedExercise, setGeneratedExercise] = useState('')
+  const [modelSetupStarted, setModelSetupStarted] = useState(false)
   const [lessonIndex, setLessonIndex] = useState(0)
   const [totalLessonXp, setTotalLessonXp] = useState(0)
   const [placedWords, setPlacedWords] = useState<string[]>([])
@@ -315,6 +381,48 @@ function App() {
     )
   }
 
+  if (screen === 'models') {
+    const models = modelSetupStarted ? activeSetupModels : pendingModels
+    return (
+      <main className="app-shell lesson-shell">
+        <section className="lesson-card models-panel" aria-labelledby="model-setup-title">
+          <button className="icon-button" onClick={() => setScreen('app')} type="button" aria-label="Back to app">
+            x
+          </button>
+          <p className="eyebrow">model download</p>
+          <h1 id="model-setup-title">Setting up your AI Teacher...</h1>
+          <div className="model-grid">
+            {models.map((model) => (
+              <article className="model-card" key={model.name}>
+                <div>
+                  <span className="model-category">{model.category}</span>
+                  <strong>{model.name}</strong>
+                  <small>{model.required ? 'Required' : 'Optional'} - {model.size}</small>
+                </div>
+                <p>{model.description}</p>
+                <div className="model-progress" aria-label={`${model.name} ${model.progress}%`}>
+                  <span style={{ width: `${model.progress}%` }} />
+                </div>
+                <strong className={model.progress === 100 ? 'model-state downloaded' : 'model-state'}>
+                  {model.status}
+                </strong>
+              </article>
+            ))}
+          </div>
+          <p className="model-note">You can start learning while models download.</p>
+          <button
+            className="primary-action"
+            disabled={modelSetupStarted}
+            onClick={() => setModelSetupStarted(true)}
+            type="button"
+          >
+            {modelSetupStarted ? 'Setup in Progress' : 'Start Model Setup'}
+          </button>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="desktop-frame">
       <aside className="sidebar" aria-label="Primary navigation">
@@ -350,6 +458,9 @@ function App() {
           <strong>{ollamaStatus === 'online' ? 'Ollama online' : ollamaStatus === 'offline' ? 'Offline fallback' : 'Checking'}</strong>
           <button className="secondary-action" onClick={generateAiExercise} type="button">
             Generate AI Exercise
+          </button>
+          <button className="secondary-action" onClick={() => setScreen('models')} type="button">
+            Manage Models
           </button>
           {generatedExercise && <p>{generatedExercise}</p>}
         </section>
@@ -500,6 +611,14 @@ function App() {
                 <span key={achievement}>{achievement}</span>
               ),
             )}
+          </div>
+          <div className="settings-list">
+            <button className="secondary-action" onClick={() => setScreen('models')} type="button">
+              Manage AI Models
+            </button>
+            <button className="secondary-action" type="button">
+              Export Data
+            </button>
           </div>
         </section>
       )
