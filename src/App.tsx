@@ -26,6 +26,7 @@ import {
   type LocalRuntimeSummary,
 } from './services/localRuntime'
 import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
+import { buildExportSnapshot, serializeExportSnapshot } from './services/exportSnapshot'
 import type { LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
@@ -67,6 +68,11 @@ interface PronunciationAttempt {
   tip: string
   problemParts: string[]
   createdAt: string
+}
+
+interface ExportStatus {
+  statusText: string
+  runtimeText: string
 }
 
 const progressKey = 'kannadaos:progress'
@@ -167,6 +173,8 @@ function App() {
   const [pronunciationHistory, setPronunciationHistory] = useState<PronunciationAttempt[]>(() =>
     hydratePronunciationHistory(localStorage.getItem(pronunciationKey)),
   )
+  const [exportPayload, setExportPayload] = useState('')
+  const [exportStatus, setExportStatus] = useState<ExportStatus | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
@@ -455,6 +463,22 @@ function App() {
     setPronunciationTranscript(transcript)
     setPronunciationResult(result)
     setPronunciationHistory((current) => [attempt, ...current].slice(0, 5))
+  }
+
+  function exportLearnerData() {
+    const snapshot = buildExportSnapshot({
+      exportedAt: new Date().toISOString(),
+      progress,
+      reminder,
+      runtimeConfig,
+      pronunciationHistory,
+    })
+
+    setExportPayload(serializeExportSnapshot(snapshot))
+    setExportStatus({
+      statusText: `Export ready: ${snapshot.summary.completedActivities} ${snapshot.summary.completedActivities === 1 ? 'activity' : 'activities'}, ${snapshot.summary.practicedWords} practiced ${snapshot.summary.practicedWords === 1 ? 'word' : 'words'}, ${snapshot.summary.pronunciationAttempts} pronunciation ${snapshot.summary.pronunciationAttempts === 1 ? 'attempt' : 'attempts'}`,
+      runtimeText: `${snapshot.summary.runtimePathsConfigured} runtime ${snapshot.summary.runtimePathsConfigured === 1 ? 'path' : 'paths'} configured`,
+    })
   }
 
   function openStory(storyId: string) {
@@ -1226,10 +1250,26 @@ function App() {
             <button className="secondary-action" onClick={() => setScreen('models')} type="button">
               Manage AI Models
             </button>
-            <button className="secondary-action" type="button">
+            <button className="secondary-action" onClick={exportLearnerData} type="button">
               Export Data
             </button>
           </div>
+          {exportStatus && (
+            <section className="export-card" aria-label="Data export">
+              <div>
+                <strong>{exportStatus.statusText}</strong>
+                <small>{exportStatus.runtimeText}</small>
+              </div>
+              <a
+                className="secondary-action export-download"
+                download="kannadaos-export.json"
+                href={`data:application/json;charset=utf-8,${encodeURIComponent(exportPayload)}`}
+              >
+                Download JSON
+              </a>
+              <pre data-testid="export-preview">{exportPayload}</pre>
+            </section>
+          )}
         </section>
       )
     }

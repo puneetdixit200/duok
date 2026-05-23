@@ -225,6 +225,47 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
   })
 
+  it('exports a learner data snapshot from profile settings', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem(
+      'kannadaos:progress',
+      JSON.stringify({
+        xp: 42,
+        completedExerciseIds: ['survival-translate-1', 'story-first-day-bangalore'],
+        reviewQueue: {
+          hogbeku: {
+            vocabularyId: 'hogbeku',
+            dueAt: '2026-05-25T09:00:00.000Z',
+            strength: 0.7,
+            attempts: 3,
+          },
+        },
+      }),
+    )
+    localStorage.setItem(
+      'kannadaos:pronunciation-history',
+      JSON.stringify([{ id: 'attempt-1', phraseId: 'namaskara-saar', phrase: 'ನಮಸ್ಕಾರ ಸಾರ್', transcript: 'ನಮಸ್ಕಾರ ಸಾರ್', score: 98, level: 'clear', feedback: 'Clear', tip: 'Keep it', problemParts: [], createdAt: '2026-05-23T15:45:00.000Z' }]),
+    )
+    localStorage.setItem(
+      'kannadaos:local-runtime',
+      JSON.stringify({ llmModelPath: '/models/aya.gguf', whisperModelPath: '', piperVoicePath: '/models/voice.onnx' }),
+    )
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /export data/i }))
+
+    expect(screen.getByText(/Export ready: 2 activities, 1 practiced word, 1 pronunciation attempt/i)).toBeInTheDocument()
+    expect(screen.getByText(/2 runtime paths configured/i)).toBeInTheDocument()
+
+    const preview = screen.getByTestId('export-preview')
+    expect(preview).toHaveTextContent('"schemaVersion": 1')
+    expect(preview).toHaveTextContent('"appName": "KannadaOS"')
+    expect(preview).toHaveTextContent('"score": 98')
+  })
+
   it('adapts practice to weak areas and due review after a wrong lesson answer', async () => {
     const user = userEvent.setup()
     render(<App />)
