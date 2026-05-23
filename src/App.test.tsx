@@ -440,10 +440,21 @@ describe('KannadaOS desktop app', () => {
         },
       ],
     })
+    const smokeLocalRuntime = vi.fn().mockResolvedValue({
+      passedCount: 3,
+      totalCount: 3,
+      statusText: '3 of 3 native commands responded',
+      components: [
+        { id: 'llm', label: 'Llama.cpp LLM', ok: true, status: 'Command responded', nextAction: 'Native command smoke passed.' },
+        { id: 'stt', label: 'Whisper.cpp STT', ok: true, status: 'Command responded', nextAction: 'Native command smoke passed.' },
+        { id: 'tts', label: 'Piper TTS', ok: true, status: 'Command responded', nextAction: 'Native command smoke passed.' },
+      ],
+    })
 
     vi.stubGlobal('kannadaOS', {
       platform: 'darwin',
       inspectLocalRuntime,
+      smokeLocalRuntime,
     })
     localStorage.setItem('kannadaos:onboarded', 'true')
     render(<App />)
@@ -475,6 +486,18 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Whisper.cpp STT/i)).toBeInTheDocument()
     expect(screen.getByText(/Piper TTS/i)).toBeInTheDocument()
     expect(screen.getAllByText(/^Ready$/i)).toHaveLength(3)
+
+    await user.click(screen.getByRole('button', { name: /run runtime smoke/i }))
+
+    expect(smokeLocalRuntime).toHaveBeenCalledWith({
+      llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+      whisperModelPath: '/models/whisper-small.bin',
+      piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+      llamaBinaryPath: '/bin/llama-cli',
+      whisperBinaryPath: '/bin/whisper-cli',
+      piperBinaryPath: '/bin/piper',
+    })
+    expect(await screen.findByText(/3 of 3 native commands responded/i)).toBeInTheDocument()
   })
 
   it('opens story mode, shows interactive words, and completes the story quiz', async () => {

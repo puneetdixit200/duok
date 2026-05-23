@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const path = require('node:path')
-const { inspectLocalRuntimeInMain } = require('./local-runtime.cjs')
+const { inspectLocalRuntimeInMain, runLocalRuntimeSmokeInMain } = require('./local-runtime.cjs')
 const {
   getLearnerDataStorePath,
   loadLearnerDataFromDisk,
@@ -14,6 +14,7 @@ if (process.env.KANNADAOS_USER_DATA_DIR) {
 }
 
 ipcMain.handle('local-runtime:inspect', (_event, config) => inspectLocalRuntimeInMain(config))
+ipcMain.handle('local-runtime:smoke', (_event, config) => runLocalRuntimeSmokeInMain(config))
 ipcMain.handle('learner-store:load', () => loadLearnerDataFromDisk(getLearnerDataStorePath(app)))
 ipcMain.handle('learner-store:save', (_event, values) =>
   saveLearnerDataToDisk(getLearnerDataStorePath(app), values),

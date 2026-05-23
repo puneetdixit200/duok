@@ -1,4 +1,5 @@
 const fs = require('node:fs')
+const { execFile } = require('node:child_process')
 
 const runtimeComponentDefinitions = [
   {
@@ -111,6 +112,84 @@ function inspectLocalRuntimeInMain(config = {}, pathExists = fs.existsSync) {
   }
 }
 
+async function runLocalRuntimeSmokeInMain(
+  config = {},
+  commandRunner = runExecutableSmoke,
+  pathExists = fs.existsSync,
+) {
+  const readiness = inspectLocalRuntimeInMain(config, pathExists)
+  const components = await Promise.all(
+    readiness.components.map(async (component) => {
+      if (!component.ready) {
+        return {
+          id: component.id,
+          label: component.label,
+          ok: false,
+          status: component.status,
+          nextAction: component.nextAction,
+          output: '',
+        }
+      }
+
+      try {
+        const result = await commandRunner(component.binaryPath, ['--help'])
+        if (result.ok) {
+          return {
+            id: component.id,
+            label: component.label,
+            ok: true,
+            status: 'Command responded',
+            nextAction: 'Native command smoke passed.',
+            output: result.output || '',
+          }
+        }
+
+        return {
+          id: component.id,
+          label: component.label,
+          ok: false,
+          status: 'Smoke failed',
+          nextAction: result.output || 'Check that this executable can run with --help.',
+          output: result.output || '',
+        }
+      } catch (error) {
+        return {
+          id: component.id,
+          label: component.label,
+          ok: false,
+          status: 'Smoke failed',
+          nextAction: error instanceof Error ? error.message : 'Native command failed.',
+          output: '',
+        }
+      }
+    }),
+  )
+  const passedCount = components.filter((component) => component.ok).length
+  const totalCount = components.length
+
+  return {
+    passedCount,
+    totalCount,
+    statusText: `${passedCount} of ${totalCount} native commands responded`,
+    components,
+  }
+}
+
+function runExecutableSmoke(binaryPath, args) {
+  return new Promise((resolve) => {
+    execFile(binaryPath, args, { timeout: 3000 }, (error, stdout, stderr) => {
+      const output = [stdout, stderr].filter(Boolean).join('\n').trim()
+
+      if (!error || output) {
+        resolve({ ok: true, output })
+        return
+      }
+
+      resolve({ ok: false, output: error.message })
+    })
+  })
+}
+
 function normalizePath(value) {
   return typeof value === 'string' ? value.trim() : ''
 }
@@ -125,4 +204,5 @@ function pathExistsSafely(modelPath, pathExists) {
 
 module.exports = {
   inspectLocalRuntimeInMain,
+  runLocalRuntimeSmokeInMain,
 }

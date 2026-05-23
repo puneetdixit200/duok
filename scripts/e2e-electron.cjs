@@ -123,6 +123,8 @@ async function main() {
     await page.getByText(/Llama.cpp LLM/i).waitFor()
     await page.getByText(/Whisper.cpp STT/i).waitFor()
     await page.getByText(/Piper TTS/i).waitFor()
+    await page.getByRole('button', { name: /run runtime smoke/i }).click()
+    await page.getByText(/3 of 3 native commands responded/i).waitFor()
     await page.getByRole('button', { name: /start model setup/i }).click()
     await page.getByRole('button', { name: /setup in progress/i }).waitFor()
     await page.getByText(/78%/i).waitFor()
@@ -164,9 +166,14 @@ function createRuntimePlaceholders(runtimeDir) {
     piperBinaryPath: path.join(runtimeDir, 'piper'),
   }
 
-  Object.values(runtimePaths).forEach((modelPath) => {
-    fs.writeFileSync(modelPath, 'placeholder model file')
-    fs.chmodSync(modelPath, 0o755)
+  Object.entries(runtimePaths).forEach(([key, runtimePath]) => {
+    if (key.endsWith('BinaryPath')) {
+      fs.writeFileSync(runtimePath, '#!/bin/sh\necho KannadaOS runtime smoke\n')
+      fs.chmodSync(runtimePath, 0o755)
+      return
+    }
+
+    fs.writeFileSync(runtimePath, 'placeholder model file')
   })
 
   return runtimePaths

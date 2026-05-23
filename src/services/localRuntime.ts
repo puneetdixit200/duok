@@ -26,6 +26,22 @@ export interface LocalRuntimeSummary {
   components: LocalRuntimeComponent[]
 }
 
+export interface LocalRuntimeSmokeComponent {
+  id: LocalRuntimeComponentId
+  label: string
+  ok: boolean
+  status: string
+  nextAction: string
+  output?: string
+}
+
+export interface LocalRuntimeSmokeSummary {
+  passedCount: number
+  totalCount: number
+  statusText: string
+  components: LocalRuntimeSmokeComponent[]
+}
+
 export const emptyLocalRuntimeConfig: LocalRuntimeConfig = {
   llmModelPath: '',
   whisperModelPath: '',

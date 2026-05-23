@@ -23,6 +23,7 @@ import {
   emptyLocalRuntimeConfig,
   inspectLocalRuntime,
   type LocalRuntimeConfig,
+  type LocalRuntimeSmokeSummary,
   type LocalRuntimeSummary,
 } from './services/localRuntime'
 import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
@@ -177,6 +178,8 @@ function App() {
     createMissingLocalRuntimeSummary(hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))),
   )
   const [runtimeCheckStatus, setRuntimeCheckStatus] = useState<'idle' | 'checking' | 'checked' | 'error'>('idle')
+  const [runtimeSmokeStatus, setRuntimeSmokeStatus] = useState<'idle' | 'checking' | 'checked' | 'error'>('idle')
+  const [runtimeSmokeSummary, setRuntimeSmokeSummary] = useState<LocalRuntimeSmokeSummary | null>(null)
   const [pronunciationPhraseId, setPronunciationPhraseId] = useState(pronunciationPhrases[0].id)
   const [pronunciationTranscript, setPronunciationTranscript] = useState('')
   const [pronunciationAudioStatus, setPronunciationAudioStatus] = useState('')
@@ -515,10 +518,14 @@ function App() {
     setRuntimeConfig(nextConfig)
     setRuntimeSummary(createMissingLocalRuntimeSummary(nextConfig))
     setRuntimeCheckStatus('idle')
+    setRuntimeSmokeStatus('idle')
+    setRuntimeSmokeSummary(null)
   }
 
   async function checkLocalRuntime() {
     setRuntimeCheckStatus('checking')
+    setRuntimeSmokeStatus('idle')
+    setRuntimeSmokeSummary(null)
 
     try {
       const summary = window.kannadaOS?.inspectLocalRuntime
@@ -529,6 +536,23 @@ function App() {
     } catch {
       setRuntimeSummary(createMissingLocalRuntimeSummary(runtimeConfig))
       setRuntimeCheckStatus('error')
+    }
+  }
+
+  async function runRuntimeSmoke() {
+    setRuntimeSmokeStatus('checking')
+
+    try {
+      if (!window.kannadaOS?.smokeLocalRuntime) {
+        throw new Error('Native runtime smoke is only available in the desktop app.')
+      }
+
+      const summary = await window.kannadaOS.smokeLocalRuntime(runtimeConfig)
+      setRuntimeSmokeSummary(summary)
+      setRuntimeSmokeStatus('checked')
+    } catch {
+      setRuntimeSmokeSummary(null)
+      setRuntimeSmokeStatus('error')
     }
   }
 
@@ -827,6 +851,14 @@ function App() {
             >
               {runtimeCheckStatus === 'checking' ? 'Checking Runtime' : 'Check Local Runtime'}
             </button>
+            <button
+              className="secondary-action runtime-check"
+              disabled={runtimeSmokeStatus === 'checking'}
+              onClick={runRuntimeSmoke}
+              type="button"
+            >
+              {runtimeSmokeStatus === 'checking' ? 'Running Runtime Smoke' : 'Run Runtime Smoke'}
+            </button>
             {runtimeCheckStatus === 'checked' && (
               <p className="runtime-status" role="status">
                 Local runtime scan complete.
@@ -836,6 +868,27 @@ function App() {
               <p className="runtime-status error" role="status">
                 Local runtime scan failed.
               </p>
+            )}
+            {runtimeSmokeStatus === 'error' && (
+              <p className="runtime-status error" role="status">
+                Native runtime smoke failed.
+              </p>
+            )}
+            {runtimeSmokeSummary && (
+              <section className="runtime-smoke" aria-label="Runtime smoke results">
+                <strong>{runtimeSmokeSummary.statusText}</strong>
+                <div className="runtime-component-grid">
+                  {runtimeSmokeSummary.components.map((component) => (
+                    <article className="runtime-component-card" key={component.id}>
+                      <span className="model-category">{component.label}</span>
+                      <strong className={component.ok ? 'model-state downloaded' : 'model-state'}>
+                        {component.status}
+                      </strong>
+                      <p>{component.nextAction}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
             )}
             <div className="runtime-component-grid">
               {runtimeSummary.components.map((component) => (
