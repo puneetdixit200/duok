@@ -125,6 +125,50 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Majestic-ge hogbeku/i)).toBeInTheDocument()
   })
 
+  it('restores desktop learner data before syncing it back to the Electron store', async () => {
+    const user = userEvent.setup()
+    const loadLearnerData = vi.fn().mockResolvedValue({
+      schemaVersion: 1,
+      appName: 'KannadaOS',
+      savedAt: '2026-05-23T18:30:00.000Z',
+      values: {
+        'kannadaos:onboarded': 'true',
+        'kannadaos:progress': JSON.stringify({
+          xp: 42,
+          dailyXp: 10,
+          hearts: 4,
+          gems: 88,
+          streakDays: 5,
+          lastPracticeDate: '2026-05-23',
+          completedExerciseIds: ['survival-translate-1'],
+          weakAreas: {},
+          reviewQueue: {},
+        }),
+        'kannadaos:reminder': JSON.stringify({ enabled: true, time: '8:30 PM', permission: 'granted' }),
+      },
+    })
+    const saveLearnerData = vi.fn().mockResolvedValue({ ok: true })
+
+    vi.stubGlobal('kannadaOS', {
+      platform: 'darwin',
+      loadLearnerData,
+      saveLearnerData,
+    })
+
+    render(<App />)
+
+    await screen.findByRole('heading', { name: /KannadaOS/i })
+    await user.click(screen.getByRole('button', { name: /me/i }))
+
+    expect(screen.getByLabelText('42 XP')).toBeInTheDocument()
+    expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
+    await screen.findByText(/Desktop data synced/i)
+
+    expect(loadLearnerData).toHaveBeenCalledTimes(1)
+    expect(saveLearnerData).toHaveBeenCalled()
+    expect(saveLearnerData.mock.calls[0][0]['kannadaos:progress']).toContain('"xp":42')
+  })
+
   it('switches chat scenarios, tutor persona, and voice input', async () => {
     const user = userEvent.setup()
     render(<App />)

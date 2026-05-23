@@ -6,8 +6,12 @@ const path = require('node:path')
 async function main() {
   const rootDir = path.join(__dirname, '..')
   const runtimeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-runtime-'))
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-user-data-'))
   const runtimePaths = createRuntimePlaceholders(runtimeDir)
-  const app = await electron.launch({ args: [rootDir], env: { ...process.env, E2E: '1' } })
+  const app = await electron.launch({
+    args: [rootDir],
+    env: { ...process.env, E2E: '1', KANNADAOS_USER_DATA_DIR: userDataDir },
+  })
   const pageErrors = []
   const consoleErrors = []
 
@@ -88,6 +92,19 @@ async function main() {
     await page.getByTestId('export-preview').getByText(/"schemaVersion": 1/i).waitFor()
     await page.getByTestId('export-preview').getByText(/"appName": "KannadaOS"/i).waitFor()
     await page.getByTestId('export-preview').getByText(/"conversationMessages": 6/i).waitFor()
+    await page.getByText(/Desktop data synced/i).waitFor()
+    await page.waitForFunction(async () => {
+      const data = await window.kannadaOS?.loadLearnerData?.()
+      const progress = data?.values?.['kannadaos:progress'] ?? ''
+      const conversations = data?.values?.['kannadaos:conversation-log'] ?? ''
+      const pronunciation = data?.values?.['kannadaos:pronunciation-history'] ?? ''
+
+      return (
+        progress.includes('"xp":38') &&
+        conversations.includes('Majestic hogbeku') &&
+        pronunciation.includes('namaskara-saar')
+      )
+    })
     await page.getByRole('button', { name: /manage ai models/i }).click()
     await page.getByRole('heading', { name: /Setting up your AI Teacher/i }).waitFor()
     await page.getByText(/Aya 8B Q4/i).waitFor()
@@ -129,6 +146,7 @@ async function main() {
     }
   } finally {
     fs.rmSync(runtimeDir, { recursive: true, force: true })
+    fs.rmSync(userDataDir, { recursive: true, force: true })
     await closeElectron(app)
   }
 }

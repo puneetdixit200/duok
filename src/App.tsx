@@ -34,6 +34,7 @@ import {
   serializeConversationStore,
   type ConversationStore,
 } from './services/conversationLog'
+import { applyLearnerStorage, collectLearnerStorage } from './services/learnerStore'
 import type { LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
@@ -81,6 +82,8 @@ interface ExportStatus {
   statusText: string
   runtimeText: string
 }
+
+type LearnerStoreStatus = 'loading' | 'saving' | 'synced' | 'browser' | 'error'
 
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
@@ -186,6 +189,11 @@ function App() {
   const [conversationStore, setConversationStore] = useState<ConversationStore>(() =>
     hydrateConversationStore(localStorage.getItem(conversationKey)),
   )
+  const hasDesktopLearnerStore = Boolean(window.kannadaOS?.loadLearnerData && window.kannadaOS?.saveLearnerData)
+  const [learnerStoreReady, setLearnerStoreReady] = useState(!hasDesktopLearnerStore)
+  const [learnerStoreStatus, setLearnerStoreStatus] = useState<LearnerStoreStatus>(
+    hasDesktopLearnerStore ? 'loading' : 'browser',
+  )
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
@@ -249,6 +257,79 @@ function App() {
   useEffect(() => {
     localStorage.setItem(conversationKey, serializeConversationStore(conversationStore))
   }, [conversationStore])
+
+  useEffect(() => {
+    const bridge = window.kannadaOS
+    if (!bridge?.loadLearnerData) {
+      return
+    }
+
+    let active = true
+    bridge
+      .loadLearnerData()
+      .then((payload) => {
+        if (!active) {
+          return
+        }
+
+        if (applyLearnerStorage(payload, localStorage)) {
+          const nextProgress = hydrateProgress(localStorage.getItem(progressKey))
+          const nextReminder = hydrateReminder(localStorage.getItem(reminderKey))
+          const nextRuntimeConfig = hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))
+          const nextConversationStore = hydrateConversationStore(localStorage.getItem(conversationKey))
+
+          setScreen(localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding')
+          setProgress(nextProgress)
+          setReminder(nextReminder)
+          setRuntimeConfig(nextRuntimeConfig)
+          setRuntimeSummary(createMissingLocalRuntimeSummary(nextRuntimeConfig))
+          setPronunciationHistory(hydratePronunciationHistory(localStorage.getItem(pronunciationKey)))
+          setConversationStore(nextConversationStore)
+          setChatMessages(
+            getScenarioMessages(nextConversationStore, defaultChatScenario.id, [
+              createOpeningMessage(defaultChatScenario),
+            ]),
+          )
+        }
+
+        setLearnerStoreReady(true)
+        setLearnerStoreStatus('synced')
+      })
+      .catch(() => {
+        if (active) {
+          setLearnerStoreReady(true)
+          setLearnerStoreStatus('error')
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const saveLearnerData = window.kannadaOS?.saveLearnerData
+    if (!learnerStoreReady || !saveLearnerData) {
+      return
+    }
+
+    let active = true
+    saveLearnerData(collectLearnerStorage(localStorage))
+      .then(() => {
+        if (active) {
+          setLearnerStoreStatus('synced')
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setLearnerStoreStatus('error')
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [conversationStore, learnerStoreReady, progress, pronunciationHistory, reminder, runtimeConfig])
 
   useEffect(() => {
     let active = true
@@ -1270,6 +1351,16 @@ function App() {
               </button>
             </div>
           </section>
+          <section className="reminder-card" aria-labelledby="learner-store-title">
+            <div>
+              <span className="model-category">storage</span>
+              <h3 id="learner-store-title">Offline Data Store</h3>
+              <p>{formatLearnerStoreStatus(learnerStoreStatus)}</p>
+              <small>
+                {window.kannadaOS?.saveLearnerData ? 'Electron repository' : 'Browser storage fallback'}
+              </small>
+            </div>
+          </section>
           <div className="settings-list">
             <button className="secondary-action" onClick={() => setScreen('models')} type="button">
               Manage AI Models
@@ -1640,6 +1731,26 @@ function formatDueReviewSummary(dueReviewIds: string[], progress: ProgressState)
       return `${label} - Strength ${strength}%`
     })
     .join(', ')
+}
+
+function formatLearnerStoreStatus(status: LearnerStoreStatus) {
+  if (status === 'loading') {
+    return 'Desktop data loading'
+  }
+
+  if (status === 'saving') {
+    return 'Desktop data saving'
+  }
+
+  if (status === 'synced') {
+    return 'Desktop data synced'
+  }
+
+  if (status === 'error') {
+    return 'Desktop data needs attention'
+  }
+
+  return 'Browser data store'
 }
 
 function titleCase(value: string) {
