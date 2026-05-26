@@ -639,6 +639,7 @@ describe('KannadaOS desktop app', () => {
           'pg-owner': ['Explain issue'],
         },
         chatMessagesSent: 100,
+        totalPracticeTimeMs: ((4 * 60) + 23) * 60 * 1000,
       }),
     )
     render(<App />)
@@ -649,6 +650,9 @@ describe('KannadaOS desktop app', () => {
     expect(within(stats).getByLabelText('92 XP')).toBeInTheDocument()
     expect(within(stats).getByLabelText('1 Words')).toBeInTheDocument()
     expect(within(stats).getByLabelText('30 Streak')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('14 Lessons')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('1 Stories')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('4h 23m Time')).toBeInTheDocument()
     const achievements = screen.getByLabelText('Achievements')
     expect(within(achievements).getByText('Getting Started')).toBeInTheDocument()
     expect(within(achievements).getByText(/6\/6 lesson exercises/i)).toBeInTheDocument()
@@ -734,6 +738,9 @@ describe('KannadaOS desktop app', () => {
     expect(within(stats).getByLabelText('0 XP')).toBeInTheDocument()
     expect(within(stats).getByLabelText('0 Words')).toBeInTheDocument()
     expect(within(stats).getByLabelText('0 Streak')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('0 Lessons')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('0 Stories')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('0m Time')).toBeInTheDocument()
     expect(screen.getByText(/Progress reset. Your AI model paths and hosted AI keys were kept./i)).toBeInTheDocument()
     expect(localStorage.getItem('kannadaos:pronunciation-history')).toBe('[]')
     expect(localStorage.getItem('kannadaos:conversation-log')).toBe('{}')

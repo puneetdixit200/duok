@@ -2769,6 +2769,9 @@ function App() {
     if (tab === 'me') {
       const achievementSummaries = getAchievementSummaries(progress)
       const learnedWordCount = Object.keys(progress.reviewQueue).length
+      const completedLessonCount = Object.keys(progress.lessonProgress).length
+      const completedStoryCount = getCompletedStoryCount(progress)
+      const totalPracticeTime = formatProfilePracticeTime(progress.totalPracticeTimeMs)
       const learnerLevel = Math.max(4, Math.floor(progress.xp / 80) + 1)
       return (
         <section className="panel" aria-labelledby="profile-title">
@@ -2784,6 +2787,9 @@ function App() {
             <Stat value={progress.xp} label="XP" />
             <Stat value={learnedWordCount} label="Words" />
             <Stat value={progress.streakDays} label="Streak" />
+            <Stat value={completedLessonCount} label="Lessons" />
+            <Stat value={completedStoryCount} label="Stories" />
+            <Stat value={totalPracticeTime} label="Time" />
           </div>
           <section className="chart-card" aria-label="Progress chart">
             <span style={{ height: '32%' }} />
@@ -3310,6 +3316,30 @@ function formatLessonDuration(durationMs: number): string {
   }
 
   return `${minutes}m ${seconds.toString().padStart(2, '0')}s`
+}
+
+function getCompletedStoryCount(progress: ProgressState): number {
+  const storyIds = new Set(progress.completedStoryIds)
+
+  for (const exerciseId of progress.completedExerciseIds) {
+    if (exerciseId.startsWith('story-')) {
+      storyIds.add(exerciseId.slice('story-'.length))
+    }
+  }
+
+  return storyIds.size
+}
+
+function formatProfilePracticeTime(durationMs: number): string {
+  const totalMinutes = Math.max(0, Math.floor(durationMs / 60000))
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  }
+
+  return `${minutes}m`
 }
 
 function createOpeningMessage(scenario: Scenario): ChatMessage {
