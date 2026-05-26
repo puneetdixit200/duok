@@ -133,6 +133,100 @@ const defaultReminderPreference: ReminderPreference = {
   permission: 'default',
 }
 
+interface ReadableSubtitle {
+  romanization: string
+  english: string
+}
+
+const kannadaWordGlossary: Record<string, ReadableSubtitle> = {
+  'ನಮಸ್ಕಾರ': { romanization: 'namaskara', english: 'hello' },
+  'ಸಾರ್': { romanization: 'saar', english: 'sir' },
+  'ಹೇಗಿದ್ದೀರಾ': { romanization: 'hegiddira', english: 'how are you' },
+  'ಚೆನ್ನಾಗಿದ್ದೇನೆ': { romanization: 'chennagiddene', english: 'I am fine' },
+  'ಹೋಗಬೇಕು': { romanization: 'hogbeku', english: 'need to go' },
+  'ಟಿಕೆಟ್': { romanization: 'ticket', english: 'ticket' },
+  'ಎಷ್ಟು': { romanization: 'eshtu', english: 'how much' },
+  'ಧನ್ಯವಾದ': { romanization: 'dhanyavada', english: 'thank you' },
+  'ಹೋಗಿ': { romanization: 'hogi', english: 'go' },
+  'ಹೋಗು': { romanization: 'hogu', english: 'go' },
+  'ಬನ್ನಿ': { romanization: 'banni', english: 'come back' },
+  'ಬಾ': { romanization: 'baa', english: 'come' },
+  'ನಾನು': { romanization: 'naanu', english: 'I' },
+  'ಶಾಲೆಗೆ': { romanization: 'shaalege', english: 'to school' },
+  'ಬರುತ್ತೇನೆ': { romanization: 'baruttene', english: 'I will come' },
+  'ತಿನ್ನುತ್ತೇನೆ': { romanization: 'tinnuttini', english: 'I will eat' },
+  'ಮಾಡುತ್ತೇನೆ': { romanization: 'maduttene', english: 'I will do' },
+  'ನನಗೆ': { romanization: 'nanage', english: 'to me' },
+  'ನೀರು': { romanization: 'neeru', english: 'water' },
+  'ಬೇಕು': { romanization: 'beku', english: 'want' },
+  'ಬೇಡ': { romanization: 'beda', english: 'do not want' },
+  'ಸ್ವಲ್ಪ': { romanization: 'swalpa', english: 'a little' },
+  'ಕನ್ನಡ': { romanization: 'kannada', english: 'Kannada' },
+  'ಬರುತ್ತದೆ': { romanization: 'baruttade', english: 'comes' },
+  'ಊಟ': { romanization: 'oota', english: 'meal' },
+  'ಆಯ್ತಾ': { romanization: 'aayta', english: 'done?' },
+  'ಇಲ್ಲಿ': { romanization: 'illi', english: 'here' },
+  'ನಿಲ್ಲಿಸಿ': { romanization: 'nillisi', english: 'stop' },
+}
+
+const independentVowels: Record<string, string> = {
+  ಅ: 'a',
+  ಆ: 'aa',
+  ಇ: 'i',
+  ಈ: 'ii',
+  ಉ: 'u',
+  ಊ: 'uu',
+  ಎ: 'e',
+  ಏ: 'ee',
+  ಐ: 'ai',
+  ಒ: 'o',
+  ಓ: 'oo',
+  ಔ: 'au',
+}
+
+const consonants: Record<string, string> = {
+  ಕ: 'k',
+  ಖ: 'kh',
+  ಗ: 'g',
+  ಘ: 'gh',
+  ಚ: 'ch',
+  ಜ: 'j',
+  ಟ: 't',
+  ಡ: 'd',
+  ಣ: 'na',
+  ತ: 't',
+  ದ: 'd',
+  ನ: 'n',
+  ಪ: 'p',
+  ಬ: 'b',
+  ಭ: 'bh',
+  ಮ: 'm',
+  ಯ: 'y',
+  ರ: 'r',
+  ಲ: 'l',
+  ವ: 'v',
+  ಶ: 'sh',
+  ಷ: 'sh',
+  ಸ: 's',
+  ಹ: 'h',
+  ಳ: 'la',
+}
+
+const vowelSigns: Record<string, string> = {
+  'ಾ': 'aa',
+  'ಿ': 'i',
+  'ೀ': 'ii',
+  'ು': 'u',
+  'ೂ': 'uu',
+  'ೆ': 'e',
+  'ೇ': 'ee',
+  'ೈ': 'ai',
+  'ೊ': 'o',
+  'ೋ': 'oo',
+  'ೌ': 'au',
+  'ೃ': 'ru',
+}
+
 const pendingModels: ModelSetupItem[] = [
   {
     name: 'Aya 8B Q4',
@@ -187,6 +281,154 @@ const activeSetupModels: ModelSetupItem[] = pendingModels.map((model) => {
 
   return model
 })
+
+function SubtitleLines({ text, context }: { text: string; context?: LessonExercise }) {
+  const subtitle = getKannadaSubtitle(text, context)
+
+  if (!subtitle) {
+    return null
+  }
+
+  return (
+    <span className="kannada-subtitles">
+      <small className="romanization">{subtitle.romanization}</small>
+      {subtitle.english && subtitle.english.toLowerCase() !== subtitle.romanization.toLowerCase() && (
+        <small className="english-subtitle">{subtitle.english}</small>
+      )}
+    </span>
+  )
+}
+
+function ChoiceText({ text, context }: { text: string; context?: LessonExercise }) {
+  if (!containsKannada(text)) {
+    return text
+  }
+
+  return (
+    <span className="choice-text">
+      <span lang="kn">{text}</span>
+      <SubtitleLines text={text} context={context} />
+    </span>
+  )
+}
+
+function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
+  if (!containsKannada(text)) {
+    return null
+  }
+
+  const phrase = survivalPhrases.find((item) => normalizeKannadaText(item.kannada) === normalizeKannadaText(text))
+  if (phrase) {
+    return { romanization: phrase.transliteration, english: phrase.english }
+  }
+
+  const words = splitKannadaWords(text)
+  if (words.length === 1) {
+    const wordGloss = kannadaWordGlossary[words[0]]
+    if (wordGloss) {
+      return wordGloss
+    }
+  }
+
+  if (context && (text === context.kannada || text === context.answer)) {
+    return {
+      romanization: context.transliteration || romanizeKannadaWords(text),
+      english: context.english || (containsKannada(context.answer) ? glossKannadaWords(text) : context.answer),
+    }
+  }
+
+  return {
+    romanization: romanizeKannadaWords(text),
+    english: glossKannadaWords(text),
+  }
+}
+
+function containsKannada(text: string): boolean {
+  return /[\u0C80-\u0CFF]/.test(text)
+}
+
+function normalizeKannadaText(text: string): string {
+  return text.normalize('NFC').replace(/[?!.,:;]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function splitKannadaWords(text: string): string[] {
+  return normalizeKannadaText(text).split(/\s+/).filter(Boolean)
+}
+
+function romanizeKannadaWords(text: string): string {
+  return splitKannadaWords(text)
+    .map((word) => kannadaWordGlossary[word]?.romanization ?? romanizeKannadaScript(word))
+    .join(' ')
+}
+
+function glossKannadaWords(text: string): string {
+  return splitKannadaWords(text)
+    .map((word) => kannadaWordGlossary[word]?.english ?? '')
+    .filter(Boolean)
+    .join(' ')
+}
+
+function romanizeKannadaScript(text: string): string {
+  let output = ''
+  let pendingConsonant = ''
+
+  for (const character of Array.from(text)) {
+    const consonant = consonants[character]
+    if (consonant) {
+      output += flushKannadaConsonant(pendingConsonant)
+      pendingConsonant = consonant
+      continue
+    }
+
+    if (character in vowelSigns) {
+      output += pendingConsonant ? `${pendingConsonant}${vowelSigns[character]}` : vowelSigns[character]
+      pendingConsonant = ''
+      continue
+    }
+
+    if (character === '್') {
+      output += pendingConsonant
+      pendingConsonant = ''
+      continue
+    }
+
+    const vowel = independentVowels[character]
+    if (vowel) {
+      output += flushKannadaConsonant(pendingConsonant)
+      output += vowel
+      pendingConsonant = ''
+      continue
+    }
+
+    if (character === 'ಂ') {
+      output += flushKannadaConsonant(pendingConsonant)
+      output += 'm'
+      pendingConsonant = ''
+      continue
+    }
+
+    output += flushKannadaConsonant(pendingConsonant)
+    output += character
+    pendingConsonant = ''
+  }
+
+  return `${output}${flushKannadaConsonant(pendingConsonant)}`.replace(/\s+/g, ' ').trim()
+}
+
+function flushKannadaConsonant(consonant: string): string {
+  return consonant ? `${consonant}a` : ''
+}
+
+function formatReadableExample(example: string): string {
+  const subtitle = getKannadaSubtitle(example)
+
+  if (!subtitle) {
+    return example
+  }
+
+  const english = subtitle.english ? ` - ${subtitle.english}` : ''
+  return `${example} (${subtitle.romanization}${english})`
+}
 
 function App() {
   const curriculum = useMemo(() => getLevelOneCurriculum(), [])
@@ -1417,6 +1659,7 @@ function App() {
             <div>
               <strong>KannadaOS</strong>
               <p>ಕನ್ನಡ ಕಲಿಯಿರಿ</p>
+              <small>Learn Kannada</small>
             </div>
           </div>
           <nav className="nav-stack">
@@ -1522,7 +1765,10 @@ function App() {
             {selectedScenario.usefulPhrases.map((phrase) => (
               <button key={phrase.id} onClick={() => setChatInput(phrase.kannada)} type="button">
                 <strong lang="kn">{phrase.kannada}</strong>
-                <small>{phrase.english}</small>
+                <span className="kannada-subtitles">
+                  <small className="romanization">{phrase.transliteration}</small>
+                  <small className="english-subtitle">{phrase.english}</small>
+                </span>
               </button>
             ))}
           </div>
@@ -1569,6 +1815,7 @@ function App() {
           <div className="review-layout">
             <button className="flashcard" onClick={() => setFlashcardBack((value) => !value)} type="button">
               <span lang="kn">{card.kannada}</span>
+              <small className="romanization">{card.transliteration}</small>
               <strong>{flashcardBack ? card.english : card.transliteration}</strong>
               {flashcardBack ? <small>{card.context}</small> : <small>Tap to flip</small>}
             </button>
@@ -1619,7 +1866,10 @@ function App() {
                   type="button"
                 >
                   <strong lang="kn">{phrase.kannada}</strong>
-                  <small>{phrase.transliteration}</small>
+                  <span className="kannada-subtitles">
+                    <small className="romanization">{phrase.transliteration}</small>
+                    <small className="english-subtitle">{phrase.english}</small>
+                  </span>
                 </button>
               ))}
             </div>
@@ -1627,7 +1877,10 @@ function App() {
               <div>
                 <span className="model-category">target phrase</span>
                 <strong lang="kn">{activePronunciationPhrase.kannada}</strong>
-                <small>{activePronunciationPhrase.english}</small>
+                <span className="kannada-subtitles">
+                  <small className="romanization">{activePronunciationPhrase.transliteration}</small>
+                  <small className="english-subtitle">{activePronunciationPhrase.english}</small>
+                </span>
               </div>
               <div className="waveform compact" aria-hidden="true">
                 {Array.from({ length: 14 }, (_, index) => (
@@ -1719,7 +1972,8 @@ function App() {
                         onClick={() => setSelectedStoryWord(word)}
                         type="button"
                       >
-                        {word.text}
+                        <span lang="kn">{word.text}</span>
+                        <small>{word.transliteration}</small>
                       </button>
                     ))}
                   </div>
@@ -1733,7 +1987,10 @@ function App() {
               <aside className="word-popover" role="dialog" aria-label={selectedStoryWord.text}>
                 <div>
                   <strong lang="kn">{selectedStoryWord.text}</strong>
-                  <span>{selectedStoryWord.transliteration}</span>
+                  <span className="kannada-subtitles">
+                    <small className="romanization">{selectedStoryWord.transliteration}</small>
+                    <small className="english-subtitle">{selectedStoryWord.english}</small>
+                  </span>
                 </div>
                 <p>{selectedStoryWord.english}</p>
                 <small>{selectedStoryWord.note}</small>
@@ -2068,7 +2325,7 @@ function App() {
             <article key={tip.title}>
               <strong>{tip.title}</strong>
               <p>{tip.body}</p>
-              <small>{tip.examples.join(' / ')}</small>
+              <small>{tip.examples.map(formatReadableExample).join(' / ')}</small>
             </article>
           ))}
         </section>
@@ -2129,7 +2386,17 @@ function App() {
         <>
           <div className="phrase-card">
             <small>{exercise.english}</small>
-            <strong lang="kn">{placedWords.length ? placedWords.join(' ') : 'Tap words below'}</strong>
+            {placedWords.length ? (
+              <>
+                <strong lang="kn">{placedWords.join(' ')}</strong>
+                <SubtitleLines text={placedWords.join(' ')} context={exercise} />
+              </>
+            ) : (
+              <>
+                <strong>Tap words below</strong>
+                <SubtitleLines text={exercise.answer} context={exercise} />
+              </>
+            )}
           </div>
           <div className="word-bank" aria-label="Word bank">
             {exercise.options.map((word) => (
@@ -2140,7 +2407,7 @@ function App() {
                 onClick={() => selectArrangeWord(word)}
                 type="button"
               >
-                {word}
+                <ChoiceText text={word} context={exercise} />
               </button>
             ))}
           </div>
@@ -2171,7 +2438,7 @@ function App() {
         <>
           <div className="phrase-card">
             <strong lang="kn">{exercise.kannada}</strong>
-            <span>{exercise.transliteration}</span>
+            <SubtitleLines text={exercise.kannada} context={exercise} />
           </div>
           <div className="speaking-card">
             <div className="waveform" aria-hidden="true">
@@ -2208,7 +2475,7 @@ function App() {
           <div className="phrase-card">
             <small>{exercise.english}</small>
             <strong lang="kn">{exercise.answer}</strong>
-            <span>{exercise.transliteration}</span>
+            <SubtitleLines text={exercise.answer} context={exercise} />
             <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
             </button>
@@ -2254,7 +2521,7 @@ function App() {
           <div className="phrase-card dialogue-card">
             <small>Reply to the line</small>
             <strong lang="kn">{exercise.kannada}</strong>
-            <span>{exercise.transliteration}</span>
+            <SubtitleLines text={exercise.kannada} context={exercise} />
             <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
             </button>
@@ -2277,7 +2544,7 @@ function App() {
                 onClick={() => handleMatchSelection(pair.left, 'left', exercise)}
                 type="button"
               >
-                {pair.left}
+                <ChoiceText text={pair.left} context={exercise} />
               </button>
             ))}
           </div>
@@ -2289,7 +2556,7 @@ function App() {
                 onClick={() => handleMatchSelection(pair.right, 'right', exercise)}
                 type="button"
               >
-                {pair.right}
+                <ChoiceText text={pair.right} context={exercise} />
               </button>
             ))}
           </div>
@@ -2302,7 +2569,7 @@ function App() {
       <>
         <div className="phrase-card">
           <strong lang="kn">{exercise.kannada}</strong>
-          {exercise.transliteration && <span>{exercise.transliteration}</span>}
+          <SubtitleLines text={exercise.kannada} context={exercise} />
           {exercise.english && <small>{exercise.english}</small>}
           <button type="button" className="mini-button" onClick={() => void playExerciseReference(exercise)}>
             Listen
@@ -2324,7 +2591,7 @@ function App() {
             onClick={() => setSelectedAnswer(option)}
             type="button"
           >
-            {option}
+            <ChoiceText text={option} context={exercise} />
           </button>
         ))}
       </div>

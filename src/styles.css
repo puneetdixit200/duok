@@ -75,6 +75,9 @@ button:disabled {
 }
 
 .eyebrow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
   margin: 0 0 8px;
   color: #ffbc8a;
   font-size: 12px;
@@ -212,9 +215,17 @@ h2 {
 }
 
 .brand-lockup p,
+.brand-lockup small,
 .profile-header p {
   margin: 0;
   color: #9b9ab0;
+}
+
+.brand-lockup small {
+  display: block;
+  margin-top: 2px;
+  color: #ffbc8a;
+  font-weight: 800;
 }
 
 .nav-stack {
@@ -460,6 +471,40 @@ h2 {
   font-style: italic;
 }
 
+.kannada-subtitles,
+.choice-text {
+  display: grid;
+  gap: 2px;
+}
+
+.kannada-subtitles {
+  color: #c9c7d6;
+  line-height: 1.25;
+}
+
+.phrase-card .kannada-subtitles,
+.pronunciation-target .kannada-subtitles {
+  justify-items: center;
+  text-align: center;
+}
+
+.romanization {
+  color: #ffbc8a;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.english-subtitle {
+  color: #c9c7d6;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.choice-text > span:first-child {
+  font-size: 20px;
+  font-weight: 900;
+}
+
 .option-stack {
   display: grid;
   gap: 10px;
@@ -494,7 +539,7 @@ h2 {
 
 .answer-option {
   min-height: 56px;
-  padding: 0 18px;
+  padding: 10px 18px;
   text-align: left;
 }
 
@@ -838,6 +883,13 @@ h2 {
   text-align: left;
 }
 
+.suggestion-row .kannada-subtitles,
+.selector-chip .kannada-subtitles,
+.word-popover .kannada-subtitles {
+  justify-items: start;
+  text-align: left;
+}
+
 .voice-status {
   margin: 0;
   border-left: 5px solid #10b981;
@@ -1144,13 +1196,20 @@ h2 {
 }
 
 .word-token {
-  min-height: 40px;
+  display: grid;
+  min-height: 48px;
+  gap: 2px;
   border: 1px solid #3d3d5c;
-  border-radius: 999px;
-  padding: 0 14px;
+  border-radius: 12px;
+  padding: 6px 14px;
   background: rgba(255, 107, 44, 0.12);
   color: #ffbc8a;
   font-weight: 900;
+}
+
+.word-token small {
+  color: #c9c7d6;
+  font-size: 12px;
 }
 
 .word-popover {
