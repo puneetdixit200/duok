@@ -6,6 +6,7 @@ export const learnerStorageKeys = [
   'kannadaos:ai-provider',
   'kannadaos:pronunciation-history',
   'kannadaos:conversation-log',
+  'kannadaos:ai-expansion',
 ] as const
 
 export type LearnerStorageKey = (typeof learnerStorageKeys)[number]

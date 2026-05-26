@@ -43,6 +43,11 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
     expect(screen.getByText(/12 Day Streak/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Continue: Greetings/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Greetings & Introductions/i })).toBeInTheDocument()
+    expect(screen.getByText(/Respectful address/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Daily quests/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Curriculum map/i)).toHaveTextContent(/Kannada Script/i)
+    expect(screen.getByLabelText(/Curriculum map/i)).toHaveTextContent(/Numbers & Prices/i)
   })
 
   it('checks a lesson answer, awards XP, and shows feedback', async () => {
@@ -92,10 +97,12 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     expect(screen.getByText('speaking')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /play reference audio/i }))
+    expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /record phrase/i }))
     expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
-    expect(await screen.findByText(/Score: 98%/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Score: 100%/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
@@ -111,6 +118,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/Confetti celebration/i)).toBeInTheDocument()
     expect(screen.getByText(/\+18 XP/i)).toBeInTheDocument()
     expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
   }, 30_000)
@@ -437,6 +445,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
     await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
+    expect(screen.getByRole('button', { name: /question will return/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /close lesson/i }))
     await user.click(screen.getByRole('button', { name: /practice/i }))
 
@@ -444,7 +453,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Adaptive difficulty: Gentle/i)).toBeInTheDocument()
     expect(screen.getByText(/Greetings needs review/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText(/Strength 25%/i)).toBeInTheDocument()
+    expect(screen.getByText(/Strength 20%/i)).toBeInTheDocument()
   })
 
   it('scores pronunciation practice and persists the latest attempt', async () => {
@@ -463,7 +472,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /score pronunciation/i }))
 
     const pronunciationResult = screen.getByLabelText(/Pronunciation result/i)
-    expect(within(pronunciationResult).getByText(/Score 98/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Score 100/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/Clear pronunciation/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/No problem syllables/i)).toBeInTheDocument()
     expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
@@ -472,7 +481,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
     await user.click(screen.getByRole('button', { name: /practice/i }))
 
-    expect(screen.getByText(/Last score 98/i)).toBeInTheDocument()
+    expect(screen.getByText(/Last score 100/i)).toBeInTheDocument()
     expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
   })
 
@@ -517,7 +526,7 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
     expect(screen.getByText(/namaskara saar = Hello sir/i)).toBeInTheDocument()
     expect(screen.getByDisplayValue('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
-    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score 98/i)
+    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score 100/i)
   })
 
   it('shows a clear error when recorded chat audio cannot be transcribed', async () => {
@@ -864,6 +873,8 @@ describe('KannadaOS desktop app', () => {
 
     expect(generateNativeExercise).toHaveBeenCalled()
     expect(await screen.findByText(/Native: Native generated prompt ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/AI curriculum expansion/i)).toHaveTextContent(/1 saved drill/i)
+    expect(localStorage.getItem('kannadaos:ai-expansion')).toContain('Native generated prompt')
   })
 
   it('opens story mode, shows interactive words, and completes the story quiz', async () => {
@@ -876,10 +887,10 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /First Day in Bangalore/i })).toBeInTheDocument()
-    expect(screen.getByText(/5 min read/i)).toBeInTheDocument()
-    expect(screen.getByText(/12 new words/i)).toBeInTheDocument()
-    expect(screen.getByText(/Office Lunch/i)).toBeInTheDocument()
-    expect(screen.getByText(/^Locked$/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/5 min read/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/12 new words/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/Office Lunch/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText(/Complete First Day in Bangalore first/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
 

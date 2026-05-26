@@ -10,11 +10,24 @@ describe('pronunciation scoring', () => {
       targetParts: ['ನಮಸ್ಕಾರ', 'ಸಾರ್'],
     })
 
-    expect(result.score).toBeGreaterThanOrEqual(95)
+    expect(result.score).toBe(100)
     expect(result.level).toBe('clear')
     expect(result.problemParts).toEqual([])
     expect(result.feedback).toMatch(/clear/i)
     expect(result.tip).toMatch(/keep/i)
+  })
+
+  it('gives low scores to unrelated speech instead of starting at a passing floor', () => {
+    const result = scorePronunciation({
+      expectedText: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      expectedTransliteration: 'namaskara saar',
+      transcript: 'ಬಸ್ ಟಿಕೆಟ್',
+      targetParts: ['ನಮಸ್ಕಾರ', 'ಸಾರ್'],
+    })
+
+    expect(result.score).toBeLessThan(50)
+    expect(result.level).toBe('needs-practice')
+    expect(result.problemParts).toEqual(['ನಮಸ್ಕಾರ', 'ಸಾರ್'])
   })
 
   it('flags missing phrase parts and returns a specific practice tip', () => {
@@ -40,7 +53,7 @@ describe('pronunciation scoring', () => {
       targetParts: ['ಟಿಕೆಟ್', 'ಎಷ್ಟು'],
     })
 
-    expect(result.score).toBeGreaterThanOrEqual(95)
+    expect(result.score).toBe(100)
     expect(result.level).toBe('clear')
   })
 })

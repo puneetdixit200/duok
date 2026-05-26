@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('kannadaOS', {
   platform: process.platform,
+  e2e: process.env.E2E === '1',
   inspectLocalRuntime: (config) => ipcRenderer.invoke('local-runtime:inspect', config),
   smokeLocalRuntime: (config) => ipcRenderer.invoke('local-runtime:smoke', config),
   generateNativeExercise: (request) => ipcRenderer.invoke('local-runtime:generate-exercise', request),

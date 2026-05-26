@@ -3,6 +3,14 @@ export interface ReviewItem {
   dueAt: string
   strength: number
   attempts: number
+  leitnerBox: number
+}
+
+export interface LessonProgress {
+  lessonId: string
+  masteryLevel: number
+  attempts: number
+  lastCompletedAt: string
 }
 
 export interface ProgressState {
@@ -15,6 +23,9 @@ export interface ProgressState {
   completedExerciseIds: string[]
   weakAreas: Record<string, number>
   reviewQueue: Record<string, ReviewItem>
+  lessonProgress: Record<string, LessonProgress>
+  dailyQuestClaims: Record<string, string[]>
+  streakFreezes: number
 }
 
 export interface ExerciseResult {
@@ -50,6 +61,24 @@ export interface AchievementSummary {
   progressLabel: string
 }
 
+export interface LessonProgressSummary {
+  completed: boolean
+  masteryLevel: number
+  attempts: number
+  lastCompletedAt: string | null
+}
+
+export interface DailyQuest {
+  id: string
+  title: string
+  description: string
+  current: number
+  target: number
+  rewardGems: number
+  completed: boolean
+  claimed: boolean
+}
+
 export function createInitialProgress(): ProgressState {
   return {
     xp: 0,
@@ -61,6 +90,9 @@ export function createInitialProgress(): ProgressState {
     completedExerciseIds: [],
     weakAreas: {},
     reviewQueue: {},
+    lessonProgress: {},
+    dailyQuestClaims: {},
+    streakFreezes: 0,
   }
 }
 
@@ -72,16 +104,16 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
 
   for (const vocabularyId of result.vocabularyIds) {
     const previous = reviewQueue[vocabularyId]
-    const previousStrength = previous?.strength ?? 0.5
-    const strength = result.correct
-      ? Math.min(1, previousStrength + 0.2)
-      : Math.max(0.1, previousStrength - 0.25)
-    const dueAt = result.correct ? addDays(result.now, 2) : result.now
+    const previousBox = clampLeitnerBox(previous?.leitnerBox ?? inferLeitnerBox(previous?.strength))
+    const leitnerBox = result.correct ? clampLeitnerBox(previousBox + 1) : 1
+    const strength = leitnerBox / 5
+    const dueAt = result.correct ? addDays(result.now, getLeitnerIntervalDays(leitnerBox)) : result.now
     reviewQueue[vocabularyId] = {
       vocabularyId,
       dueAt,
       strength,
       attempts: (previous?.attempts ?? 0) + 1,
+      leitnerBox,
     }
   }
 
@@ -102,6 +134,43 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
           [result.skillTag]: (state.weakAreas[result.skillTag] ?? 0) + 1,
         },
     reviewQueue,
+  }
+}
+
+export function completeLessonProgress(
+  state: ProgressState,
+  lessonId: string,
+  completedAt: string,
+): ProgressState {
+  const previous = state.lessonProgress[lessonId]
+  const masteryLevel = Math.min(5, (previous?.masteryLevel ?? 0) + 1)
+
+  return {
+    ...state,
+    gems: state.gems + (previous ? 5 : 15),
+    lessonProgress: {
+      ...state.lessonProgress,
+      [lessonId]: {
+        lessonId,
+        masteryLevel,
+        attempts: (previous?.attempts ?? 0) + 1,
+        lastCompletedAt: completedAt,
+      },
+    },
+  }
+}
+
+export function getLessonProgressSummary(
+  state: ProgressState,
+  lessonId: string,
+): LessonProgressSummary {
+  const progress = state.lessonProgress[lessonId]
+
+  return {
+    completed: Boolean(progress),
+    masteryLevel: progress?.masteryLevel ?? 0,
+    attempts: progress?.attempts ?? 0,
+    lastCompletedAt: progress?.lastCompletedAt ?? null,
   }
 }
 
@@ -218,9 +287,96 @@ export function hydrateProgress(serialized: string | null): ProgressState {
   }
 
   try {
-    return { ...createInitialProgress(), ...JSON.parse(serialized) }
+    const hydrated = { ...createInitialProgress(), ...JSON.parse(serialized) } as ProgressState
+    hydrated.reviewQueue = hydrateReviewQueue(hydrated.reviewQueue)
+    return hydrated
   } catch {
     return createInitialProgress()
+  }
+}
+
+export function getDailyQuests(state: ProgressState, now: string): DailyQuest[] {
+  const dateKey = now.slice(0, 10)
+  const claimed = new Set(state.dailyQuestClaims[dateKey] ?? [])
+  const completedToday = state.completedExerciseIds.length
+
+  return [
+    {
+      id: 'daily-xp-10',
+      title: 'Earn 10 XP',
+      description: 'Hit the daily XP goal.',
+      current: Math.min(10, state.dailyXp),
+      target: 10,
+      rewardGems: 10,
+      completed: state.dailyXp >= 10,
+      claimed: claimed.has('daily-xp-10'),
+    },
+    {
+      id: 'daily-activities-3',
+      title: 'Complete 3 activities',
+      description: 'Finish any three lesson, story, or review activities.',
+      current: Math.min(3, completedToday),
+      target: 3,
+      rewardGems: 15,
+      completed: completedToday >= 3,
+      claimed: claimed.has('daily-activities-3'),
+    },
+    {
+      id: 'daily-perfect-lesson',
+      title: 'Keep every heart',
+      description: 'Finish a lesson while still holding all five hearts.',
+      current: state.hearts >= 5 && state.dailyXp >= 18 ? 1 : 0,
+      target: 1,
+      rewardGems: 20,
+      completed: state.hearts >= 5 && state.dailyXp >= 18,
+      claimed: claimed.has('daily-perfect-lesson'),
+    },
+  ]
+}
+
+export function claimDailyQuestReward(state: ProgressState, quest: DailyQuest, now = '2026-05-27T00:00:00.000Z'): ProgressState {
+  if (!quest.completed) {
+    return state
+  }
+
+  const dateKey = now.slice(0, 10)
+  const claimed = state.dailyQuestClaims[dateKey] ?? []
+
+  if (claimed.includes(quest.id)) {
+    return state
+  }
+
+  return {
+    ...state,
+    gems: state.gems + quest.rewardGems,
+    dailyQuestClaims: {
+      ...state.dailyQuestClaims,
+      [dateKey]: [...claimed, quest.id],
+    },
+  }
+}
+
+export function refillHeartsWithGems(state: ProgressState, cost = 50): ProgressState {
+  if (state.hearts >= 5 || state.gems < cost) {
+    return state
+  }
+
+  return {
+    ...state,
+    hearts: 5,
+    gems: state.gems - cost,
+  }
+}
+
+export function buyStreakFreeze(state: ProgressState, cost = 100): ProgressState {
+  if (state.gems < cost) {
+    return state
+  }
+
+  return {
+    ...state,
+    gems: state.gems - cost,
+    streakFreezes: state.streakFreezes + 1,
   }
 }
 
@@ -228,6 +384,39 @@ function addDays(isoDate: string, days: number): string {
   const date = new Date(isoDate)
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString()
+}
+
+function getLeitnerIntervalDays(box: number): number {
+  return [1, 3, 7, 14, 30][clampLeitnerBox(box) - 1]
+}
+
+function clampLeitnerBox(box: number): number {
+  return Math.max(1, Math.min(5, Math.round(box)))
+}
+
+function inferLeitnerBox(strength: number | undefined): number {
+  if (typeof strength !== 'number') {
+    return 1
+  }
+
+  return clampLeitnerBox(Math.ceil(strength * 5))
+}
+
+function hydrateReviewQueue(reviewQueue: ProgressState['reviewQueue']): ProgressState['reviewQueue'] {
+  return Object.fromEntries(
+    Object.entries(reviewQueue).map(([vocabularyId, item]) => {
+      const leitnerBox = clampLeitnerBox(item.leitnerBox ?? inferLeitnerBox(item.strength))
+      return [
+        vocabularyId,
+        {
+          ...item,
+          vocabularyId: item.vocabularyId ?? vocabularyId,
+          leitnerBox,
+          strength: item.strength ?? leitnerBox / 5,
+        },
+      ]
+    }),
+  )
 }
 
 function getWeakSkillPriority(mistakes: number): WeakSkillPriority {

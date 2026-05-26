@@ -36,6 +36,7 @@ declare global {
   interface Window {
     kannadaOS?: {
       platform: string
+      e2e?: boolean
       inspectLocalRuntime?: (config: LocalRuntimeConfig) => Promise<LocalRuntimeSummary>
       smokeLocalRuntime?: (config: LocalRuntimeConfig) => Promise<LocalRuntimeSmokeSummary>
       generateNativeExercise?: (request: NativeExerciseRequest) => Promise<NativeExerciseResponse>

@@ -23,7 +23,7 @@ export function scorePronunciation(input: PronunciationScoreInput): Pronunciatio
   const expected = normalizeForScoring(input.expectedText)
   const transcript = normalizeForScoring(input.transcript)
   const similarity = expected && transcript ? calculateSimilarity(expected, transcript) : 0
-  const score = Math.max(0, Math.min(99, Math.round(55 + similarity * 43)))
+  const score = Math.max(0, Math.min(100, Math.round(20 + similarity * 80)))
   const problemParts = input.targetParts.filter((part) => {
     const normalizedPart = normalizeForScoring(part)
     return normalizedPart && !transcript.includes(normalizedPart)

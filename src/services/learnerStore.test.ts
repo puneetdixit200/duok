@@ -15,12 +15,14 @@ describe('renderer learner storage repository', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:progress', '{"xp":42}')
     localStorage.setItem('kannadaos:conversation-log', '{"auto-ride":[]}')
+    localStorage.setItem('kannadaos:ai-expansion', '[{"prompt":"AI commute drill"}]')
     localStorage.setItem('foreign:key', 'ignore me')
 
     expect(collectLearnerStorage(localStorage)).toEqual({
       'kannadaos:onboarded': 'true',
       'kannadaos:progress': '{"xp":42}',
       'kannadaos:conversation-log': '{"auto-ride":[]}',
+      'kannadaos:ai-expansion': '[{"prompt":"AI commute drill"}]',
     })
   })
 
@@ -32,6 +34,7 @@ describe('renderer learner storage repository', () => {
       values: {
         'kannadaos:onboarded': 'true',
         'kannadaos:progress': '{"xp":42}',
+        'kannadaos:ai-expansion': '[{"prompt":"AI commute drill"}]',
         'foreign:key': 'ignore me',
       },
     }
@@ -39,6 +42,7 @@ describe('renderer learner storage repository', () => {
     expect(applyLearnerStorage(payload, localStorage)).toBe(true)
     expect(localStorage.getItem('kannadaos:onboarded')).toBe('true')
     expect(localStorage.getItem('kannadaos:progress')).toBe('{"xp":42}')
+    expect(localStorage.getItem('kannadaos:ai-expansion')).toBe('[{"prompt":"AI commute drill"}]')
     expect(localStorage.getItem('foreign:key')).toBeNull()
   })
 

@@ -5,6 +5,8 @@ export type ExerciseType =
   | 'listening'
   | 'speaking'
   | 'matchPairs'
+  | 'typeKannada'
+  | 'dialogue'
 
 export interface Phrase {
   id: string
@@ -36,6 +38,39 @@ export interface Curriculum {
   description: string
   phrases: Phrase[]
   exercises: LessonExercise[]
+}
+
+export interface GrammarTip {
+  title: string
+  body: string
+  examples: string[]
+}
+
+export interface ScriptSymbol {
+  id: string
+  kind: 'vowel' | 'consonant' | 'combination'
+  kannada: string
+  transliteration: string
+  soundHint: string
+}
+
+export interface CurriculumLesson {
+  id: string
+  unitId: string
+  title: string
+  subtitle: string
+  objective: string
+  exercises: LessonExercise[]
+}
+
+export interface CurriculumUnit {
+  id: string
+  title: string
+  description: string
+  optional: boolean
+  tips: GrammarTip[]
+  lessons: CurriculumLesson[]
+  scriptSymbols: ScriptSymbol[]
 }
 
 export interface Scenario {

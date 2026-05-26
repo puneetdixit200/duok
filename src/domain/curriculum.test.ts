@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import {
   bangaloreScenarios,
+  coreCurriculumUnits,
+  getAllLessonExercises,
   getExerciseCoverage,
   getLevelOneCurriculum,
+  getLessonById,
+  getNextAvailableLesson,
+  getScriptCurriculumUnit,
+  getStoryLockState,
+  getUnlockedCurriculumUnits,
+  stories,
+  transliterateLatinToKannada,
 } from './curriculum'
+import { completeLessonProgress, createInitialProgress } from './progress'
 
 describe('KannadaOS level 1 curriculum', () => {
   it('ships at least 20 survival phrases with Kannada, transliteration, English, and Bangalore context', () => {
@@ -49,5 +59,89 @@ describe('KannadaOS level 1 curriculum', () => {
     ])
     expect(bangaloreScenarios[0].checklist).toContain('Ask the fare')
     expect(bangaloreScenarios[1].openingLine.kannada).toContain('ಎಲ್ಲಿಗೆ')
+  })
+
+  it('ships a Duolingo-grade beginner path with 8 core units, 5 lessons each, grammar tips, and 150+ exercises', () => {
+    expect(coreCurriculumUnits).toHaveLength(8)
+    expect(coreCurriculumUnits.map((unit) => unit.title)).toEqual([
+      'Greetings & Introductions',
+      'Numbers & Prices',
+      'Transport & Directions',
+      'Food & Ordering',
+      'Shopping & Bargaining',
+      'Home & PG Life',
+      'Office & Workplace',
+      'Emergencies & Health',
+    ])
+
+    for (const unit of coreCurriculumUnits) {
+      expect(unit.optional).toBe(false)
+      expect(unit.lessons).toHaveLength(5)
+      expect(unit.tips.length).toBeGreaterThanOrEqual(2)
+      expect(unit.lessons.every((lesson) => lesson.exercises.length >= 6)).toBe(true)
+      expect(unit.lessons.every((lesson) => new Set(lesson.exercises.map((exercise) => exercise.type)).size >= 6)).toBe(true)
+    }
+
+    const exercises = getAllLessonExercises(coreCurriculumUnits)
+    expect(exercises.length).toBeGreaterThanOrEqual(150)
+    expect(exercises.some((exercise) => exercise.type === 'typeKannada')).toBe(true)
+    expect(exercises.some((exercise) => exercise.type === 'dialogue')).toBe(true)
+    expect(new Set(exercises.map((exercise) => exercise.id)).size).toBe(exercises.length)
+  })
+
+  it('includes an optional Kannada script unit with vowels, consonants, and vowel-sign combinations', () => {
+    const scriptUnit = getScriptCurriculumUnit()
+
+    expect(scriptUnit.optional).toBe(true)
+    expect(scriptUnit.title).toBe('Kannada Script')
+    expect(scriptUnit.lessons.map((lesson) => lesson.title)).toEqual([
+      'Independent Vowels',
+      'Ka-Varga Consonants',
+      'Cha-Ta Groups',
+      'Pa-Ya Groups',
+      'Vowel Signs With Ka',
+    ])
+    expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'vowel')).toHaveLength(14)
+    expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'consonant').length).toBeGreaterThanOrEqual(34)
+    expect(scriptUnit.scriptSymbols.some((symbol) => symbol.kannada === 'ಕಿ' && symbol.transliteration === 'ki')).toBe(true)
+  })
+
+  it('unlocks lessons sequentially while keeping the optional script path available', () => {
+    const progress = createInitialProgress()
+    const firstLesson = coreCurriculumUnits[0].lessons[0]
+    const secondLesson = coreCurriculumUnits[0].lessons[1]
+
+    expect(getNextAvailableLesson(coreCurriculumUnits, progress)?.id).toBe(firstLesson.id)
+    expect(getLessonById(firstLesson.id)?.title).toBe(firstLesson.title)
+    expect(getUnlockedCurriculumUnits([...coreCurriculumUnits, getScriptCurriculumUnit()], progress).map((unit) => unit.id)).toEqual([
+      'unit-1-greetings',
+      'unit-script',
+    ])
+
+    const afterFirstLesson = completeLessonProgress(progress, firstLesson.id, '2026-05-27T10:00:00.000Z')
+
+    expect(getNextAvailableLesson(coreCurriculumUnits, afterFirstLesson)?.id).toBe(secondLesson.id)
+  })
+
+  it('ships six complete progressively harder stories and unlocks them from story progress', () => {
+    expect(stories).toHaveLength(6)
+    expect(stories.every((story) => story.sentences.length >= 3)).toBe(true)
+    expect(stories.every((story) => story.quiz.options.length >= 4)).toBe(true)
+
+    const progress = createInitialProgress()
+    expect(getStoryLockState(stories[0], progress).locked).toBe(false)
+    expect(getStoryLockState(stories[1], progress).locked).toBe(true)
+
+    const withFirstStory = {
+      ...progress,
+      completedExerciseIds: ['story-first-day-bangalore'],
+    }
+    expect(getStoryLockState(stories[1], withFirstStory).locked).toBe(false)
+  })
+
+  it('converts common romanized Kannada input into Kannada script for typing exercises', () => {
+    expect(transliterateLatinToKannada('namaskara saar')).toBe('ನಮಸ್ಕಾರ ಸಾರ್')
+    expect(transliterateLatinToKannada('ticket eshtu')).toBe('ಟಿಕೆಟ್ ಎಷ್ಟು')
+    expect(transliterateLatinToKannada('nanage neeru beku')).toBe('ನನಗೆ ನೀರು ಬೇಕು')
   })
 })

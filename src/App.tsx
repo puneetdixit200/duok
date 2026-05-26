@@ -1,21 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   bangaloreScenarios,
+  coreCurriculumUnits,
+  getNextAvailableLesson,
+  getScriptCurriculumUnit,
+  getStoryLockState,
   getLevelOneCurriculum,
+  getLessonById,
+  getUnlockedCurriculumUnits,
+  isLessonUnlocked,
   lessonExercises,
   stories,
   survivalPhrases,
+  transliterateLatinToKannada,
   tutorPersonas,
 } from './domain/curriculum'
 import {
   applyExerciseResult,
+  buyStreakFreeze,
+  claimDailyQuestReward,
+  completeLessonProgress,
   createInitialProgress,
   getAdaptiveDifficulty,
   getAchievementSummaries,
+  getDailyQuests,
+  getLessonProgressSummary,
   getDueReviewItems,
   getWeakSkillSummaries,
   hydrateProgress,
+  refillHeartsWithGems,
   serializeProgress,
+  type DailyQuest,
   type ProgressState,
 } from './domain/progress'
 import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
@@ -38,7 +53,7 @@ import {
   type LocalRuntimeSummary,
 } from './services/localRuntime'
 import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
-import { startVoiceCapture, type RecordedAudio, type VoiceCaptureSession } from './services/voiceCapture'
+import { encodePcmWav, startVoiceCapture, type RecordedAudio, type VoiceCaptureSession } from './services/voiceCapture'
 import { buildExportSnapshot, serializeExportSnapshot } from './services/exportSnapshot'
 import {
   appendScenarioMessages,
@@ -48,7 +63,7 @@ import {
   type ConversationStore,
 } from './services/conversationLog'
 import { applyLearnerStorage, collectLearnerStorage } from './services/learnerStore'
-import type { LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
+import type { GeneratedExercise, LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
 type Tab = 'home' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
@@ -106,6 +121,7 @@ const runtimeKey = 'kannadaos:local-runtime'
 const aiProviderKey = 'kannadaos:ai-provider'
 const pronunciationKey = 'kannadaos:pronunciation-history'
 const conversationKey = 'kannadaos:conversation-log'
+const aiExpansionKey = 'kannadaos:ai-expansion'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
 const pronunciationPhrases = survivalPhrases.filter((phrase) =>
@@ -174,6 +190,7 @@ const activeSetupModels: ModelSetupItem[] = pendingModels.map((model) => {
 
 function App() {
   const curriculum = useMemo(() => getLevelOneCurriculum(), [])
+  const allCurriculumUnits = useMemo(() => [...coreCurriculumUnits, getScriptCurriculumUnit()], [])
   const [screen, setScreen] = useState<Screen>(() =>
     localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding',
   )
@@ -217,6 +234,7 @@ function App() {
     hasDesktopLearnerStore ? 'loading' : 'browser',
   )
   const [selectedAnswer, setSelectedAnswer] = useState('')
+  const [typedAnswer, setTypedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [chatInput, setChatInput] = useState('')
   const [selectedScenarioId, setSelectedScenarioId] = useState(defaultChatScenario.id)
@@ -232,12 +250,19 @@ function App() {
   const [flashcardBack, setFlashcardBack] = useState(false)
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [generatedExercise, setGeneratedExercise] = useState('')
+  const [aiExpansionDeck, setAiExpansionDeck] = useState<GeneratedExercise[]>(() =>
+    hydrateAiExpansionDeck(localStorage.getItem(aiExpansionKey)),
+  )
   const [modelSetupStarted, setModelSetupStarted] = useState(false)
   const [storyMode, setStoryMode] = useState<StoryMode>('list')
   const [selectedStoryId, setSelectedStoryId] = useState(stories[0].id)
   const [selectedStoryWord, setSelectedStoryWord] = useState<StoryWord | null>(null)
   const [selectedStoryAnswer, setSelectedStoryAnswer] = useState('')
   const [storyFeedback, setStoryFeedback] = useState<'correct' | 'wrong' | null>(null)
+  const [activeLessonId, setActiveLessonId] = useState(coreCurriculumUnits[0].lessons[0].id)
+  const [lessonRunExercises, setLessonRunExercises] = useState<LessonExercise[]>(() => [
+    ...lessonExercises,
+  ])
   const [lessonIndex, setLessonIndex] = useState(0)
   const [totalLessonXp, setTotalLessonXp] = useState(0)
   const [placedWords, setPlacedWords] = useState<string[]>([])
@@ -249,7 +274,9 @@ function App() {
   const [voiceCaptureSession, setVoiceCaptureSession] = useState<VoiceCaptureSession | null>(null)
   const [recordingTarget, setRecordingTarget] = useState<VoiceRecordingTarget | null>(null)
 
-  const activeExercise = lessonExercises[Math.min(lessonIndex, lessonExercises.length - 1)]
+  const activeLesson =
+    getLessonById(activeLessonId) ?? getNextAvailableLesson(coreCurriculumUnits, progress) ?? coreCurriculumUnits[0].lessons[0]
+  const activeExercise = lessonRunExercises[Math.min(lessonIndex, lessonRunExercises.length - 1)]
   const activeStory = stories.find((story) => story.id === selectedStoryId) ?? stories[0]
   const selectedScenario =
     bangaloreScenarios.find((scenario) => scenario.id === selectedScenarioId) ?? defaultChatScenario
@@ -260,7 +287,7 @@ function App() {
   const latestPronunciationAttempt = pronunciationHistory[0]
   const completedInCurrentLesson = Math.min(
     lessonIndex + (feedback === 'correct' ? 1 : 0),
-    lessonExercises.length,
+    lessonRunExercises.length,
   )
 
   useEffect(() => {
@@ -288,6 +315,10 @@ function App() {
   }, [conversationStore])
 
   useEffect(() => {
+    localStorage.setItem(aiExpansionKey, JSON.stringify(aiExpansionDeck))
+  }, [aiExpansionDeck])
+
+  useEffect(() => {
     const bridge = window.kannadaOS
     if (!bridge?.loadLearnerData) {
       return
@@ -307,6 +338,7 @@ function App() {
           const nextRuntimeConfig = hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))
           const nextAiProviderSettings = hydrateAiProviderSettings(localStorage.getItem(aiProviderKey))
           const nextConversationStore = hydrateConversationStore(localStorage.getItem(conversationKey))
+          const nextAiExpansionDeck = hydrateAiExpansionDeck(localStorage.getItem(aiExpansionKey))
 
           setScreen(localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding')
           setProgress(nextProgress)
@@ -316,6 +348,7 @@ function App() {
           setRuntimeSummary(createMissingLocalRuntimeSummary(nextRuntimeConfig))
           setPronunciationHistory(hydratePronunciationHistory(localStorage.getItem(pronunciationKey)))
           setConversationStore(nextConversationStore)
+          setAiExpansionDeck(nextAiExpansionDeck)
           setChatMessages(
             getScenarioMessages(nextConversationStore, defaultChatScenario.id, [
               createOpeningMessage(defaultChatScenario),
@@ -374,12 +407,58 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (screen !== 'lesson' || lessonIndex >= lessonRunExercises.length || !activeExercise?.kannada) {
+      return
+    }
+
+    let cancelled = false
+    const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
+    if (
+      activeExercise.type === 'speaking' ||
+      !synthesizeNativeSpeech ||
+      !runtimeConfig.piperVoicePath.trim() ||
+      !runtimeConfig.piperBinaryPath.trim()
+    ) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setAudioStatus(`Auto reference audio: ${activeExercise.transliteration ?? activeExercise.kannada}`)
+        }
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    synthesizeNativeSpeech({
+      runtimeConfig,
+      text: activeExercise.kannada,
+    }).then((result) => {
+      if (!cancelled) {
+        setAudioStatus(
+          result.ok
+            ? `Auto Piper audio ready: ${result.audioPath}`
+            : result.error ?? 'Auto reference audio unavailable.',
+        )
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeExercise, lessonIndex, lessonRunExercises.length, runtimeConfig, screen])
+
   function startLearning() {
     localStorage.setItem(onboardedKey, 'true')
     setScreen('app')
   }
 
-  function openLesson() {
+  function openLesson(lessonId?: string) {
+    const nextLesson =
+      (lessonId ? getLessonById(lessonId) : getNextAvailableLesson(coreCurriculumUnits, progress)) ??
+      coreCurriculumUnits[0].lessons[0]
+    setActiveLessonId(nextLesson.id)
+    setLessonRunExercises([...nextLesson.exercises])
     setLessonIndex(0)
     setTotalLessonXp(0)
     resetExerciseInteraction()
@@ -392,33 +471,45 @@ function App() {
     }
 
     const correct = selectedAnswer === exercise.answer
+    const now = new Date().toISOString()
+    const completesLesson = correct && lessonIndex === lessonRunExercises.length - 1
     setFeedback(correct ? 'correct' : 'wrong')
 
     if (correct) {
       setTotalLessonXp((current) => current + exercise.xp)
+    } else {
+      setLessonRunExercises((current) =>
+        current.slice(lessonIndex + 1).some((queuedExercise) => queuedExercise.id === exercise.id)
+          ? current
+          : [...current, exercise],
+      )
     }
 
     setProgress((current) =>
-      applyExerciseResult(current, {
-        exerciseId: exercise.id,
-        correct,
-        skillTag: exercise.skillTag,
-        xp: exercise.xp,
-        vocabularyIds: exercise.vocabularyIds,
-        now: new Date().toISOString(),
-      }),
+      {
+        const nextProgress = applyExerciseResult(current, {
+          exerciseId: exercise.id,
+          correct,
+          skillTag: exercise.skillTag,
+          xp: exercise.xp,
+          vocabularyIds: exercise.vocabularyIds,
+          now,
+        })
+
+        return completesLesson ? completeLessonProgress(nextProgress, activeLesson.id, now) : nextProgress
+      },
     )
 
-    if (correct && lessonIndex === lessonExercises.length - 1) {
-      setLessonIndex(lessonExercises.length)
+    if (completesLesson) {
+      setLessonIndex(lessonRunExercises.length)
       setSelectedAnswer('')
       setFeedback(null)
     }
   }
 
   function goToNextExercise() {
-    if (lessonIndex + 1 >= lessonExercises.length) {
-      setLessonIndex(lessonExercises.length)
+    if (lessonIndex + 1 >= lessonRunExercises.length) {
+      setLessonIndex(lessonRunExercises.length)
       resetExerciseInteraction()
       return
     }
@@ -429,6 +520,7 @@ function App() {
 
   function resetExerciseInteraction() {
     setSelectedAnswer('')
+    setTypedAnswer('')
     setFeedback(null)
     setPlacedWords([])
     setAudioStatus('')
@@ -511,6 +603,7 @@ function App() {
     setGeneratedExercise(
       `${formatGeneratedExerciseSource(result.source)}: ${result.exercise.prompt} ${result.exercise.kannada}`,
     )
+    setAiExpansionDeck((current) => [result.exercise, ...current].slice(0, 8))
   }
 
   async function generateExerciseWithLocalPreference(weakArea: string) {
@@ -614,6 +707,18 @@ function App() {
     setReminder((current) => ({ ...current, permission: 'granted' }))
   }
 
+  function claimQuestReward(quest: DailyQuest) {
+    setProgress((current) => claimDailyQuestReward(current, quest, new Date().toISOString()))
+  }
+
+  function refillHearts() {
+    setProgress((current) => refillHeartsWithGems(current))
+  }
+
+  function purchaseStreakFreeze() {
+    setProgress((current) => buyStreakFreeze(current))
+  }
+
   function updateRuntimePath(key: keyof LocalRuntimeConfig, value: string) {
     const nextConfig = { ...runtimeConfig, [key]: value }
     setRuntimeConfig(nextConfig)
@@ -621,6 +726,36 @@ function App() {
     setRuntimeCheckStatus('idle')
     setRuntimeSmokeStatus('idle')
     setRuntimeSmokeSummary(null)
+  }
+
+  async function playExerciseReference(exercise: LessonExercise) {
+    const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
+    if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      setAudioStatus(`Playing reference audio: ${exercise.transliteration ?? exercise.kannada}`)
+      return
+    }
+
+    setAudioStatus('Piper synthesis running...')
+    const result = await synthesizeNativeSpeech({
+      runtimeConfig,
+      text: exercise.kannada,
+    })
+
+    if (result.ok) {
+      if (result.audioUrl) {
+        try {
+          await new Audio(result.audioUrl).play()
+        } catch {
+          setAudioStatus(`Piper audio ready: ${result.audioPath} (playback unavailable)`)
+          return
+        }
+      }
+
+      setAudioStatus(`Piper audio ready: ${result.audioPath}`)
+      return
+    }
+
+    setAudioStatus(result.error ?? 'Piper synthesis failed.')
   }
 
   async function checkLocalRuntime() {
@@ -796,6 +931,13 @@ function App() {
       return
     }
 
+    if (window.kannadaOS?.e2e) {
+      setVoiceCaptureSession(createE2EVoiceCaptureSession())
+      setRecordingTarget(target)
+      setStatus('Recording... click Stop Recording when done.')
+      return
+    }
+
     try {
       const session = await startVoiceCapture()
       setVoiceCaptureSession(session)
@@ -941,12 +1083,19 @@ function App() {
   }
 
   if (screen === 'lesson') {
-    if (lessonIndex >= lessonExercises.length) {
+    if (lessonIndex >= lessonRunExercises.length) {
       return (
         <main className="app-shell lesson-shell">
           <section className="lesson-card lesson-complete" aria-labelledby="lesson-complete-title">
             <p className="eyebrow">lesson complete</p>
             <h1 id="lesson-complete-title">Lesson Complete!</h1>
+            <div className="confetti-burst" aria-label="Confetti celebration">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
             <div className="star-row" aria-label="Three stars earned">
               <span>★</span>
               <span>★</span>
@@ -955,10 +1104,11 @@ function App() {
             <article className="xp-card">
               <strong>+{totalLessonXp} XP</strong>
               <span>Total: {progress.xp} XP</span>
+              <small>{activeLesson.title} mastery crown earned</small>
             </article>
             <div className="completion-stats">
               <Stat value={100} label="Accuracy" />
-              <Stat value={lessonExercises.length} label="Correct" />
+              <Stat value={lessonRunExercises.length} label="Correct" />
               <Stat value={0} label="Wrong" />
             </div>
             <button className="primary-action" onClick={() => setScreen('app')} type="button">
@@ -977,14 +1127,17 @@ function App() {
           </button>
           <div
             className="lesson-progress"
-            aria-label={`Lesson progress: ${completedInCurrentLesson} of ${lessonExercises.length} exercises complete`}
+            aria-label={`Lesson progress: ${completedInCurrentLesson} of ${lessonRunExercises.length} exercises complete`}
           >
-            <span style={{ width: `${Math.max(12, (completedInCurrentLesson / lessonExercises.length) * 100)}%` }} />
+            <span style={{ width: `${Math.max(12, (completedInCurrentLesson / lessonRunExercises.length) * 100)}%` }} />
           </div>
           <strong>Heart {progress.hearts}</strong>
         </header>
         <section className="lesson-card" aria-labelledby="lesson-title">
-          <p className="eyebrow">{activeExercise.type}</p>
+          <p className="eyebrow">
+            <span>{activeExercise.type}</span>
+            <small>{activeLesson.title}</small>
+          </p>
           <h1 id="lesson-title">{activeExercise.prompt}</h1>
           {renderExerciseContent(activeExercise)}
           <button
@@ -1004,6 +1157,11 @@ function App() {
           {feedback === 'correct' && (
             <button className="secondary-action" onClick={goToNextExercise} type="button">
               Next Exercise
+            </button>
+          )}
+          {feedback === 'wrong' && (
+            <button className="secondary-action" onClick={goToNextExercise} type="button">
+              Continue. This question will return.
             </button>
           )}
         </section>
@@ -1291,6 +1449,21 @@ function App() {
             Manage Models
           </button>
           {generatedExercise && <p>{generatedExercise}</p>}
+          {aiExpansionDeck.length > 0 && (
+            <div className="ai-expansion-queue" aria-label="AI curriculum expansion">
+              <strong>AI Expansion Queue</strong>
+              <span>
+                {aiExpansionDeck.length} saved {aiExpansionDeck.length === 1 ? 'drill' : 'drills'} for curriculum review
+              </span>
+              <ul>
+                {aiExpansionDeck.slice(0, 3).map((exercise, index) => (
+                  <li key={`${exercise.prompt}-${index}`}>
+                    {exercise.prompt} · {exercise.kannada}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       </aside>
       <section className="workspace">{renderTab()}</section>
@@ -1649,34 +1822,39 @@ function App() {
               <p className="eyebrow">Story Mode</p>
               <h2 id="stories-title">Stories</h2>
             </div>
-            <span className="metric-pill">1 unlocked</span>
+            <span className="metric-pill">
+              {stories.filter((story) => !getStoryLockState(story, progress).locked).length} unlocked
+            </span>
           </header>
           <div className="story-grid">
-            {stories.map((story) => (
-              <article className={story.locked ? 'story-card locked' : 'story-card'} key={story.id}>
-                <img src={story.imagePath} alt="" />
-                <div className="story-card-body">
-                  <span className={`difficulty-badge ${story.difficulty.toLowerCase()}`}>{story.difficulty}</span>
-                  <h3>{story.title}</h3>
-                  <p>{story.subtitle}</p>
-                  <div className="story-meta">
-                    <span>{story.readTimeMinutes} min read</span>
-                    <span>{story.newWordCount} new words</span>
+            {stories.map((story) => {
+              const lockState = getStoryLockState(story, progress)
+              return (
+                <article className={lockState.locked ? 'story-card locked' : 'story-card'} key={story.id}>
+                  <img src={story.imagePath} alt="" />
+                  <div className="story-card-body">
+                    <span className={`difficulty-badge ${story.difficulty.toLowerCase()}`}>{story.difficulty}</span>
+                    <h3>{story.title}</h3>
+                    <p>{story.subtitle}</p>
+                    <div className="story-meta">
+                      <span>{story.readTimeMinutes} min read</span>
+                      <span>{story.newWordCount} new words</span>
+                    </div>
+                    {lockState.locked ? (
+                      <span className="locked-label">{lockState.reason}</span>
+                    ) : (
+                      <button
+                        className="secondary-action"
+                        onClick={() => openStory(story.id)}
+                        type="button"
+                      >
+                        Read {story.title}
+                      </button>
+                    )}
                   </div>
-                  {story.locked ? (
-                    <span className="locked-label">Locked</span>
-                  ) : (
-                    <button
-                      className="secondary-action"
-                      onClick={() => openStory(story.id)}
-                      type="button"
-                    >
-                      Read {story.title}
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
+                </article>
+              )
+            })}
           </div>
         </section>
       )
@@ -1801,10 +1979,20 @@ function App() {
             <button className="secondary-action" onClick={exportLearnerData} type="button">
               Export Data
             </button>
+            <button className="secondary-action" disabled={progress.hearts >= 5 || progress.gems < 50} onClick={refillHearts} type="button">
+              Refill Hearts - 50 gems
+            </button>
+            <button className="secondary-action" disabled={progress.gems < 100} onClick={purchaseStreakFreeze} type="button">
+              Buy Streak Freeze - 100 gems
+            </button>
             <button className="secondary-action danger-action" onClick={resetAllProgress} type="button">
               Reset All Progress
             </button>
           </div>
+          <section className="reset-card" aria-label="Gem economy">
+            <strong>{progress.streakFreezes} streak {progress.streakFreezes === 1 ? 'freeze' : 'freezes'} banked</strong>
+            <small>Practice restores memory; gems can refill hearts or protect a missed day.</small>
+          </section>
           {resetStatus && (
             <section className="reset-card" aria-label="Reset status">
               <strong>{resetStatus}</strong>
@@ -1831,6 +2019,13 @@ function App() {
       )
     }
 
+    const nextLesson = getNextAvailableLesson(coreCurriculumUnits, progress) ?? coreCurriculumUnits[0].lessons[0]
+    const unlockedUnitIds = new Set(getUnlockedCurriculumUnits(allCurriculumUnits, progress).map((unit) => unit.id))
+    const nextUnit =
+      coreCurriculumUnits.find((unit) => unit.lessons.some((lesson) => lesson.id === nextLesson.id)) ??
+      coreCurriculumUnits[0]
+    const dailyQuests = getDailyQuests(progress, new Date().toISOString())
+
     return (
       <section className="panel home-panel" aria-labelledby="home-title">
         <header className="section-header">
@@ -1852,18 +2047,75 @@ function App() {
             {Math.min(10, progress.dailyXp)}/10
           </div>
         </section>
-        <button className="continue-card" onClick={openLesson} type="button">
-          <span>Continue: Greetings</span>
-          <small>Lesson 3 of 8 - {curriculum.phrases.length} survival phrases loaded</small>
+        <button
+          aria-label={`Continue: ${nextLesson.title}`}
+          className="continue-card"
+          onClick={() => openLesson(nextLesson.id)}
+          type="button"
+        >
+          <span>Continue: {nextLesson.title}</span>
+          <small>
+            {nextUnit.title} - {nextLesson.objective} - {curriculum.phrases.length} survival phrases loaded
+          </small>
           <i>
-            <b style={{ width: '37%' }} />
+            <b style={{ width: `${Math.max(12, getLessonProgressSummary(progress, nextLesson.id).masteryLevel * 20)}%` }} />
           </i>
         </button>
-        <section className="level-map" aria-label="Level map">
-          {['Greetings', 'Numbers', 'Transport', 'Food', 'Office', 'Boss'].map((node, index) => (
-            <article className={index < 2 ? 'map-node done' : index === 2 ? 'map-node current' : 'map-node locked'} key={node}>
-              <span>{index < 2 ? '✓' : index === 2 ? '★' : 'lock'}</span>
-              <strong>{node}</strong>
+        <section className="tips-card" aria-labelledby="unit-tips-title">
+          <p className="eyebrow">unit tips</p>
+          <h3 id="unit-tips-title">{nextUnit.title}</h3>
+          {nextUnit.tips.map((tip) => (
+            <article key={tip.title}>
+              <strong>{tip.title}</strong>
+              <p>{tip.body}</p>
+              <small>{tip.examples.join(' / ')}</small>
+            </article>
+          ))}
+        </section>
+        <section className="daily-quest-grid" aria-label="Daily quests">
+          {dailyQuests.map((quest) => (
+            <article className={quest.completed ? 'quest-card complete' : 'quest-card'} key={quest.id}>
+              <strong>{quest.title}</strong>
+              <p>{quest.description}</p>
+              <span>{quest.current}/{quest.target} - +{quest.rewardGems} gems</span>
+              <button
+                className="secondary-action"
+                disabled={!quest.completed || quest.claimed}
+                onClick={() => claimQuestReward(quest)}
+                type="button"
+              >
+                {quest.claimed ? 'Claimed' : 'Claim Reward'}
+              </button>
+            </article>
+          ))}
+        </section>
+        <section className="level-map expanded" aria-label="Curriculum map">
+          {allCurriculumUnits.map((unit, mapUnitIndex) => (
+            <article
+              className={unlockedUnitIds.has(unit.id) ? 'map-node unit-node current' : 'map-node unit-node locked'}
+              key={unit.id}
+            >
+              <span>{unit.optional ? 'ಅ' : unlockedUnitIds.has(unit.id) ? '★' : 'lock'}</span>
+              <strong>{unit.optional ? `Optional: ${unit.title}` : unit.title}</strong>
+              <small>{unit.description}</small>
+              <div className="lesson-dot-row">
+                {unit.lessons.map((lesson, unitLessonIndex) => {
+                  const lessonProgress = getLessonProgressSummary(progress, lesson.id)
+                  const unlocked = unit.optional || isLessonUnlocked(lesson.id, progress)
+                  return (
+                    <button
+                      aria-label={`Curriculum ${mapUnitIndex + 1} lesson ${unitLessonIndex + 1} ${lessonProgress.masteryLevel} crowns`}
+                      className={lessonProgress.completed ? 'lesson-dot done' : unlocked ? 'lesson-dot current' : 'lesson-dot locked'}
+                      disabled={!unlocked}
+                      key={lesson.id}
+                      onClick={() => openLesson(lesson.id)}
+                      type="button"
+                    >
+                      {lessonProgress.masteryLevel || (unlocked ? '•' : 'x')}
+                    </button>
+                  )
+                })}
+              </div>
             </article>
           ))}
         </section>
@@ -1902,7 +2154,7 @@ function App() {
           <div className="listening-card">
             <button
               className="speaker-button"
-              onClick={() => setAudioStatus('Playing reference audio')}
+              onClick={() => void playExerciseReference(exercise)}
               type="button"
             >
               Play reference audio
@@ -1927,6 +2179,13 @@ function App() {
                 <span key={index} style={{ height: `${20 + ((index * 13) % 48)}px` }} />
               ))}
             </div>
+            <button
+              className="mini-button"
+              onClick={() => void playExerciseReference(exercise)}
+              type="button"
+            >
+              Play reference audio
+            </button>
             <button className="speaker-button" onClick={() => recordPhrase(exercise)} type="button">
               {recordingTarget === 'lesson' ? 'Stop Recording' : 'Record phrase'}
             </button>
@@ -1938,6 +2197,70 @@ function App() {
             )}
             {audioStatus && <p role="status">{audioStatus}</p>}
           </div>
+        </>
+      )
+    }
+
+    if (exercise.type === 'typeKannada') {
+      const convertedAnswer = transliterateLatinToKannada(typedAnswer)
+      return (
+        <>
+          <div className="phrase-card">
+            <small>{exercise.english}</small>
+            <strong lang="kn">{exercise.answer}</strong>
+            <span>{exercise.transliteration}</span>
+            <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
+              Listen
+            </button>
+          </div>
+          <label className="transcript-field typing-helper">
+            <span>Kannada typing answer</span>
+            <input
+              aria-label="Kannada typing answer"
+              onChange={(event) => {
+                setTypedAnswer(event.target.value)
+                setSelectedAnswer(transliterateLatinToKannada(event.target.value))
+              }}
+              placeholder="Type namaskara saar"
+              value={typedAnswer}
+            />
+          </label>
+          <article className="keyboard-helper" aria-label="Kannada keyboard helper">
+            <strong>Keyboard helper</strong>
+            <span>{typedAnswer ? convertedAnswer : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'}</span>
+            <div className="suggestion-row compact">
+              {exercise.options.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => {
+                    setTypedAnswer(option)
+                    setSelectedAnswer(transliterateLatinToKannada(option))
+                  }}
+                  type="button"
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </article>
+          {audioStatus && <p role="status">{audioStatus}</p>}
+        </>
+      )
+    }
+
+    if (exercise.type === 'dialogue') {
+      return (
+        <>
+          <div className="phrase-card dialogue-card">
+            <small>Reply to the line</small>
+            <strong lang="kn">{exercise.kannada}</strong>
+            <span>{exercise.transliteration}</span>
+            <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
+              Listen
+            </button>
+          </div>
+          {renderOptions(exercise)}
+          {audioStatus && <p role="status">{audioStatus}</p>}
         </>
       )
     }
@@ -1981,10 +2304,11 @@ function App() {
           <strong lang="kn">{exercise.kannada}</strong>
           {exercise.transliteration && <span>{exercise.transliteration}</span>}
           {exercise.english && <small>{exercise.english}</small>}
-          <button type="button" className="mini-button">
+          <button type="button" className="mini-button" onClick={() => void playExerciseReference(exercise)}>
             Listen
           </button>
         </div>
+        {audioStatus && <p role="status">{audioStatus}</p>}
         {renderOptions(exercise)}
       </>
     )
@@ -2127,6 +2451,35 @@ function hydratePronunciationHistory(serialized: string | null): PronunciationAt
   }
 }
 
+function hydrateAiExpansionDeck(serialized: string | null): GeneratedExercise[] {
+  if (!serialized) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as Partial<GeneratedExercise>[]
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed.filter(isGeneratedExercise).slice(0, 8)
+  } catch {
+    return []
+  }
+}
+
+function isGeneratedExercise(exercise: Partial<GeneratedExercise>): exercise is GeneratedExercise {
+  return (
+    typeof exercise.type === 'string' &&
+    typeof exercise.prompt === 'string' &&
+    typeof exercise.kannada === 'string' &&
+    typeof exercise.answer === 'string' &&
+    Array.isArray(exercise.options) &&
+    exercise.options.every((option) => typeof option === 'string') &&
+    (exercise.explanation === undefined || typeof exercise.explanation === 'string')
+  )
+}
+
 function getPronunciationParts(kannada: string): string[] {
   return kannada
     .replace(/[?]/g, '')
@@ -2155,6 +2508,25 @@ function getSimulatedPronunciationTranscript(phrase: Phrase): string {
   }
 
   return phrase.kannada.replace(/[?]/g, '')
+}
+
+function createE2EVoiceCaptureSession(): VoiceCaptureSession {
+  const sampleRate = 16_000
+  const samples = new Float32Array(sampleRate)
+
+  for (let index = 0; index < samples.length; index += 1) {
+    samples[index] = Math.sin((index / sampleRate) * Math.PI * 2 * 440) * 0.25
+  }
+
+  return {
+    async stop() {
+      return {
+        audioBytes: encodePcmWav(samples, sampleRate),
+        durationMs: 1000,
+        sampleRate,
+      }
+    },
+  }
 }
 
 function parseMatchPairs(answer: string) {

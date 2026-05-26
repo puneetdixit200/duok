@@ -69,7 +69,7 @@ async function main() {
     await page.getByText(/Piper audio ready:/i).waitFor()
     await page.getByLabel(/Transcribed speech/i).fill('ನಮಸ್ಕಾರ ಸಾರ್')
     await page.getByRole('button', { name: /score pronunciation/i }).click()
-    await page.locator('[aria-label="Pronunciation result"]').getByText(/Score 98/i).waitFor()
+    await page.locator('[aria-label="Pronunciation result"]').getByText(/Score 100/i).waitFor()
     await page.getByText(/No problem syllables/i).waitFor()
     await page.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i).waitFor()
 
@@ -366,17 +366,21 @@ async function completeLesson(page) {
 
   await page.getByText('listening', { exact: true }).waitFor()
   await page.getByRole('button', { name: /play reference audio/i }).click()
-  await page.getByText(/Playing reference audio/i).waitFor()
+  await page.getByText(/Piper audio ready|Playing reference audio|Auto reference audio|Auto Piper audio ready/i).waitFor()
   await page.getByRole('button', { name: 'ಟಿಕೆಟ್ ಎಷ್ಟು?' }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
   await page.getByText('speaking', { exact: true }).waitFor()
   await page.getByRole('button', { name: /record phrase/i }).click()
-  await page.getByText(/Recording... click Stop Recording when done/i).waitFor()
+  try {
+    await page.getByRole('button', { name: /stop recording/i }).waitFor({ timeout: 5000 })
+  } catch (error) {
+    throw new Error(`Speaking recording did not start. Visible text:\n${await page.locator('body').innerText()}`)
+  }
   await page.waitForTimeout(1200)
   await page.getByRole('button', { name: /stop recording/i }).click()
-  await page.getByText(/Score: 98%/i).waitFor()
+  await page.getByText(/Score: 100%/i).waitFor()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 

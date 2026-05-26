@@ -259,6 +259,25 @@ h2 {
   font-size: 13px;
 }
 
+.ai-expansion-queue {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid rgba(71, 202, 130, 0.38);
+  border-radius: 10px;
+  background: rgba(71, 202, 130, 0.08);
+}
+
+.ai-expansion-queue ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 16px;
+  color: #d7f5e2;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .workspace {
   padding: 28px;
 }
@@ -1340,6 +1359,132 @@ h2 {
   word-break: break-word;
 }
 
+.tips-card,
+.daily-quest-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.tips-card {
+  border: 1px solid #30304d;
+  border-radius: 16px;
+  padding: 16px;
+  background: #171727;
+}
+
+.tips-card article,
+.quest-card,
+.keyboard-helper {
+  border: 1px solid #30304d;
+  border-radius: 12px;
+  padding: 12px;
+  background: #202037;
+}
+
+.quest-card.complete {
+  border-color: #6ee7b7;
+}
+
+.level-map.expanded {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-top: 16px;
+}
+
+.unit-node {
+  align-items: flex-start;
+  min-height: 150px;
+}
+
+.lesson-dot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lesson-dot {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #3d3d5c;
+  border-radius: 999px;
+  background: #11111d;
+  color: #f8fafc;
+  font-weight: 800;
+}
+
+.lesson-dot.done {
+  border-color: #6ee7b7;
+  background: #14532d;
+}
+
+.lesson-dot.current {
+  border-color: #facc15;
+}
+
+.lesson-dot.locked {
+  color: #7d7a92;
+}
+
+.confetti-burst {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  height: 42px;
+}
+
+.confetti-burst span {
+  width: 10px;
+  height: 26px;
+  border-radius: 999px;
+  background: #facc15;
+  animation: pop 900ms ease-in-out infinite alternate;
+}
+
+.confetti-burst span:nth-child(2) {
+  background: #6ee7b7;
+  animation-delay: 120ms;
+}
+
+.confetti-burst span:nth-child(3) {
+  background: #fb7185;
+  animation-delay: 240ms;
+}
+
+.confetti-burst span:nth-child(4) {
+  background: #60a5fa;
+  animation-delay: 360ms;
+}
+
+.confetti-burst span:nth-child(5) {
+  background: #f97316;
+  animation-delay: 480ms;
+}
+
+.typing-helper,
+.keyboard-helper {
+  margin-top: 12px;
+}
+
+.keyboard-helper {
+  display: grid;
+  gap: 8px;
+}
+
+.dialogue-card {
+  border-color: #facc15;
+}
+
+@keyframes pop {
+  from {
+    transform: translateY(8px) rotate(-8deg);
+  }
+
+  to {
+    transform: translateY(-8px) rotate(8deg);
+  }
+}
+
 .achievement-grid span,
 .metric-pill,
 .top-counters span {
@@ -1363,6 +1508,8 @@ h2 {
   }
 
   .level-map,
+  .level-map.expanded,
+  .daily-quest-grid,
   .scenario-grid,
   .scenario-picker,
   .persona-picker,
@@ -1397,6 +1544,8 @@ h2 {
   }
 
   .level-map,
+  .level-map.expanded,
+  .daily-quest-grid,
   .scenario-grid,
   .scenario-picker,
   .persona-picker,
