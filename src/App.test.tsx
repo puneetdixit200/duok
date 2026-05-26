@@ -89,6 +89,45 @@ describe('KannadaOS desktop app', () => {
     expect(within(tipsDialog).getByText(/Respectful address/i)).toBeInTheDocument()
   })
 
+  it('shows navigation badges for active streak and due practice reviews', () => {
+    const progress = {
+      ...createInitialProgress(),
+      streakDays: 3,
+      reviewQueue: {
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.4,
+          attempts: 1,
+          leitnerBox: 2,
+        },
+        'ticket-eshtu': {
+          vocabularyId: 'ticket-eshtu',
+          dueAt: '2026-05-21T09:00:00.000Z',
+          strength: 0.6,
+          attempts: 2,
+          leitnerBox: 3,
+        },
+        dhanyavada: {
+          vocabularyId: 'dhanyavada',
+          dueAt: '2099-05-21T09:00:00.000Z',
+          strength: 0.8,
+          attempts: 3,
+          leitnerBox: 4,
+        },
+      },
+    }
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+
+    render(<App />)
+
+    const navigation = screen.getByLabelText(/Primary navigation/i)
+    expect(within(navigation).getByRole('button', { name: /Dashboard.*streak active/i })).toBeInTheDocument()
+    expect(within(navigation).getByRole('button', { name: /Practice.*2 due reviews/i })).toBeInTheDocument()
+    expect(within(navigation).getByRole('button', { name: /^Chat$/i })).toBeInTheDocument()
+  })
+
   it('checks a lesson answer, awards XP, and shows feedback', async () => {
     const user = userEvent.setup()
     render(<App />)

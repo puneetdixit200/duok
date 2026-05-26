@@ -2124,6 +2124,8 @@ function App() {
     )
   }
 
+  const navDueReviewCount = getDueReviewItems(progress, new Date().toISOString()).length
+
   return (
     <main className="desktop-frame">
       <aside className="sidebar" aria-label="Primary navigation">
@@ -2145,16 +2147,29 @@ function App() {
               ['stories', 'Stories'],
               ['blr', 'BLR'],
               ['me', 'Me'],
-            ].map(([id, label]) => (
-              <button
-                className={tab === id ? 'nav-button active' : 'nav-button'}
-                key={id}
-                onClick={() => setTab(id as Tab)}
-                type="button"
-              >
-                {label}
-              </button>
-            ))}
+            ].map(([id, label]) => {
+              const showStreakBadge = id === 'home' && progress.streakDays > 0
+              const showReviewBadge = id === 'practice' && navDueReviewCount > 0
+              const navLabel = [
+                label,
+                showStreakBadge ? 'streak active' : '',
+                showReviewBadge ? `${navDueReviewCount} due ${navDueReviewCount === 1 ? 'review' : 'reviews'}` : '',
+              ].filter(Boolean).join(', ')
+
+              return (
+                <button
+                  aria-label={navLabel}
+                  className={tab === id ? 'nav-button active' : 'nav-button'}
+                  key={id}
+                  onClick={() => setTab(id as Tab)}
+                  type="button"
+                >
+                  <span className="nav-label">{label}</span>
+                  {showStreakBadge && <span aria-hidden="true" className="nav-flame">🔥</span>}
+                  {showReviewBadge && <span aria-hidden="true" className="nav-badge">{navDueReviewCount}</span>}
+                </button>
+              )
+            })}
           </nav>
         </div>
         <section className="model-status">

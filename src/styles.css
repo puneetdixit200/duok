@@ -234,9 +234,40 @@ h2 {
 }
 
 .nav-button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
   min-height: 48px;
   padding: 0 14px;
   text-align: left;
+}
+
+.nav-label {
+  min-width: 0;
+}
+
+.nav-flame,
+.nav-badge {
+  justify-self: end;
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.nav-flame {
+  background: rgba(255, 150, 0, 0.18);
+}
+
+.nav-badge {
+  border: 1px solid rgba(255, 75, 75, 0.72);
+  background: #ff4b4b;
+  color: white;
 }
 
 .nav-button.active {
