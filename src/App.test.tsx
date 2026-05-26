@@ -285,8 +285,38 @@ describe('KannadaOS desktop app', () => {
     fireEvent.keyDown(window, { key: '2', metaKey: true })
     expect(screen.getByRole('heading', { name: /Learn Kannada/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: '4', metaKey: true })
+    fireEvent.keyDown(window, { key: '3', metaKey: true })
     expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '4', metaKey: true })
+    expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '5', metaKey: true })
+    expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+  })
+
+  it('supports lesson keyboard bindings for select, check, replay, continue, and escape', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    fireEvent.keyDown(window, { key: ' ' })
+    expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '1' })
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(screen.getByText('arrange')).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'r', metaKey: true })
+    expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
   })
 
   it('completes all six lesson exercise types and shows the completion screen', async () => {

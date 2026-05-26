@@ -175,9 +175,9 @@ const dailyGoalOptions = [5, 10, 20, 30] as const
 const tabShortcutByKey: Record<string, Tab> = {
   '1': 'home',
   '2': 'learn',
-  '3': 'chat',
-  '4': 'practice',
-  '5': 'stories',
+  '3': 'practice',
+  '4': 'stories',
+  '5': 'chat',
   '6': 'blr',
   '7': 'me',
 }
@@ -582,6 +582,14 @@ function levenshteinDistance(left: string, right: string): number {
   }
 
   return previous[right.length]
+}
+
+function isEditableShortcutTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 }
 
 function getNowMs(): number {
@@ -993,33 +1001,78 @@ function App() {
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
-      if (!event.metaKey && !event.ctrlKey) {
+      const hasCommandModifier = event.metaKey || event.ctrlKey
+
+      if (hasCommandModifier) {
+        const shortcutTab = tabShortcutByKey[event.key]
+        if (shortcutTab) {
+          event.preventDefault()
+          setScreen('app')
+          setTab(shortcutTab)
+          return
+        }
+
+        if (event.key.toLowerCase() === 'm') {
+          event.preventDefault()
+          if (screen === 'lesson' && activeExercise?.type === 'speaking') {
+            void recordPhrase(activeExercise)
+            return
+          }
+
+          if (screen === 'app' && tab === 'chat') {
+            void recordVoiceInput()
+            return
+          }
+
+          if (screen === 'app' && tab === 'practice') {
+            void recordPronunciationAudio()
+          }
+          return
+        }
+
+        if (event.key.toLowerCase() === 'r' && screen === 'lesson' && activeExercise) {
+          event.preventDefault()
+          void playExerciseReference(activeExercise)
+          return
+        }
+      }
+
+      if (isEditableShortcutTarget(event.target)) {
         return
       }
 
-      const shortcutTab = tabShortcutByKey[event.key]
-      if (shortcutTab) {
+      if (screen !== 'lesson' || !activeExercise) {
+        return
+      }
+
+      if (event.key === 'Escape') {
         event.preventDefault()
         setScreen('app')
-        setTab(shortcutTab)
         return
       }
 
-      if (event.key.toLowerCase() === 'm') {
+      if (/^[1-4]$/.test(event.key)) {
         event.preventDefault()
-        setScreen('models')
+        selectExerciseOptionByIndex(activeExercise, Number(event.key) - 1)
         return
       }
 
-      if (event.key.toLowerCase() === 'r' && screen === 'lesson') {
+      if (event.key === ' ') {
         event.preventDefault()
-        openLesson(activeLessonId)
+        void playExerciseReference(activeExercise)
         return
       }
 
-      if (event.key === 'Enter' && screen === 'lesson' && activeExercise && selectedAnswer && !feedback) {
+      if (event.key === 'Enter') {
         event.preventDefault()
-        checkAnswer(activeExercise)
+        if (feedback === 'correct' || feedback === 'wrong') {
+          goToNextExercise()
+          return
+        }
+
+        if (!feedback && selectedAnswer) {
+          checkAnswer(activeExercise)
+        }
       }
     }
 
@@ -1029,7 +1082,27 @@ function App() {
     }
   // The shortcut handler intentionally uses the latest render's lesson actions.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeExercise, activeLessonId, feedback, screen, selectedAnswer])
+  }, [activeExercise, feedback, screen, selectedAnswer, tab])
+
+  function selectExerciseOptionByIndex(exercise: LessonExercise, optionIndex: number) {
+    if (feedback || optionIndex < 0 || optionIndex >= exercise.options.length) {
+      return
+    }
+
+    const option = exercise.options[optionIndex]
+    if (exercise.type === 'arrange') {
+      selectArrangeWord(option)
+      return
+    }
+
+    if (exercise.type === 'typeKannada') {
+      setTypedAnswer(option)
+      setSelectedAnswer(transliterateLatinToKannada(option))
+      return
+    }
+
+    setSelectedAnswer(option)
+  }
 
   function goToNextExercise() {
     if (lessonIndex + 1 >= lessonRunExercises.length) {
@@ -2996,6 +3069,7 @@ function App() {
               </button>
             ))}
           </div>
+          {audioStatus && <p role="status">{audioStatus}</p>}
         </>
       )
     }
