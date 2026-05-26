@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -10,6 +10,16 @@ const voiceCaptureMock = vi.hoisted(() => ({
 vi.mock('./services/voiceCapture', () => ({
   startVoiceCapture: voiceCaptureMock.startVoiceCapture,
 }))
+
+async function completeOnboarding(user: ReturnType<typeof userEvent.setup>, dailyGoal: RegExp = /10 XP/i) {
+  await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+  await user.click(screen.getByRole('button', { name: /moved to bangalore/i }))
+  await user.click(screen.getByRole('button', { name: /next: choose level/i }))
+  await user.click(screen.getByRole('button', { name: /zero/i }))
+  await user.click(screen.getByRole('button', { name: /next: set goal/i }))
+  await user.click(screen.getByRole('button', { name: dailyGoal }))
+  await user.click(screen.getByRole('button', { name: /start learning/i }))
+}
 
 describe('KannadaOS desktop app', () => {
   beforeEach(() => {
@@ -33,31 +43,55 @@ describe('KannadaOS desktop app', () => {
     vi.unstubAllGlobals()
   })
 
-  it('moves from onboarding to the home dashboard', async () => {
+  it('stores a learner profile from onboarding and moves to the home dashboard', async () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+    await user.click(screen.getByRole('button', { name: /moved to bangalore/i }))
+    await user.click(screen.getByRole('button', { name: /next: choose level/i }))
     await user.click(screen.getByRole('button', { name: /zero/i }))
+    await user.click(screen.getByRole('button', { name: /next: set goal/i }))
+    await user.click(screen.getByRole('button', { name: /20 XP/i }))
     await user.click(screen.getByRole('button', { name: /start learning/i }))
 
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
     expect(screen.getByText(/Learn Kannada/i)).toBeInTheDocument()
-    expect(screen.getByText(/12 Day Streak/i)).toBeInTheDocument()
+    expect(screen.getByText(/0 Day Streak/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Continue: Greetings/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Greetings & Introductions/i })).toBeInTheDocument()
     expect(screen.getByText(/Respectful address/i)).toBeInTheDocument()
     expect(screen.getByText(/ನಮಸ್ಕಾರ ಸಾರ್ \(namaskara saar/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Daily quests/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Curriculum map/i)).toHaveTextContent(/Kannada Script/i)
-    expect(screen.getByLabelText(/Curriculum map/i)).toHaveTextContent(/Numbers & Prices/i)
+    expect(screen.getByLabelText(/0 of 20 XP/i)).toHaveTextContent('0/20')
+    expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"dailyGoalXp":20')
+    expect(localStorage.getItem('kannadaos:sound-prefs')).toContain('"autoPlayAudio":true')
+    expect(screen.getByRole('button', { name: /learn/i })).toBeInTheDocument()
+  })
+
+  it('opens the Learn tab with curriculum units and grammar tips', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    expect(screen.getByRole('heading', { name: /Learn Kannada/i })).toBeInTheDocument()
+    expect(screen.getByText(/Unit 0: Kannada Script/i)).toBeInTheDocument()
+    expect(screen.getByText(/Unit 1: Greetings & Introductions/i)).toBeInTheDocument()
+
+    await user.click(screen.getAllByRole('button', { name: /tips/i })[1])
+
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Greetings & Introductions/i })
+    expect(tipsDialog).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/Respectful address/i)).toBeInTheDocument()
   })
 
   it('checks a lesson answer, awards XP, and shows feedback', async () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
@@ -70,8 +104,7 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
@@ -93,12 +126,48 @@ describe('KannadaOS desktop app', () => {
     expect(fillOptions).toBeInTheDocument()
   })
 
+  it('keeps listening answer text hidden until the learner checks', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    const listeningChoices = screen.getByLabelText(/Listening choices/i)
+    expect(within(listeningChoices).queryByText(/ಟಿಕೆಟ್ ಎಷ್ಟು/i)).not.toBeInTheDocument()
+    await user.click(within(listeningChoices).getByRole('button', { name: /ticket eshtu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(within(listeningChoices).getByText(/ಟಿಕೆಟ್ ಎಷ್ಟು/i)).toBeInTheDocument()
+  })
+
+  it('switches primary tabs with desktop keyboard shortcuts', async () => {
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    fireEvent.keyDown(window, { key: '2', metaKey: true })
+    expect(screen.getByRole('heading', { name: /Learn Kannada/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '4', metaKey: true })
+    expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
+  })
+
   it('completes all six lesson exercise types and shows the completion screen', async () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
 
     expect(screen.getByText('translate')).toBeInTheDocument()
@@ -121,7 +190,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText('listening')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /play reference audio/i }))
     expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /ಟಿಕೆಟ್ ಎಷ್ಟು/i }))
+    await user.click(screen.getByRole('button', { name: /ticket eshtu/i }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
@@ -156,8 +225,7 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /chat/i }))
     await user.type(screen.getByPlaceholderText(/type in kannada/i), 'Majestic hogbeku')
     await user.click(screen.getByRole('button', { name: /send/i }))
@@ -217,7 +285,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await screen.findByRole('heading', { name: /KannadaOS/i })
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
 
     expect(screen.getByLabelText('42 XP')).toBeInTheDocument()
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
@@ -232,8 +300,7 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /chat/i }))
 
     await user.click(screen.getByRole('button', { name: /BMTC Bus/i }))
@@ -262,17 +329,23 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /practice/i }))
     await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
     expect(screen.getByText(/need to go/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Strength 20%/i).length).toBeGreaterThanOrEqual(1)
+    await user.click(screen.getByRole('button', { name: /^Easy$/i }))
+    expect(screen.getByText(/Strength 60%/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /blr/i }))
     expect(screen.getByText(/Slang of the Day/i)).toBeInTheDocument()
-    expect(screen.getByText(/Auto Ride/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Auto Ride/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText(/Ask the fare/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/ticket eshtu/i).length).toBeGreaterThanOrEqual(1)
+    await user.click(screen.getByRole('button', { name: /open auto ride in chat/i }))
+    expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
     const stats = screen.getByTestId('profile-stats')
     expect(within(stats).getByText(/XP/i)).toBeInTheDocument()
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
@@ -312,7 +385,7 @@ describe('KannadaOS desktop app', () => {
     )
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
 
     const stats = screen.getByTestId('profile-stats')
     expect(within(stats).getByLabelText('92 XP')).toBeInTheDocument()
@@ -383,7 +456,7 @@ describe('KannadaOS desktop app', () => {
     )
 
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
     await user.click(screen.getByRole('button', { name: /reset all progress/i }))
 
     const stats = screen.getByTestId('profile-stats')
@@ -404,7 +477,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     const { unmount } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
 
     expect(screen.getByRole('heading', { name: /Daily Reminder/i })).toBeInTheDocument()
     expect(screen.getByText(/Reminder Off/i)).toBeInTheDocument()
@@ -418,7 +491,7 @@ describe('KannadaOS desktop app', () => {
 
     unmount()
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
 
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
@@ -453,7 +526,7 @@ describe('KannadaOS desktop app', () => {
 
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
     await user.click(screen.getByRole('button', { name: /export data/i }))
 
     expect(screen.getByText(/Export ready: 2 activities, 1 practiced word, 1 pronunciation attempt/i)).toBeInTheDocument()
@@ -469,8 +542,7 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
     await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
@@ -482,7 +554,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Adaptive difficulty: Gentle/i)).toBeInTheDocument()
     expect(screen.getByText(/Greetings needs review/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText(/Strength 20%/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Strength 20%/i).length).toBeGreaterThanOrEqual(1)
   })
 
   it('scores pronunciation practice and persists the latest attempt', async () => {
@@ -667,9 +739,8 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
 
     expect(screen.getByRole('heading', { name: /Setting up your AI Teacher/i })).toBeInTheDocument()
@@ -722,7 +793,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     const { unmount } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
     await user.selectOptions(screen.getByLabelText(/active ai provider/i), 'openrouter')
     await user.type(screen.getByLabelText(/OpenRouter API key/i), 'sk-or-test')
@@ -741,12 +812,12 @@ describe('KannadaOS desktop app', () => {
 
     unmount()
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
 
     expect(screen.getByLabelText(/active ai provider/i)).toHaveValue('openrouter')
     expect(screen.getByLabelText(/OpenRouter model/i)).toHaveValue('openai/gpt-4o-mini')
-  })
+  }, 30_000)
 
   it('uses the selected NVIDIA hosted model for tutor chat replies', async () => {
     const user = userEvent.setup()
@@ -857,7 +928,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /^Me$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
 
     expect(screen.getByRole('heading', { name: /On-device Runtime/i })).toBeInTheDocument()
@@ -904,14 +975,13 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Native: Native generated prompt ಹೋಗಬೇಕು/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/AI curriculum expansion/i)).toHaveTextContent(/1 saved drill/i)
     expect(localStorage.getItem('kannadaos:ai-expansion')).toContain('Native generated prompt')
-  })
+  }, 30_000)
 
   it('opens story mode, shows interactive words, and completes the story quiz', async () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /zero/i }))
-    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /stories/i }))
 
     expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()

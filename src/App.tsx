@@ -28,10 +28,12 @@ import {
   getDueReviewItems,
   getWeakSkillSummaries,
   hydrateProgress,
+  rateReviewItem,
   refillHeartsWithGems,
   serializeProgress,
   type DailyQuest,
   type ProgressState,
+  type ReviewRating,
 } from './domain/progress'
 import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
 import { generateExerciseWithNativeRuntime } from './services/nativeExercise'
@@ -66,8 +68,9 @@ import { applyLearnerStorage, collectLearnerStorage } from './services/learnerSt
 import type { GeneratedExercise, LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
-type Tab = 'home' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
+type Tab = 'home' | 'learn' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
 type Screen = 'onboarding' | 'app' | 'lesson' | 'models'
+type OnboardingStep = 'welcome' | 'motivation' | 'level' | 'goal'
 type StoryMode = 'list' | 'reader' | 'quiz' | 'complete'
 type VoiceRecordingTarget = 'chat' | 'pronunciation' | 'lesson'
 
@@ -94,6 +97,18 @@ interface ReminderPreference {
   permission: 'default' | 'granted' | 'denied'
 }
 
+interface LearnerProfile {
+  motivation: string
+  startingLevel: string
+  dailyGoalXp: number
+  onboardedAt: string
+}
+
+interface SoundPreferences {
+  soundEffects: boolean
+  autoPlayAudio: boolean
+}
+
 interface PronunciationAttempt {
   id: string
   phraseId: string
@@ -116,6 +131,8 @@ type LearnerStoreStatus = 'loading' | 'saving' | 'synced' | 'browser' | 'error'
 
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
+const learnerProfileKey = 'kannadaos:learner-profile'
+const soundPrefsKey = 'kannadaos:sound-prefs'
 const reminderKey = 'kannadaos:reminder'
 const runtimeKey = 'kannadaos:local-runtime'
 const aiProviderKey = 'kannadaos:ai-provider'
@@ -131,6 +148,36 @@ const defaultReminderPreference: ReminderPreference = {
   enabled: false,
   time: '7:30 PM',
   permission: 'default',
+}
+const defaultLearnerProfile: LearnerProfile = {
+  motivation: 'moved-to-bangalore',
+  startingLevel: 'zero',
+  dailyGoalXp: 10,
+  onboardedAt: '',
+}
+const defaultSoundPreferences: SoundPreferences = {
+  soundEffects: true,
+  autoPlayAudio: true,
+}
+const motivationOptions = [
+  { id: 'moved-to-bangalore', label: 'Moved to Bangalore', detail: 'Autos, buses, PGs, darshinis, and office Kannada.' },
+  { id: 'work-and-friends', label: 'Work and friends', detail: 'Everyday conversation with coworkers and locals.' },
+  { id: 'family-and-culture', label: 'Family and culture', detail: 'Read signs, greetings, and respectful phrases.' },
+] as const
+const startingLevelOptions = [
+  { id: 'zero', label: 'Zero. Teach me everything.', detail: 'Start with script, greetings, and survival phrases.' },
+  { id: 'can-read-script', label: 'I can read Kannada script', detail: 'Keep script available but focus on speaking.' },
+  { id: 'basic-conversations', label: 'I know basic conversations', detail: 'Start with Bangalore situations and review basics.' },
+] as const
+const dailyGoalOptions = [5, 10, 20, 30] as const
+const tabShortcutByKey: Record<string, Tab> = {
+  '1': 'home',
+  '2': 'learn',
+  '3': 'chat',
+  '4': 'practice',
+  '5': 'stories',
+  '6': 'blr',
+  '7': 'me',
 }
 
 interface ReadableSubtitle {
@@ -312,6 +359,26 @@ function ChoiceText({ text, context }: { text: string; context?: LessonExercise 
   )
 }
 
+function ListeningChoiceText({ text, context, revealed }: { text: string; context?: LessonExercise; revealed: boolean }) {
+  if (!containsKannada(text) || revealed) {
+    return <ChoiceText text={text} context={context} />
+  }
+
+  const subtitle = getKannadaSubtitle(text, context)
+
+  return (
+    <span className="choice-text">
+      <span>Audio choice</span>
+      {subtitle && (
+        <span className="kannada-subtitles">
+          <small className="romanization">{subtitle.romanization}</small>
+          {subtitle.english && <small className="english-subtitle">{subtitle.english}</small>}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
   if (!containsKannada(text)) {
     return null
@@ -432,12 +499,21 @@ function formatReadableExample(example: string): string {
 
 function App() {
   const curriculum = useMemo(() => getLevelOneCurriculum(), [])
-  const allCurriculumUnits = useMemo(() => [...coreCurriculumUnits, getScriptCurriculumUnit()], [])
+  const allCurriculumUnits = useMemo(() => [getScriptCurriculumUnit(), ...coreCurriculumUnits], [])
   const [screen, setScreen] = useState<Screen>(() =>
     localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding',
   )
   const [tab, setTab] = useState<Tab>('home')
-  const [selectedLevel, setSelectedLevel] = useState('Zero. Teach me everything.')
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('welcome')
+  const [selectedMotivation, setSelectedMotivation] = useState(defaultLearnerProfile.motivation)
+  const [selectedStartingLevel, setSelectedStartingLevel] = useState(defaultLearnerProfile.startingLevel)
+  const [selectedDailyGoalXp, setSelectedDailyGoalXp] = useState(defaultLearnerProfile.dailyGoalXp)
+  const [learnerProfile, setLearnerProfile] = useState<LearnerProfile>(() =>
+    hydrateLearnerProfile(localStorage.getItem(learnerProfileKey)),
+  )
+  const [soundPreferences, setSoundPreferences] = useState<SoundPreferences>(() =>
+    hydrateSoundPreferences(localStorage.getItem(soundPrefsKey)),
+  )
   const [progress, setProgress] = useState<ProgressState>(() =>
     hydrateProgress(localStorage.getItem(progressKey)),
   )
@@ -501,6 +577,7 @@ function App() {
   const [selectedStoryWord, setSelectedStoryWord] = useState<StoryWord | null>(null)
   const [selectedStoryAnswer, setSelectedStoryAnswer] = useState('')
   const [storyFeedback, setStoryFeedback] = useState<'correct' | 'wrong' | null>(null)
+  const [tipsUnitId, setTipsUnitId] = useState<string | null>(null)
   const [activeLessonId, setActiveLessonId] = useState(coreCurriculumUnits[0].lessons[0].id)
   const [lessonRunExercises, setLessonRunExercises] = useState<LessonExercise[]>(() => [
     ...lessonExercises,
@@ -535,6 +612,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem(progressKey, serializeProgress(progress))
   }, [progress])
+
+  useEffect(() => {
+    localStorage.setItem(learnerProfileKey, JSON.stringify(learnerProfile))
+  }, [learnerProfile])
+
+  useEffect(() => {
+    localStorage.setItem(soundPrefsKey, JSON.stringify(soundPreferences))
+  }, [soundPreferences])
 
   useEffect(() => {
     localStorage.setItem(reminderKey, JSON.stringify(reminder))
@@ -576,6 +661,8 @@ function App() {
 
         if (applyLearnerStorage(payload, localStorage)) {
           const nextProgress = hydrateProgress(localStorage.getItem(progressKey))
+          const nextLearnerProfile = hydrateLearnerProfile(localStorage.getItem(learnerProfileKey))
+          const nextSoundPreferences = hydrateSoundPreferences(localStorage.getItem(soundPrefsKey))
           const nextReminder = hydrateReminder(localStorage.getItem(reminderKey))
           const nextRuntimeConfig = hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))
           const nextAiProviderSettings = hydrateAiProviderSettings(localStorage.getItem(aiProviderKey))
@@ -584,6 +671,11 @@ function App() {
 
           setScreen(localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding')
           setProgress(nextProgress)
+          setLearnerProfile(nextLearnerProfile)
+          setSelectedMotivation(nextLearnerProfile.motivation)
+          setSelectedStartingLevel(nextLearnerProfile.startingLevel)
+          setSelectedDailyGoalXp(nextLearnerProfile.dailyGoalXp)
+          setSoundPreferences(nextSoundPreferences)
           setReminder(nextReminder)
           setRuntimeConfig(nextRuntimeConfig)
           setAiProviderSettings(nextAiProviderSettings)
@@ -635,7 +727,7 @@ function App() {
     return () => {
       active = false
     }
-  }, [aiProviderSettings, conversationStore, learnerStoreReady, progress, pronunciationHistory, reminder, runtimeConfig])
+  }, [aiProviderSettings, conversationStore, learnerProfile, learnerStoreReady, progress, pronunciationHistory, reminder, runtimeConfig, soundPreferences])
 
   useEffect(() => {
     let active = true
@@ -650,11 +742,62 @@ function App() {
   }, [])
 
   useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if (!event.metaKey && !event.ctrlKey) {
+        return
+      }
+
+      const shortcutTab = tabShortcutByKey[event.key]
+      if (shortcutTab) {
+        event.preventDefault()
+        setScreen('app')
+        setTab(shortcutTab)
+        return
+      }
+
+      if (event.key.toLowerCase() === 'm') {
+        event.preventDefault()
+        setScreen('models')
+        return
+      }
+
+      if (event.key.toLowerCase() === 'r' && screen === 'lesson') {
+        event.preventDefault()
+        openLesson(activeLessonId)
+        return
+      }
+
+      if (event.key === 'Enter' && screen === 'lesson' && activeExercise && selectedAnswer && !feedback) {
+        event.preventDefault()
+        checkAnswer(activeExercise)
+      }
+    }
+
+    window.addEventListener('keydown', handleShortcut)
+    return () => {
+      window.removeEventListener('keydown', handleShortcut)
+    }
+  // The shortcut handler intentionally uses the latest render's lesson actions.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeExercise, activeLessonId, feedback, screen, selectedAnswer])
+
+  useEffect(() => {
     if (screen !== 'lesson' || lessonIndex >= lessonRunExercises.length || !activeExercise?.kannada) {
       return
     }
 
     let cancelled = false
+    if (!soundPreferences.autoPlayAudio) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setAudioStatus('Auto reference audio paused in sound preferences.')
+        }
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (
       activeExercise.type === 'speaking' ||
@@ -688,10 +831,31 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [activeExercise, lessonIndex, lessonRunExercises.length, runtimeConfig, screen])
+  }, [activeExercise, lessonIndex, lessonRunExercises.length, runtimeConfig, screen, soundPreferences.autoPlayAudio])
 
   function startLearning() {
+    const nextLearnerProfile: LearnerProfile = {
+      motivation: selectedMotivation,
+      startingLevel: selectedStartingLevel,
+      dailyGoalXp: selectedDailyGoalXp,
+      onboardedAt: new Date().toISOString(),
+    }
     localStorage.setItem(onboardedKey, 'true')
+    localStorage.setItem(learnerProfileKey, JSON.stringify(nextLearnerProfile))
+    localStorage.setItem(soundPrefsKey, JSON.stringify(soundPreferences))
+    setLearnerProfile(nextLearnerProfile)
+    if (selectedStartingLevel === 'can-read-script') {
+      const completedAt = nextLearnerProfile.onboardedAt
+      setProgress((current) =>
+        getScriptCurriculumUnit().lessons.reduce(
+          (nextProgress, lesson) =>
+            nextProgress.lessonProgress[lesson.id]
+              ? nextProgress
+              : completeLessonProgress(nextProgress, lesson.id, completedAt, true),
+          current,
+        ),
+      )
+    }
     setScreen('app')
   }
 
@@ -715,6 +879,7 @@ function App() {
     const correct = selectedAnswer === exercise.answer
     const now = new Date().toISOString()
     const completesLesson = correct && lessonIndex === lessonRunExercises.length - 1
+    const completesPerfectLesson = completesLesson && lessonRunExercises.length === activeLesson.exercises.length && progress.hearts === 5
     setFeedback(correct ? 'correct' : 'wrong')
 
     if (correct) {
@@ -738,7 +903,7 @@ function App() {
           now,
         })
 
-        return completesLesson ? completeLessonProgress(nextProgress, activeLesson.id, now) : nextProgress
+        return completesLesson ? completeLessonProgress(nextProgress, activeLesson.id, now, completesPerfectLesson) : nextProgress
       },
     )
 
@@ -945,12 +1110,25 @@ function App() {
     setReminder((current) => ({ ...current, time }))
   }
 
+  function setDailyGoal(goal: number) {
+    setLearnerProfile((current) => ({ ...current, dailyGoalXp: goal }))
+  }
+
+  function toggleSoundPreference(key: keyof SoundPreferences) {
+    setSoundPreferences((current) => ({ ...current, [key]: !current[key] }))
+  }
+
   function allowReminderAlerts() {
     setReminder((current) => ({ ...current, permission: 'granted' }))
   }
 
   function claimQuestReward(quest: DailyQuest) {
     setProgress((current) => claimDailyQuestReward(current, quest, new Date().toISOString()))
+  }
+
+  function rateFlashcard(vocabularyId: string, rating: ReviewRating) {
+    setProgress((current) => rateReviewItem(current, vocabularyId, rating, new Date().toISOString()))
+    setFlashcardBack(false)
   }
 
   function refillHearts() {
@@ -1288,37 +1466,96 @@ function App() {
   }
 
   if (screen === 'onboarding') {
+    const selectedMotivationOption = motivationOptions.find((option) => option.id === selectedMotivation) ?? motivationOptions[0]
+    const selectedStartingLevelOption = startingLevelOptions.find((option) => option.id === selectedStartingLevel) ?? startingLevelOptions[0]
+
     return (
       <main className="app-shell onboarding-shell">
         <section className="splash-panel" aria-labelledby="onboarding-title">
           <div className="logo-mark" aria-hidden="true">
             ಕ
           </div>
-          <p className="eyebrow">Offline Kannada AI teacher</p>
-          <h1 id="onboarding-title">KannadaOS</h1>
-          <p className="lead">
-            Real Bangalore Kannada for buses, autos, darshinis, offices, and daily life.
-          </p>
-          <div className="level-grid" aria-label="Choose Kannada level">
-            {[
-              'Zero. Teach me everything.',
-              'I know basics.',
-              'Conversational, but rusty.',
-            ].map((level) => (
-              <button
-                className={selectedLevel === level ? 'choice-card selected' : 'choice-card'}
-                key={level}
-                onClick={() => setSelectedLevel(level)}
-                type="button"
-              >
-                <span>{level}</span>
-                <small>{level.startsWith('Zero') ? 'Start with greetings and survival phrases' : 'Skip ahead later from Profile'}</small>
+          {onboardingStep === 'welcome' && (
+            <>
+              <p className="eyebrow">Offline Kannada AI teacher</p>
+              <h1 id="onboarding-title">KannadaOS</h1>
+              <p className="lead">
+                Real Bangalore Kannada for buses, autos, darshinis, offices, and daily life.
+              </p>
+              <button className="primary-action" onClick={() => setOnboardingStep('motivation')} type="button">
+                Continue onboarding
               </button>
-            ))}
-          </div>
-          <button className="primary-action" onClick={startLearning} type="button">
-            Start Learning
-          </button>
+            </>
+          )}
+
+          {onboardingStep === 'motivation' && (
+            <>
+              <p className="eyebrow">Step 1 of 3</p>
+              <h1 id="onboarding-title">Why are you learning Kannada?</h1>
+              <div className="level-grid" aria-label="Choose learning motivation">
+                {motivationOptions.map((option) => (
+                  <button
+                    className={selectedMotivation === option.id ? 'choice-card selected' : 'choice-card'}
+                    key={option.id}
+                    onClick={() => setSelectedMotivation(option.id)}
+                    type="button"
+                  >
+                    <span>{option.label}</span>
+                    <small>{option.detail}</small>
+                  </button>
+                ))}
+              </div>
+              <button className="primary-action" onClick={() => setOnboardingStep('level')} type="button">
+                Next: choose level
+              </button>
+            </>
+          )}
+
+          {onboardingStep === 'level' && (
+            <>
+              <p className="eyebrow">Step 2 of 3 - {selectedMotivationOption.label}</p>
+              <h1 id="onboarding-title">What is your current level?</h1>
+              <div className="level-grid" aria-label="Choose Kannada level">
+                {startingLevelOptions.map((option) => (
+                  <button
+                    className={selectedStartingLevel === option.id ? 'choice-card selected' : 'choice-card'}
+                    key={option.id}
+                    onClick={() => setSelectedStartingLevel(option.id)}
+                    type="button"
+                  >
+                    <span>{option.label}</span>
+                    <small>{option.detail}</small>
+                  </button>
+                ))}
+              </div>
+              <button className="primary-action" onClick={() => setOnboardingStep('goal')} type="button">
+                Next: set goal
+              </button>
+            </>
+          )}
+
+          {onboardingStep === 'goal' && (
+            <>
+              <p className="eyebrow">Step 3 of 3 - {selectedStartingLevelOption.label}</p>
+              <h1 id="onboarding-title">Set a daily XP goal</h1>
+              <div className="level-grid compact-grid" aria-label="Choose daily XP goal">
+                {dailyGoalOptions.map((goal) => (
+                  <button
+                    className={selectedDailyGoalXp === goal ? 'choice-card selected' : 'choice-card'}
+                    key={goal}
+                    onClick={() => setSelectedDailyGoalXp(goal)}
+                    type="button"
+                  >
+                    <span>{goal} XP</span>
+                    <small>{goal <= 10 ? 'Light daily practice' : goal === 20 ? 'Focused beginner pace' : 'Intensive practice'}</small>
+                  </button>
+                ))}
+              </div>
+              <button className="primary-action" onClick={startLearning} type="button">
+                Start Learning
+              </button>
+            </>
+          )}
         </section>
       </main>
     )
@@ -1665,6 +1902,7 @@ function App() {
           <nav className="nav-stack">
             {[
               ['home', 'Dashboard'],
+              ['learn', 'Learn'],
               ['chat', 'Chat'],
               ['practice', 'Practice'],
               ['stories', 'Stories'],
@@ -1714,6 +1952,85 @@ function App() {
   )
 
   function renderTab() {
+    if (tab === 'learn') {
+      const unlockedUnitIds = new Set(getUnlockedCurriculumUnits(allCurriculumUnits, progress).map((unit) => unit.id))
+      const activeTipsUnit = allCurriculumUnits.find((unit) => unit.id === tipsUnitId) ?? null
+
+      return (
+        <section className="panel learn-panel" aria-labelledby="learn-title">
+          <header className="section-header">
+            <div>
+              <p className="eyebrow">Curriculum tree</p>
+              <h2 id="learn-title">Learn Kannada</h2>
+            </div>
+            <span className="metric-pill">{progress.xp} XP</span>
+          </header>
+          <section className="level-map expanded" aria-label="Learn curriculum tree">
+            {allCurriculumUnits.map((unit, mapUnitIndex) => {
+              const unlockedUnit = unlockedUnitIds.has(unit.id)
+              const unitNumber = unit.optional ? 0 : coreCurriculumUnits.findIndex((coreUnit) => coreUnit.id === unit.id) + 1
+              return (
+                <article
+                  className={unlockedUnit ? 'map-node unit-node current' : 'map-node unit-node locked'}
+                  key={unit.id}
+                >
+                  <span>{unit.optional ? 'ಅ' : unlockedUnit ? '★' : 'lock'}</span>
+                  <strong>Unit {unitNumber}: {unit.title}</strong>
+                  <small>{unit.description}</small>
+                  <button className="secondary-action compact-action" onClick={() => setTipsUnitId(unit.id)} type="button">
+                    Tips
+                  </button>
+                  <div className="lesson-dot-row">
+                    {unit.lessons.map((lesson, unitLessonIndex) => {
+                      const lessonProgress = getLessonProgressSummary(progress, lesson.id)
+                      const unlocked = unit.optional || isLessonUnlocked(lesson.id, progress)
+                      return (
+                        <button
+                          aria-label={`Learn unit ${mapUnitIndex + 1} lesson ${unitLessonIndex + 1}: ${lesson.title}, ${lessonProgress.masteryLevel} crowns`}
+                          className={lessonProgress.completed ? 'lesson-dot done' : unlocked ? 'lesson-dot current' : 'lesson-dot locked'}
+                          disabled={!unlocked}
+                          key={lesson.id}
+                          onClick={() => openLesson(lesson.id)}
+                          type="button"
+                        >
+                          {lessonProgress.masteryLevel || (unlocked ? '•' : 'x')}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </article>
+              )
+            })}
+          </section>
+          {activeTipsUnit && (
+            <section className="tips-modal" role="dialog" aria-modal="true" aria-labelledby="tips-modal-title">
+              <div className="tips-modal-body">
+                <header className="section-header compact-header">
+                  <div>
+                    <p className="eyebrow">grammar tips</p>
+                    <h3 id="tips-modal-title">Tips: {activeTipsUnit.title}</h3>
+                  </div>
+                  <button className="icon-button" onClick={() => setTipsUnitId(null)} type="button" aria-label="Close tips">
+                    x
+                  </button>
+                </header>
+                {activeTipsUnit.tips.map((tip) => (
+                  <article className="tip-row" key={tip.title}>
+                    <strong>{tip.title}</strong>
+                    <p>{tip.body}</p>
+                    <small>{tip.examples.map(formatReadableExample).join(' / ')}</small>
+                  </article>
+                ))}
+                <button className="primary-action" onClick={() => openLesson(activeTipsUnit.lessons[0].id)} type="button">
+                  Start lesson
+                </button>
+              </div>
+            </section>
+          )}
+        </section>
+      )
+    }
+
     if (tab === 'chat') {
       return (
         <section className="panel chat-panel" aria-labelledby="chat-title">
@@ -1801,6 +2118,7 @@ function App() {
         .map((vocabularyId) => survivalPhrases.find((phrase) => phrase.id === vocabularyId))
         .filter((phrase): phrase is (typeof survivalPhrases)[number] => Boolean(phrase))
       const card = dueReviewPhrases[0] ?? survivalPhrases.find((phrase) => phrase.id === 'hogbeku')!
+      const cardReview = progress.reviewQueue[card.id]
       return (
         <section className="panel" aria-labelledby="practice-title">
           <header className="section-header">
@@ -1813,12 +2131,28 @@ function App() {
             </span>
           </header>
           <div className="review-layout">
-            <button className="flashcard" onClick={() => setFlashcardBack((value) => !value)} type="button">
-              <span lang="kn">{card.kannada}</span>
-              <small className="romanization">{card.transliteration}</small>
-              <strong>{flashcardBack ? card.english : card.transliteration}</strong>
-              {flashcardBack ? <small>{card.context}</small> : <small>Tap to flip</small>}
-            </button>
+            <div className="flashcard-stack">
+              <button className="flashcard" onClick={() => setFlashcardBack((value) => !value)} type="button">
+                <span lang="kn">{card.kannada}</span>
+                <small className="romanization">{card.transliteration}</small>
+                <strong>{flashcardBack ? card.english : card.transliteration}</strong>
+                {flashcardBack ? <small>{card.context}</small> : <small>Tap to flip</small>}
+              </button>
+              <div className="review-rating-row" aria-label="Flashcard rating">
+                {[
+                  ['hard', 'Hard'],
+                  ['okay', 'Okay'],
+                  ['easy', 'Easy'],
+                ].map(([rating, label]) => (
+                  <button className="secondary-action compact-action" key={rating} onClick={() => rateFlashcard(card.id, rating as ReviewRating)} type="button">
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <small className="review-strength">
+                Strength {Math.round((cardReview?.strength ?? 0.2) * 100)}%
+              </small>
+            </div>
             <div className="practice-stack">
               <article className="accent-card saffron">
                 <strong>Adaptive difficulty: {titleCase(adaptiveDifficulty.level)}</strong>
@@ -2138,6 +2472,41 @@ function App() {
                 <strong>{scenario.title}</strong>
                 <small>{scenario.difficulty}</small>
                 <p>{scenario.situation}</p>
+                <ul className="scenario-checklist" aria-label={`${scenario.title} checklist`}>
+                  {scenario.checklist.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <div className="scenario-phrase-list" aria-label={`${scenario.title} useful phrases`}>
+                  {scenario.usefulPhrases.map((phrase) => (
+                    <button
+                      className="selector-chip compact"
+                      key={phrase.id}
+                      onClick={() => {
+                        selectChatScenario(scenario.id)
+                        setChatInput(phrase.kannada)
+                        setTab('chat')
+                      }}
+                      type="button"
+                    >
+                      <strong lang="kn">{phrase.kannada}</strong>
+                      <span className="kannada-subtitles">
+                        <small className="romanization">{phrase.transliteration}</small>
+                        <small className="english-subtitle">{phrase.english}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="secondary-action"
+                  onClick={() => {
+                    selectChatScenario(scenario.id)
+                    setTab('chat')
+                  }}
+                  type="button"
+                >
+                  Open {scenario.title} in chat
+                </button>
               </article>
             ))}
           </div>
@@ -2219,6 +2588,42 @@ function App() {
               </button>
             </div>
           </section>
+          <section className="reminder-card" aria-labelledby="daily-goal-title">
+            <div>
+              <span className="model-category">daily goal</span>
+              <h3 id="daily-goal-title">Daily XP Goal</h3>
+              <p>{learnerProfile.dailyGoalXp} XP per day</p>
+              <small>Dashboard quests and the XP ring use this target.</small>
+            </div>
+            <div className="reminder-actions">
+              {dailyGoalOptions.map((goal) => (
+                <button
+                  className={learnerProfile.dailyGoalXp === goal ? 'selector-chip compact active' : 'selector-chip compact'}
+                  key={goal}
+                  onClick={() => setDailyGoal(goal)}
+                  type="button"
+                >
+                  {goal} XP
+                </button>
+              ))}
+            </div>
+          </section>
+          <section className="reminder-card" aria-labelledby="sound-settings-title">
+            <div>
+              <span className="model-category">sound</span>
+              <h3 id="sound-settings-title">Sound Preferences</h3>
+              <p>{soundPreferences.autoPlayAudio ? 'Auto-play On' : 'Auto-play Off'}</p>
+              <small>{soundPreferences.soundEffects ? 'Sound effects on' : 'Sound effects off'}</small>
+            </div>
+            <div className="reminder-actions">
+              <button className="secondary-action" onClick={() => toggleSoundPreference('autoPlayAudio')} type="button">
+                {soundPreferences.autoPlayAudio ? 'Disable Auto-play' : 'Enable Auto-play'}
+              </button>
+              <button className="secondary-action" onClick={() => toggleSoundPreference('soundEffects')} type="button">
+                {soundPreferences.soundEffects ? 'Disable Sound Effects' : 'Enable Sound Effects'}
+              </button>
+            </div>
+          </section>
           <section className="reminder-card" aria-labelledby="learner-store-title">
             <div>
               <span className="model-category">storage</span>
@@ -2281,7 +2686,8 @@ function App() {
     const nextUnit =
       coreCurriculumUnits.find((unit) => unit.lessons.some((lesson) => lesson.id === nextLesson.id)) ??
       coreCurriculumUnits[0]
-    const dailyQuests = getDailyQuests(progress, new Date().toISOString())
+    const dailyGoalXp = learnerProfile.dailyGoalXp
+    const dailyQuests = getDailyQuests(progress, new Date().toISOString(), dailyGoalXp)
 
     return (
       <section className="panel home-panel" aria-labelledby="home-title">
@@ -2297,11 +2703,11 @@ function App() {
         </header>
         <section className="streak-banner">
           <div>
-            <strong>12 Day Streak!</strong>
-            <p>Keep it up. {Math.max(0, 10 - progress.dailyXp)} XP to hit today&apos;s goal.</p>
+            <strong>{progress.streakDays} Day Streak!</strong>
+            <p>Keep it up. {Math.max(0, dailyGoalXp - progress.dailyXp)} XP to hit today&apos;s goal.</p>
           </div>
-          <div className="ring" aria-label={`${progress.dailyXp} of 10 XP`}>
-            {Math.min(10, progress.dailyXp)}/10
+          <div className="ring" aria-label={`${progress.dailyXp} of ${dailyGoalXp} XP`}>
+            {Math.min(dailyGoalXp, progress.dailyXp)}/{dailyGoalXp}
           </div>
         </section>
         <button
@@ -2428,7 +2834,18 @@ function App() {
             </button>
             {audioStatus && <p role="status">{audioStatus}</p>}
           </div>
-          {renderOptions(exercise)}
+          <div className="option-stack" aria-label="Listening choices">
+            {exercise.options.map((option) => (
+              <button
+                className={selectedAnswer === option ? 'answer-option selected' : 'answer-option'}
+                key={option}
+                onClick={() => setSelectedAnswer(option)}
+                type="button"
+              >
+                <ListeningChoiceText text={option} context={exercise} revealed={feedback !== null} />
+              </button>
+            ))}
+          </div>
         </>
       )
     }
@@ -2644,6 +3061,44 @@ function buildTutorReply(input: string, scenario: Scenario, persona: TutorPerson
   return {
     text: `${persona.name}: Try it in the ${scenario.title} roleplay.`,
     subtext: scenario.usefulPhrases.map((phrase) => phrase.transliteration).join(' / '),
+  }
+}
+
+function hydrateLearnerProfile(serialized: string | null): LearnerProfile {
+  if (!serialized) {
+    return defaultLearnerProfile
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as Partial<LearnerProfile>
+    const dailyGoalXp = dailyGoalOptions.includes(parsed.dailyGoalXp as (typeof dailyGoalOptions)[number])
+      ? Number(parsed.dailyGoalXp)
+      : defaultLearnerProfile.dailyGoalXp
+
+    return {
+      motivation: typeof parsed.motivation === 'string' && parsed.motivation ? parsed.motivation : defaultLearnerProfile.motivation,
+      startingLevel: typeof parsed.startingLevel === 'string' && parsed.startingLevel ? parsed.startingLevel : defaultLearnerProfile.startingLevel,
+      dailyGoalXp,
+      onboardedAt: typeof parsed.onboardedAt === 'string' ? parsed.onboardedAt : defaultLearnerProfile.onboardedAt,
+    }
+  } catch {
+    return defaultLearnerProfile
+  }
+}
+
+function hydrateSoundPreferences(serialized: string | null): SoundPreferences {
+  if (!serialized) {
+    return defaultSoundPreferences
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as Partial<SoundPreferences>
+    return {
+      soundEffects: typeof parsed.soundEffects === 'boolean' ? parsed.soundEffects : defaultSoundPreferences.soundEffects,
+      autoPlayAudio: typeof parsed.autoPlayAudio === 'boolean' ? parsed.autoPlayAudio : defaultSoundPreferences.autoPlayAudio,
+    }
+  } catch {
+    return defaultSoundPreferences
   }
 }
 

@@ -13,6 +13,8 @@ describe('renderer learner storage repository', () => {
 
   it('collects only durable KannadaOS learner domains from browser storage', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:learner-profile', '{"dailyGoalXp":20}')
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":false,"autoPlayAudio":true}')
     localStorage.setItem('kannadaos:progress', '{"xp":42}')
     localStorage.setItem('kannadaos:conversation-log', '{"auto-ride":[]}')
     localStorage.setItem('kannadaos:ai-expansion', '[{"prompt":"AI commute drill"}]')
@@ -20,6 +22,8 @@ describe('renderer learner storage repository', () => {
 
     expect(collectLearnerStorage(localStorage)).toEqual({
       'kannadaos:onboarded': 'true',
+      'kannadaos:learner-profile': '{"dailyGoalXp":20}',
+      'kannadaos:sound-prefs': '{"soundEffects":false,"autoPlayAudio":true}',
       'kannadaos:progress': '{"xp":42}',
       'kannadaos:conversation-log': '{"auto-ride":[]}',
       'kannadaos:ai-expansion': '[{"prompt":"AI commute drill"}]',
@@ -33,6 +37,8 @@ describe('renderer learner storage repository', () => {
       savedAt: '2026-05-23T18:30:00.000Z',
       values: {
         'kannadaos:onboarded': 'true',
+        'kannadaos:learner-profile': '{"dailyGoalXp":20}',
+        'kannadaos:sound-prefs': '{"soundEffects":false,"autoPlayAudio":true}',
         'kannadaos:progress': '{"xp":42}',
         'kannadaos:ai-expansion': '[{"prompt":"AI commute drill"}]',
         'foreign:key': 'ignore me',
@@ -41,6 +47,8 @@ describe('renderer learner storage repository', () => {
 
     expect(applyLearnerStorage(payload, localStorage)).toBe(true)
     expect(localStorage.getItem('kannadaos:onboarded')).toBe('true')
+    expect(localStorage.getItem('kannadaos:learner-profile')).toBe('{"dailyGoalXp":20}')
+    expect(localStorage.getItem('kannadaos:sound-prefs')).toBe('{"soundEffects":false,"autoPlayAudio":true}')
     expect(localStorage.getItem('kannadaos:progress')).toBe('{"xp":42}')
     expect(localStorage.getItem('kannadaos:ai-expansion')).toBe('[{"prompt":"AI commute drill"}]')
     expect(localStorage.getItem('foreign:key')).toBeNull()

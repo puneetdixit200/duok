@@ -1,5 +1,7 @@
 export const learnerStorageKeys = [
   'kannadaos:onboarded',
+  'kannadaos:learner-profile',
+  'kannadaos:sound-prefs',
   'kannadaos:progress',
   'kannadaos:reminder',
   'kannadaos:local-runtime',

@@ -89,21 +89,26 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(new Set(exercises.map((exercise) => exercise.id)).size).toBe(exercises.length)
   })
 
-  it('includes an optional Kannada script unit with vowels, consonants, and vowel-sign combinations', () => {
+  it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
     expect(scriptUnit.optional).toBe(true)
     expect(scriptUnit.title).toBe('Kannada Script')
     expect(scriptUnit.lessons.map((lesson) => lesson.title)).toEqual([
-      'Independent Vowels',
-      'Ka-Varga Consonants',
-      'Cha-Ta Groups',
-      'Pa-Ya Groups',
-      'Vowel Signs With Ka',
+      'Vowels Part 1',
+      'Vowels Part 2',
+      'Consonants: Velars',
+      'Consonants: Palatals',
+      'Consonants: Retroflexes',
+      'Consonants: Dentals',
+      'Consonants: Labials + Others',
+      'Vowel Signs',
+      'Reading Practice',
     ])
     expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'vowel')).toHaveLength(14)
     expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'consonant').length).toBeGreaterThanOrEqual(34)
     expect(scriptUnit.scriptSymbols.some((symbol) => symbol.kannada === 'ಕಿ' && symbol.transliteration === 'ki')).toBe(true)
+    expect([...coreCurriculumUnits, scriptUnit].reduce((total, unit) => total + unit.lessons.length, 0)).toBe(49)
   })
 
   it('unlocks lessons sequentially while keeping the optional script path available', () => {

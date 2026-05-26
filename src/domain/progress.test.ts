@@ -12,6 +12,7 @@ import {
   getLessonProgressSummary,
   getWeakSkillSummaries,
   hydrateProgress,
+  rateReviewItem,
   refillHeartsWithGems,
   serializeProgress,
 } from './progress'
@@ -33,9 +34,33 @@ describe('learner progress', () => {
     expect(progress.hearts).toBe(5)
     expect(progress.streakDays).toBe(1)
     expect(progress.dailyXp).toBe(2)
+    expect(progress.todayActivityIds).toEqual(['survival-translate-1'])
     expect(progress.completedExerciseIds).toContain('survival-translate-1')
     expect(progress.reviewQueue['namaskara-saar'].leitnerBox).toBe(2)
     expect(progress.reviewQueue['namaskara-saar'].strength).toBe(0.4)
+  })
+
+  it('resets daily XP and activity counts when practice moves to a new day', () => {
+    const firstDay = applyExerciseResult(createInitialProgress(), {
+      exerciseId: 'survival-translate-1',
+      correct: true,
+      skillTag: 'greetings',
+      xp: 2,
+      vocabularyIds: ['namaskara-saar'],
+      now: '2026-05-23T09:00:00.000Z',
+    })
+    const nextDay = applyExerciseResult(firstDay, {
+      exerciseId: 'survival-arrange-1',
+      correct: true,
+      skillTag: 'greetings',
+      xp: 3,
+      vocabularyIds: ['namaskara-saar'],
+      now: '2026-05-24T09:00:00.000Z',
+    })
+
+    expect(nextDay.dailyXp).toBe(3)
+    expect(nextDay.todayActivityIds).toEqual(['survival-arrange-1'])
+    expect(nextDay.completedExerciseIds).toEqual(['survival-translate-1', 'survival-arrange-1'])
   })
 
   it('tracks weak areas, removes a heart, and schedules review for incorrect answers', () => {
@@ -50,6 +75,7 @@ describe('learner progress', () => {
 
     expect(progress.xp).toBe(0)
     expect(progress.hearts).toBe(4)
+    expect(progress.lastHeartLostAt).toBe(now)
     expect(progress.weakAreas.verbs).toBe(1)
     expect(getDueReviewItems(progress, now)).toEqual(['hogbeku'])
   })
@@ -106,6 +132,29 @@ describe('learner progress', () => {
 
     expect(wrong.reviewQueue.eshtu.leitnerBox).toBe(1)
     expect(wrong.reviewQueue.eshtu.dueAt).toBe('2026-06-02T09:00:00.000Z')
+  })
+
+  it('updates review strength from Hard, Okay, and Easy flashcard ratings', () => {
+    const initial = applyExerciseResult(createInitialProgress(), {
+      exerciseId: 'prices-translate-1',
+      correct: true,
+      skillTag: 'prices',
+      xp: 2,
+      vocabularyIds: ['eshtu'],
+      now,
+    })
+
+    const hard = rateReviewItem(initial, 'eshtu', 'hard', '2026-05-26T09:00:00.000Z')
+    expect(hard.reviewQueue.eshtu.leitnerBox).toBe(1)
+    expect(hard.reviewQueue.eshtu.dueAt).toBe('2026-05-26T09:00:00.000Z')
+
+    const okay = rateReviewItem(hard, 'eshtu', 'okay', '2026-05-26T09:30:00.000Z')
+    expect(okay.reviewQueue.eshtu.leitnerBox).toBe(2)
+    expect(okay.reviewQueue.eshtu.dueAt).toBe('2026-05-29T09:30:00.000Z')
+
+    const easy = rateReviewItem(okay, 'eshtu', 'easy', '2026-05-29T09:30:00.000Z')
+    expect(easy.reviewQueue.eshtu.leitnerBox).toBe(4)
+    expect(easy.reviewQueue.eshtu.dueAt).toBe('2026-06-12T09:30:00.000Z')
   })
 
   it('summarizes weak skills and lowers adaptive difficulty when review pressure is high', () => {
@@ -189,11 +238,19 @@ describe('learner progress', () => {
       '2026-05-28T10:00:00.000Z',
     )
 
-    expect(getLessonProgressSummary(secondCompletion, 'unit-1-greetings-lesson-1')).toEqual({
+    const perfectCompletion = completeLessonProgress(
+      secondCompletion,
+      'unit-1-greetings-lesson-1',
+      '2026-05-29T10:00:00.000Z',
+      true,
+    )
+
+    expect(getLessonProgressSummary(perfectCompletion, 'unit-1-greetings-lesson-1')).toEqual({
       completed: true,
-      masteryLevel: 2,
-      attempts: 2,
-      lastCompletedAt: '2026-05-28T10:00:00.000Z',
+      masteryLevel: 3,
+      attempts: 3,
+      perfectCompletions: 1,
+      lastCompletedAt: '2026-05-29T10:00:00.000Z',
     })
   })
 
@@ -204,26 +261,27 @@ describe('learner progress', () => {
       hearts: 1,
       gems: 160,
       completedExerciseIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+      todayActivityIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
     }
-    const quests = getDailyQuests(progress, '2026-05-27T10:00:00.000Z')
+    const quests = getDailyQuests(progress, '2026-05-27T10:00:00.000Z', 20)
 
     expect(quests).toEqual([
-      expect.objectContaining({ id: 'daily-xp-10', completed: true, rewardGems: 10 }),
+      expect.objectContaining({ id: 'daily-xp-20', title: 'Earn 20 XP', current: 18, target: 20, completed: false, rewardGems: 10 }),
       expect.objectContaining({ id: 'daily-activities-3', completed: true, rewardGems: 15 }),
       expect.objectContaining({ id: 'daily-perfect-lesson', completed: false, rewardGems: 20 }),
     ])
 
-    const rewarded = claimDailyQuestReward(progress, quests[0])
-    expect(rewarded.gems).toBe(170)
-    expect(rewarded.dailyQuestClaims['2026-05-27']).toContain('daily-xp-10')
-    expect(claimDailyQuestReward(rewarded, quests[0]).gems).toBe(170)
+    const rewarded = claimDailyQuestReward(progress, quests[1])
+    expect(rewarded.gems).toBe(175)
+    expect(rewarded.dailyQuestClaims['2026-05-27']).toContain('daily-activities-3')
+    expect(claimDailyQuestReward(rewarded, quests[1]).gems).toBe(175)
 
     const refilled = refillHeartsWithGems(rewarded)
     expect(refilled.hearts).toBe(5)
-    expect(refilled.gems).toBe(120)
+    expect(refilled.gems).toBe(125)
 
     const protectedStreak = buyStreakFreeze(refilled)
     expect(protectedStreak.streakFreezes).toBe(1)
-    expect(protectedStreak.gems).toBe(20)
+    expect(protectedStreak.gems).toBe(25)
   })
 })

@@ -1027,6 +1027,11 @@ h2 {
   text-align: center;
 }
 
+.flashcard-stack {
+  display: grid;
+  gap: 10px;
+}
+
 .flashcard span {
   color: white;
   font-size: clamp(34px, 5vw, 60px);
@@ -1036,6 +1041,18 @@ h2 {
 .flashcard strong {
   color: #ffbc8a;
   font-size: 24px;
+}
+
+.review-rating-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  gap: 8px;
+}
+
+.review-strength {
+  color: #c9c7d6;
+  font-weight: 800;
+  text-align: center;
 }
 
 .practice-stack {
@@ -1083,9 +1100,22 @@ h2 {
   background: #202037;
 }
 
-.scenario-card span {
+.scenario-card > span {
   color: #ffbc8a;
   font-weight: 900;
+}
+
+.scenario-checklist {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0;
+  padding-left: 18px;
+  color: #d7d5e4;
+}
+
+.scenario-phrase-list {
+  display: grid;
+  gap: 8px;
 }
 
 .story-grid {
@@ -1483,6 +1513,52 @@ h2 {
 
 .lesson-dot.locked {
   color: #7d7a92;
+}
+
+.tips-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(9, 9, 16, 0.68);
+}
+
+.tips-modal-body {
+  display: grid;
+  width: min(680px, 100%);
+  max-height: min(760px, 90vh);
+  gap: 12px;
+  overflow: auto;
+  border: 1px solid #3d3d5c;
+  border-radius: 16px;
+  padding: 20px;
+  background: #171727;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+}
+
+.tip-row {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #30304d;
+  border-radius: 12px;
+  padding: 12px;
+  background: #202037;
+}
+
+.tip-row p {
+  margin: 0;
+  color: #d7d5e4;
+}
+
+.compact-header {
+  margin-bottom: 0;
+}
+
+.compact-action {
+  min-height: 36px;
+  padding: 8px 10px;
 }
 
 .confetti-burst {

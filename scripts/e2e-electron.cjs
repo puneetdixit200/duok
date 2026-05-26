@@ -32,11 +32,16 @@ async function main() {
       }
     })
 
-    await page.getByRole('button', { name: /zero/i }).waitFor()
+    await page.getByRole('button', { name: /continue onboarding/i }).waitFor()
     await page.waitForFunction(() =>
       localStorage.getItem('kannadaos:local-runtime')?.includes('whisper-small.bin'),
     )
+    await page.getByRole('button', { name: /continue onboarding/i }).click()
+    await page.getByRole('button', { name: /moved to bangalore/i }).click()
+    await page.getByRole('button', { name: /next: choose level/i }).click()
     await page.getByRole('button', { name: /zero/i }).click()
+    await page.getByRole('button', { name: /next: set goal/i }).click()
+    await page.getByRole('button', { name: /10 XP/i }).click()
     await page.getByRole('button', { name: /start learning/i }).click()
     await page.getByRole('button', { name: /continue: greetings/i }).click()
     await completeLesson(page)
@@ -89,7 +94,7 @@ async function main() {
     })
 
     await page.getByRole('button', { name: /blr/i }).click()
-    await page.getByText(/Auto Ride/i).waitFor()
+    await page.getByText('Auto Ride', { exact: true }).waitFor()
     await page.getByRole('button', { name: /^me$/i }).click()
     await page.getByText(/Level 4 Learner/i).waitFor()
     await page.getByLabel('38 XP').waitFor()
@@ -367,7 +372,7 @@ async function completeLesson(page) {
   await page.getByText('listening', { exact: true }).waitFor()
   await page.getByRole('button', { name: /play reference audio/i }).click()
   await page.getByText(/Piper audio ready|Playing reference audio|Auto reference audio|Auto Piper audio ready/i).waitFor()
-  await page.getByRole('button', { name: /^ಟಿಕೆಟ್ ಎಷ್ಟು/ }).click()
+  await page.getByRole('button', { name: /ticket eshtu/i }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 

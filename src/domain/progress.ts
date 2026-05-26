@@ -10,6 +10,7 @@ export interface LessonProgress {
   lessonId: string
   masteryLevel: number
   attempts: number
+  perfectCompletions: number
   lastCompletedAt: string
 }
 
@@ -20,11 +21,17 @@ export interface ProgressState {
   gems: number
   streakDays: number
   lastPracticeDate: string | null
+  lastHeartLostAt: string | null
   completedExerciseIds: string[]
+  todayActivityIds: string[]
+  completedStoryIds: string[]
   weakAreas: Record<string, number>
   reviewQueue: Record<string, ReviewItem>
   lessonProgress: Record<string, LessonProgress>
   dailyQuestClaims: Record<string, string[]>
+  scenarioChecklist: Record<string, string[]>
+  totalPracticeTimeMs: number
+  chatMessagesSent: number
   streakFreezes: number
 }
 
@@ -47,6 +54,7 @@ export interface WeakSkillSummary {
 }
 
 export type AdaptiveDifficultyLevel = 'gentle' | 'steady' | 'challenge'
+export type ReviewRating = 'hard' | 'okay' | 'easy'
 
 export interface AdaptiveDifficulty {
   level: AdaptiveDifficultyLevel
@@ -65,6 +73,7 @@ export interface LessonProgressSummary {
   completed: boolean
   masteryLevel: number
   attempts: number
+  perfectCompletions: number
   lastCompletedAt: string | null
 }
 
@@ -87,19 +96,28 @@ export function createInitialProgress(): ProgressState {
     gems: 120,
     streakDays: 0,
     lastPracticeDate: null,
+    lastHeartLostAt: null,
     completedExerciseIds: [],
+    todayActivityIds: [],
+    completedStoryIds: [],
     weakAreas: {},
     reviewQueue: {},
     lessonProgress: {},
     dailyQuestClaims: {},
+    scenarioChecklist: {},
+    totalPracticeTimeMs: 0,
+    chatMessagesSent: 0,
     streakFreezes: 0,
   }
 }
 
 export function applyExerciseResult(state: ProgressState, result: ExerciseResult): ProgressState {
   const practiceDate = result.now.slice(0, 10)
-  const shouldStartOrContinueStreak = state.lastPracticeDate !== practiceDate
+  const isSamePracticeDate = state.lastPracticeDate === practiceDate
+  const shouldStartOrContinueStreak = !isSamePracticeDate
   const earnedXp = result.correct ? result.xp : 0
+  const baseDailyXp = isSamePracticeDate ? state.dailyXp : 0
+  const baseTodayActivityIds = isSamePracticeDate ? state.todayActivityIds : []
   const reviewQueue = { ...state.reviewQueue }
 
   for (const vocabularyId of result.vocabularyIds) {
@@ -120,13 +138,20 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
   return {
     ...state,
     xp: state.xp + earnedXp,
-    dailyXp: state.dailyXp + earnedXp,
+    dailyXp: baseDailyXp + earnedXp,
     hearts: result.correct ? state.hearts : Math.max(0, state.hearts - 1),
+    lastHeartLostAt: result.correct ? state.lastHeartLostAt : result.now,
     streakDays: shouldStartOrContinueStreak ? Math.max(1, state.streakDays + 1) : state.streakDays,
     lastPracticeDate: practiceDate,
     completedExerciseIds: state.completedExerciseIds.includes(result.exerciseId)
       ? state.completedExerciseIds
       : [...state.completedExerciseIds, result.exerciseId],
+    todayActivityIds: baseTodayActivityIds.includes(result.exerciseId)
+      ? baseTodayActivityIds
+      : [...baseTodayActivityIds, result.exerciseId],
+    completedStoryIds: result.exerciseId.startsWith('story-') && !state.completedStoryIds.includes(result.exerciseId.slice(6))
+      ? [...state.completedStoryIds, result.exerciseId.slice(6)]
+      : state.completedStoryIds,
     weakAreas: result.correct
       ? state.weakAreas
       : {
@@ -141,6 +166,7 @@ export function completeLessonProgress(
   state: ProgressState,
   lessonId: string,
   completedAt: string,
+  perfect = false,
 ): ProgressState {
   const previous = state.lessonProgress[lessonId]
   const masteryLevel = Math.min(5, (previous?.masteryLevel ?? 0) + 1)
@@ -154,6 +180,7 @@ export function completeLessonProgress(
         lessonId,
         masteryLevel,
         attempts: (previous?.attempts ?? 0) + 1,
+        perfectCompletions: (previous?.perfectCompletions ?? 0) + (perfect ? 1 : 0),
         lastCompletedAt: completedAt,
       },
     },
@@ -170,6 +197,7 @@ export function getLessonProgressSummary(
     completed: Boolean(progress),
     masteryLevel: progress?.masteryLevel ?? 0,
     attempts: progress?.attempts ?? 0,
+    perfectCompletions: progress?.perfectCompletions ?? 0,
     lastCompletedAt: progress?.lastCompletedAt ?? null,
   }
 }
@@ -234,6 +262,37 @@ export function getDueReviewItems(state: ProgressState, now: string): string[] {
     .sort()
 }
 
+export function rateReviewItem(
+  state: ProgressState,
+  vocabularyId: string,
+  rating: ReviewRating,
+  now: string,
+): ProgressState {
+  const previous = state.reviewQueue[vocabularyId]
+  const previousBox = clampLeitnerBox(previous?.leitnerBox ?? inferLeitnerBox(previous?.strength))
+  const leitnerBox =
+    rating === 'hard'
+      ? Math.max(1, previousBox - 1)
+      : rating === 'easy'
+        ? clampLeitnerBox(previousBox + 2)
+        : clampLeitnerBox(previousBox + 1)
+  const dueAt = rating === 'hard' ? now : addDays(now, getLeitnerIntervalDays(leitnerBox))
+
+  return {
+    ...state,
+    reviewQueue: {
+      ...state.reviewQueue,
+      [vocabularyId]: {
+        vocabularyId,
+        dueAt,
+        strength: leitnerBox / 5,
+        attempts: (previous?.attempts ?? 0) + 1,
+        leitnerBox,
+      },
+    },
+  }
+}
+
 export function getWeakSkillSummaries(state: ProgressState, limit = 3): WeakSkillSummary[] {
   return Object.entries(state.weakAreas)
     .filter(([, mistakes]) => mistakes > 0)
@@ -289,27 +348,29 @@ export function hydrateProgress(serialized: string | null): ProgressState {
   try {
     const hydrated = { ...createInitialProgress(), ...JSON.parse(serialized) } as ProgressState
     hydrated.reviewQueue = hydrateReviewQueue(hydrated.reviewQueue)
+    hydrated.lessonProgress = hydrateLessonProgress(hydrated.lessonProgress)
     return hydrated
   } catch {
     return createInitialProgress()
   }
 }
 
-export function getDailyQuests(state: ProgressState, now: string): DailyQuest[] {
+export function getDailyQuests(state: ProgressState, now: string, dailyGoalXp = 10): DailyQuest[] {
   const dateKey = now.slice(0, 10)
   const claimed = new Set(state.dailyQuestClaims[dateKey] ?? [])
-  const completedToday = state.completedExerciseIds.length
+  const completedToday = state.todayActivityIds.length
+  const dailyXpQuestId = `daily-xp-${dailyGoalXp}`
 
   return [
     {
-      id: 'daily-xp-10',
-      title: 'Earn 10 XP',
+      id: dailyXpQuestId,
+      title: `Earn ${dailyGoalXp} XP`,
       description: 'Hit the daily XP goal.',
-      current: Math.min(10, state.dailyXp),
-      target: 10,
+      current: Math.min(dailyGoalXp, state.dailyXp),
+      target: dailyGoalXp,
       rewardGems: 10,
-      completed: state.dailyXp >= 10,
-      claimed: claimed.has('daily-xp-10'),
+      completed: state.dailyXp >= dailyGoalXp,
+      claimed: claimed.has(dailyXpQuestId),
     },
     {
       id: 'daily-activities-3',
@@ -416,6 +477,19 @@ function hydrateReviewQueue(reviewQueue: ProgressState['reviewQueue']): Progress
         },
       ]
     }),
+  )
+}
+
+function hydrateLessonProgress(lessonProgress: ProgressState['lessonProgress']): ProgressState['lessonProgress'] {
+  return Object.fromEntries(
+    Object.entries(lessonProgress).map(([lessonId, progress]) => [
+      lessonId,
+      {
+        ...progress,
+        lessonId: progress.lessonId ?? lessonId,
+        perfectCompletions: progress.perfectCompletions ?? 0,
+      },
+    ]),
   )
 }
 

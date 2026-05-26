@@ -1163,12 +1163,22 @@ function buildScriptUnit(): CurriculumUnit {
       ['ಕೊ', 'ko'], ['ಕೌ', 'kau'],
     ].map(([kannada, transliteration]) => scriptSymbol('combination', kannada, transliteration)),
   ]
+  const vowels = scriptSymbols.filter((symbol) => symbol.kind === 'vowel')
+  const consonants = scriptSymbols.filter((symbol) => symbol.kind === 'consonant')
+  const vowelSigns = scriptSymbols.filter((symbol) => symbol.kind === 'combination')
+  const readingPracticeSymbols = [
+    ['ಕನ್ನಡ', 'kannada'], ['ನಮಸ್ಕಾರ', 'namaskara'], ['ಸಾರ್', 'saar'], ['ಟಿಕೆಟ್', 'ticket'], ['ನೀರು', 'neeru'], ['ಧನ್ಯವಾದ', 'dhanyavada'],
+  ].map(([kannada, transliteration]) => scriptSymbol('combination', kannada, transliteration))
   const lessons: CurriculumLesson[] = [
-    scriptLesson('script-vowels', 'Independent Vowels', scriptSymbols.filter((symbol) => symbol.kind === 'vowel').slice(0, 14)),
-    scriptLesson('script-ka-varga', 'Ka-Varga Consonants', scriptSymbols.filter((symbol) => symbol.kind === 'consonant').slice(0, 5)),
-    scriptLesson('script-cha-ta', 'Cha-Ta Groups', scriptSymbols.filter((symbol) => symbol.kind === 'consonant').slice(5, 20)),
-    scriptLesson('script-pa-ya', 'Pa-Ya Groups', scriptSymbols.filter((symbol) => symbol.kind === 'consonant').slice(20)),
-    scriptLesson('script-ka-combos', 'Vowel Signs With Ka', scriptSymbols.filter((symbol) => symbol.kind === 'combination')),
+    scriptLesson('script-vowels-1', 'Vowels Part 1', vowels.slice(0, 6)),
+    scriptLesson('script-vowels-2', 'Vowels Part 2', vowels.slice(6)),
+    scriptLesson('script-velars', 'Consonants: Velars', consonants.slice(0, 5)),
+    scriptLesson('script-palatals', 'Consonants: Palatals', consonants.slice(5, 10)),
+    scriptLesson('script-retroflexes', 'Consonants: Retroflexes', consonants.slice(10, 15)),
+    scriptLesson('script-dentals', 'Consonants: Dentals', consonants.slice(15, 20)),
+    scriptLesson('script-labials-others', 'Consonants: Labials + Others', consonants.slice(20)),
+    scriptLesson('script-vowel-signs', 'Vowel Signs', vowelSigns),
+    scriptLesson('script-reading-practice', 'Reading Practice', readingPracticeSymbols),
   ]
 
   return {
