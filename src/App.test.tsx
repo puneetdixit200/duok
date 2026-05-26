@@ -128,6 +128,28 @@ describe('KannadaOS desktop app', () => {
     expect(within(navigation).getByRole('button', { name: /^Chat$/i })).toBeInTheDocument()
   })
 
+  it('shows recovery actions when the learner is out of hearts', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      hearts: 0,
+      gems: 60,
+      lastHeartLostAt: new Date().toISOString(),
+    }))
+
+    render(<App />)
+
+    const recoveryCard = screen.getByRole('region', { name: /Out of Hearts/i })
+    expect(within(recoveryCard).getByRole('heading', { name: /Out of Hearts/i })).toBeInTheDocument()
+    expect(within(recoveryCard).getAllByText(/Practice to earn hearts/i).length).toBeGreaterThanOrEqual(1)
+    expect(within(recoveryCard).getByText(/Wait 4 hours for 1 heart/i)).toBeInTheDocument()
+    expect(within(recoveryCard).getByRole('button', { name: /Refill 50 gems/i })).toBeEnabled()
+
+    await user.click(within(recoveryCard).getByRole('button', { name: /Practice Now/i }))
+    expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
+  })
+
   it('checks a lesson answer, awards XP, and shows feedback', async () => {
     const user = userEvent.setup()
     render(<App />)

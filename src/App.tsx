@@ -614,7 +614,7 @@ function App() {
     hydrateSoundPreferences(localStorage.getItem(soundPrefsKey)),
   )
   const [progress, setProgress] = useState<ProgressState>(() =>
-    hydrateProgress(localStorage.getItem(progressKey)),
+    hydrateProgress(localStorage.getItem(progressKey), new Date().toISOString()),
   )
   const [reminder, setReminder] = useState<ReminderPreference>(() =>
     hydrateReminder(localStorage.getItem(reminderKey)),
@@ -764,7 +764,7 @@ function App() {
         }
 
         if (applyLearnerStorage(payload, localStorage)) {
-          const nextProgress = hydrateProgress(localStorage.getItem(progressKey))
+          const nextProgress = hydrateProgress(localStorage.getItem(progressKey), new Date().toISOString())
           const nextLearnerProfile = hydrateLearnerProfile(localStorage.getItem(learnerProfileKey))
           const nextSoundPreferences = hydrateSoundPreferences(localStorage.getItem(soundPrefsKey))
           const nextReminder = hydrateReminder(localStorage.getItem(reminderKey))
@@ -2985,6 +2985,33 @@ function App() {
             {Math.min(dailyGoalXp, progress.dailyXp)}/{dailyGoalXp}
           </div>
         </section>
+        {progress.hearts <= 0 && (
+          <section className="out-of-hearts-card" aria-labelledby="out-of-hearts-title">
+            <div>
+              <p className="eyebrow">heart recovery</p>
+              <h3 id="out-of-hearts-title">Out of Hearts!</h3>
+              <p>Practice to earn hearts, refill with gems, or wait for recovery.</p>
+            </div>
+            <ul>
+              <li>Practice to earn hearts</li>
+              <li>Refill with 50 gems</li>
+              <li>Wait 4 hours for 1 heart</li>
+            </ul>
+            <div className="heart-recovery-actions">
+              <button className="secondary-action" onClick={() => setTab('practice')} type="button">
+                Practice Now
+              </button>
+              <button
+                className="primary-action"
+                disabled={progress.gems < 50}
+                onClick={refillHearts}
+                type="button"
+              >
+                Refill 50 gems
+              </button>
+            </div>
+          </section>
+        )}
         <button
           aria-label={`Continue: ${nextLesson.title}`}
           className="continue-card"

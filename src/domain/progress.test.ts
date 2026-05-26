@@ -98,6 +98,23 @@ describe('learner progress', () => {
     expect(getDueReviewItems(restored, '2026-05-26T09:00:00.000Z')).toEqual(['ticket-eshtu'])
   })
 
+  it('regenerates one heart every four hours when persisted progress is restored', () => {
+    const progress = {
+      ...createInitialProgress(),
+      hearts: 1,
+      lastHeartLostAt: '2026-05-27T00:00:00.000Z',
+    }
+
+    const restored = hydrateProgress(serializeProgress(progress), '2026-05-27T09:30:00.000Z')
+
+    expect(restored.hearts).toBe(3)
+    expect(restored.lastHeartLostAt).toBe('2026-05-27T08:00:00.000Z')
+
+    const full = hydrateProgress(serializeProgress({ ...progress, hearts: 4 }), '2026-05-27T04:30:00.000Z')
+    expect(full.hearts).toBe(5)
+    expect(full.lastHeartLostAt).toBeNull()
+  })
+
   it('uses Leitner boxes for spaced repetition scheduling', () => {
     const firstCorrect = applyExerciseResult(createInitialProgress(), {
       exerciseId: 'prices-translate-1',

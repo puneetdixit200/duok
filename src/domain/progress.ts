@@ -88,6 +88,9 @@ export interface DailyQuest {
   claimed: boolean
 }
 
+const maxHearts = 5
+const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
+
 export function createInitialProgress(): ProgressState {
   return {
     xp: 0,
@@ -455,7 +458,7 @@ export function serializeProgress(state: ProgressState): string {
   return JSON.stringify(state)
 }
 
-export function hydrateProgress(serialized: string | null): ProgressState {
+export function hydrateProgress(serialized: string | null, now?: string): ProgressState {
   if (!serialized) {
     return createInitialProgress()
   }
@@ -464,9 +467,48 @@ export function hydrateProgress(serialized: string | null): ProgressState {
     const hydrated = { ...createInitialProgress(), ...JSON.parse(serialized) } as ProgressState
     hydrated.reviewQueue = hydrateReviewQueue(hydrated.reviewQueue)
     hydrated.lessonProgress = hydrateLessonProgress(hydrated.lessonProgress)
-    return hydrated
+    return now ? regenerateHearts(hydrated, now) : hydrated
   } catch {
     return createInitialProgress()
+  }
+}
+
+export function regenerateHearts(state: ProgressState, now: string): ProgressState {
+  const hearts = Math.max(0, Math.min(maxHearts, Math.round(state.hearts)))
+
+  if (hearts >= maxHearts) {
+    return { ...state, hearts: maxHearts, lastHeartLostAt: null }
+  }
+
+  if (!state.lastHeartLostAt) {
+    return { ...state, hearts }
+  }
+
+  const lostAtMs = new Date(state.lastHeartLostAt).getTime()
+  const nowMs = new Date(now).getTime()
+
+  if (!Number.isFinite(lostAtMs) || !Number.isFinite(nowMs) || nowMs <= lostAtMs) {
+    return { ...state, hearts }
+  }
+
+  const regeneratedCount = Math.floor((nowMs - lostAtMs) / heartRegenerationIntervalMs)
+  if (regeneratedCount <= 0) {
+    return { ...state, hearts }
+  }
+
+  const nextHearts = Math.min(maxHearts, hearts + regeneratedCount)
+  if (nextHearts >= maxHearts) {
+    return {
+      ...state,
+      hearts: maxHearts,
+      lastHeartLostAt: null,
+    }
+  }
+
+  return {
+    ...state,
+    hearts: nextHearts,
+    lastHeartLostAt: new Date(lostAtMs + regeneratedCount * heartRegenerationIntervalMs).toISOString(),
   }
 }
 
@@ -541,6 +583,7 @@ export function refillHeartsWithGems(state: ProgressState, cost = 50): ProgressS
     ...state,
     hearts: 5,
     gems: state.gems - cost,
+    lastHeartLostAt: null,
   }
 }
 
