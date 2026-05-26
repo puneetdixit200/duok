@@ -2387,6 +2387,7 @@ function App() {
               <button className="flashcard" onClick={() => setFlashcardBack((value) => !value)} type="button">
                 <span lang="kn">{card.kannada}</span>
                 <small className="romanization">{card.transliteration}</small>
+                {!flashcardBack && <small className="english-subtitle">{card.english}</small>}
                 <strong>{flashcardBack ? card.english : card.transliteration}</strong>
                 {flashcardBack ? <small>{card.context}</small> : <small>Tap to flip</small>}
               </button>
@@ -2563,6 +2564,7 @@ function App() {
                       >
                         <span lang="kn">{word.text}</span>
                         <small>{word.transliteration}</small>
+                        <small className="english-subtitle">{word.english}</small>
                       </button>
                     ))}
                   </div>

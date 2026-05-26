@@ -167,6 +167,21 @@ describe('KannadaOS desktop app', () => {
     expect(fillOptions).toBeInTheDocument()
   })
 
+  it('shows English subtitles on non-lesson Kannada study surfaces', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    expect(screen.getByRole('button', { name: /ಹೋಗಬೇಕು.*hogbeku.*need to go/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+    await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
+
+    expect(screen.getByRole('button', { name: /ಬಂದ.*banda.*came/i })).toBeInTheDocument()
+  })
+
   it('keeps listening answer text hidden until the learner checks', async () => {
     const user = userEvent.setup()
     render(<App />)
