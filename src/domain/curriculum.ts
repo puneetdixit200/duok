@@ -890,7 +890,7 @@ export function getLevelOneCurriculum(): Curriculum {
 }
 
 export function getExerciseCoverage(): ExerciseType[] {
-  return ['translate', 'arrange', 'fillBlank', 'listening', 'speaking', 'matchPairs']
+  return ['translate', 'arrange', 'fillBlank', 'listening', 'speaking', 'matchPairs', 'typeKannada', 'dialogue']
 }
 
 export function getAllLessonExercises(units = allUnits): LessonExercise[] {

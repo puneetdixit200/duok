@@ -499,6 +499,91 @@ function formatReadableExample(example: string): string {
   return `${example} (${subtitle.romanization}${english})`
 }
 
+function applyStartingLevelPlacement(
+  progress: ProgressState,
+  startingLevel: string,
+  completedAt: string,
+): ProgressState {
+  let nextProgress = progress
+
+  if (startingLevel === 'can-read-script') {
+    nextProgress = markPlacementLessonsCompleted(nextProgress, getScriptCurriculumUnit().lessons, completedAt)
+  }
+
+  if (startingLevel === 'basic-conversations') {
+    const prerequisiteLessons = coreCurriculumUnits.slice(0, 2).flatMap((unit) => unit.lessons)
+    nextProgress = markPlacementLessonsCompleted(nextProgress, prerequisiteLessons, completedAt)
+  }
+
+  return nextProgress
+}
+
+function markPlacementLessonsCompleted(
+  progress: ProgressState,
+  lessons: Array<{ id: string }>,
+  completedAt: string,
+): ProgressState {
+  return lessons.reduce((nextProgress, lesson) => {
+    if (nextProgress.lessonProgress[lesson.id]) {
+      return nextProgress
+    }
+
+    return {
+      ...nextProgress,
+      lessonProgress: {
+        ...nextProgress.lessonProgress,
+        [lesson.id]: {
+          lessonId: lesson.id,
+          masteryLevel: 1,
+          attempts: 1,
+          perfectCompletions: 0,
+          lastCompletedAt: completedAt,
+        },
+      },
+    }
+  }, progress)
+}
+
+function evaluateTypedKannadaAnswer(typedAnswer: string, expectedAnswer: string) {
+  const typed = normalizeKannadaAnswer(typedAnswer)
+  const expected = normalizeKannadaAnswer(expectedAnswer)
+  const correct = typed === expected
+  const distance = levenshteinDistance(typed, expected)
+
+  return {
+    correct,
+    distance,
+    almost: !correct && typed.length > 0 && distance <= 2,
+  }
+}
+
+function normalizeKannadaAnswer(value: string): string {
+  return value
+    .normalize('NFC')
+    .replace(/[?!.,:;]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function levenshteinDistance(left: string, right: string): number {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index)
+
+  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
+    const current = [leftIndex + 1]
+
+    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
+      const insertion = current[rightIndex] + 1
+      const deletion = previous[rightIndex + 1] + 1
+      const substitution = previous[rightIndex] + (left[leftIndex] === right[rightIndex] ? 0 : 1)
+      current.push(Math.min(insertion, deletion, substitution))
+    }
+
+    previous.splice(0, previous.length, ...current)
+  }
+
+  return previous[right.length]
+}
+
 function getNowMs(): number {
   return Date.now()
 }
@@ -559,7 +644,8 @@ function App() {
   )
   const [selectedAnswer, setSelectedAnswer] = useState('')
   const [typedAnswer, setTypedAnswer] = useState('')
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'almost' | null>(null)
+  const [almostTypingDistance, setAlmostTypingDistance] = useState<number | null>(null)
   const [chatInput, setChatInput] = useState('')
   const [selectedScenarioId, setSelectedScenarioId] = useState(defaultChatScenario.id)
   const [selectedTutorPersonaId, setSelectedTutorPersonaId] = useState(defaultTutorPersona.id)
@@ -814,18 +900,7 @@ function App() {
     localStorage.setItem(learnerProfileKey, JSON.stringify(nextLearnerProfile))
     localStorage.setItem(soundPrefsKey, JSON.stringify(soundPreferences))
     setLearnerProfile(nextLearnerProfile)
-    if (selectedStartingLevel === 'can-read-script') {
-      const completedAt = nextLearnerProfile.onboardedAt
-      setProgress((current) =>
-        getScriptCurriculumUnit().lessons.reduce(
-          (nextProgress, lesson) =>
-            nextProgress.lessonProgress[lesson.id]
-              ? nextProgress
-              : completeLessonProgress(nextProgress, lesson.id, completedAt, true),
-          current,
-        ),
-      )
-    }
+    setProgress((current) => applyStartingLevelPlacement(current, selectedStartingLevel, nextLearnerProfile.onboardedAt))
     setScreen('app')
   }
 
@@ -833,6 +908,7 @@ function App() {
     setSelectedAnswer('')
     setTypedAnswer('')
     setFeedback(null)
+    setAlmostTypingDistance(null)
     setPlacedWords([])
     setAudioStatus('')
     setSpeakingScore(null)
@@ -862,7 +938,16 @@ function App() {
       return
     }
 
-    const correct = selectedAnswer === exercise.answer
+    const typingEvaluation = exercise.type === 'typeKannada'
+      ? evaluateTypedKannadaAnswer(selectedAnswer, exercise.answer)
+      : null
+    if (typingEvaluation?.almost) {
+      setFeedback('almost')
+      setAlmostTypingDistance(typingEvaluation.distance)
+      return
+    }
+
+    const correct = typingEvaluation ? typingEvaluation.correct : selectedAnswer === exercise.answer
     const now = new Date().toISOString()
     const completesLesson = correct && lessonIndex === lessonRunExercises.length - 1
     const nextCorrectCount = lessonCorrectCount + (correct ? 1 : 0)
@@ -1173,14 +1258,19 @@ function App() {
     setRuntimeSmokeSummary(null)
   }
 
-  async function playExerciseReference(exercise: LessonExercise) {
+  async function playExerciseReference(exercise: LessonExercise, playbackRate = 1) {
+    const slow = playbackRate < 1
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
-      setAudioStatus(`Playing reference audio: ${exercise.transliteration ?? exercise.kannada}`)
+      setAudioStatus(
+        slow
+          ? `Playing slow reference audio at 0.7x: ${exercise.transliteration ?? exercise.kannada}`
+          : `Playing reference audio: ${exercise.transliteration ?? exercise.kannada}`,
+      )
       return
     }
 
-    setAudioStatus('Piper synthesis running...')
+    setAudioStatus(slow ? 'Piper slow synthesis running...' : 'Piper synthesis running...')
     const result = await synthesizeNativeSpeech({
       runtimeConfig,
       text: exercise.kannada,
@@ -1189,14 +1279,20 @@ function App() {
     if (result.ok) {
       if (result.audioUrl) {
         try {
-          await new Audio(result.audioUrl).play()
+          const audio = new Audio(result.audioUrl)
+          audio.playbackRate = playbackRate
+          await audio.play()
         } catch {
-          setAudioStatus(`Piper audio ready: ${result.audioPath} (playback unavailable)`)
+          setAudioStatus(
+            slow
+              ? `Piper slow audio ready at 0.7x: ${result.audioPath} (playback unavailable)`
+              : `Piper audio ready: ${result.audioPath} (playback unavailable)`,
+          )
           return
         }
       }
 
-      setAudioStatus(`Piper audio ready: ${result.audioPath}`)
+      setAudioStatus(slow ? `Piper slow audio ready at 0.7x: ${result.audioPath}` : `Piper audio ready: ${result.audioPath}`)
       return
     }
 
@@ -1245,14 +1341,19 @@ function App() {
     setPronunciationResult(null)
   }
 
-  async function playPronunciationReference() {
+  async function playPronunciationReference(playbackRate = 1) {
+    const slow = playbackRate < 1
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
-      setPronunciationAudioStatus(`Reference audio: ${activePronunciationPhrase.transliteration}`)
+      setPronunciationAudioStatus(
+        slow
+          ? `Slow reference audio at 0.7x: ${activePronunciationPhrase.transliteration}`
+          : `Reference audio: ${activePronunciationPhrase.transliteration}`,
+      )
       return
     }
 
-    setPronunciationAudioStatus('Piper synthesis running...')
+    setPronunciationAudioStatus(slow ? 'Piper slow synthesis running...' : 'Piper synthesis running...')
     const result = await synthesizeNativeSpeech({
       runtimeConfig,
       text: activePronunciationPhrase.kannada,
@@ -1261,14 +1362,20 @@ function App() {
     if (result.ok) {
       if (result.audioUrl) {
         try {
-          await new Audio(result.audioUrl).play()
+          const audio = new Audio(result.audioUrl)
+          audio.playbackRate = playbackRate
+          await audio.play()
         } catch {
-          setPronunciationAudioStatus(`Piper audio ready: ${result.audioPath} (playback unavailable)`)
+          setPronunciationAudioStatus(
+            slow
+              ? `Piper slow audio ready at 0.7x: ${result.audioPath} (playback unavailable)`
+              : `Piper audio ready: ${result.audioPath} (playback unavailable)`,
+          )
           return
         }
       }
 
-      setPronunciationAudioStatus(`Piper audio ready: ${result.audioPath}`)
+      setPronunciationAudioStatus(slow ? `Piper slow audio ready at 0.7x: ${result.audioPath}` : `Piper audio ready: ${result.audioPath}`)
       return
     }
 
@@ -1664,9 +1771,30 @@ function App() {
             Check
           </button>
           {feedback && (
-            <div className={feedback === 'correct' ? 'feedback correct' : 'feedback wrong'} role="status">
-              <strong>{feedback === 'correct' ? 'Correct' : 'Try again'}</strong>
-              <span>{feedback === 'correct' ? `+${activeExercise.xp} XP` : activeExercise.explanation}</span>
+            <div
+              className={
+                feedback === 'correct'
+                  ? 'feedback correct'
+                  : feedback === 'almost'
+                    ? 'feedback almost'
+                    : 'feedback wrong'
+              }
+              role="status"
+            >
+              <strong>
+                {feedback === 'correct'
+                  ? 'Correct'
+                  : feedback === 'almost'
+                    ? `Almost! Check: ${almostTypingDistance}`
+                    : 'Try again'}
+              </strong>
+              <span>
+                {feedback === 'correct'
+                  ? `+${activeExercise.xp} XP`
+                  : feedback === 'almost'
+                    ? 'Fix the Kannada spelling and try again.'
+                    : activeExercise.explanation}
+              </span>
             </div>
           )}
           {feedback === 'correct' && (
@@ -2259,8 +2387,11 @@ function App() {
               </div>
             </article>
             <div className="pronunciation-controls">
-              <button className="secondary-action" onClick={playPronunciationReference} type="button">
+              <button className="secondary-action" onClick={() => void playPronunciationReference()} type="button">
                 Play Reference
+              </button>
+              <button className="secondary-action" onClick={() => void playPronunciationReference(0.7)} type="button">
+                Play Slow
               </button>
               <button className="secondary-action" onClick={recordPronunciationAudio} type="button">
                 {recordingTarget === 'pronunciation' ? 'Stop Recording' : 'Record Pronunciation'}
@@ -2880,6 +3011,13 @@ function App() {
             >
               Play reference audio
             </button>
+            <button
+              className="mini-button"
+              onClick={() => void playExerciseReference(exercise, 0.7)}
+              type="button"
+            >
+              Play slow audio
+            </button>
             {audioStatus && <p role="status">{audioStatus}</p>}
           </div>
           <div className="option-stack" aria-label="Listening choices">
@@ -2918,6 +3056,13 @@ function App() {
             >
               Play reference audio
             </button>
+            <button
+              className="mini-button"
+              onClick={() => void playExerciseReference(exercise, 0.7)}
+              type="button"
+            >
+              Play slow audio
+            </button>
             <button className="speaker-button" onClick={() => recordPhrase(exercise)} type="button">
               {recordingTarget === 'lesson' ? 'Stop Recording' : 'Record phrase'}
             </button>
@@ -2952,6 +3097,10 @@ function App() {
               onChange={(event) => {
                 setTypedAnswer(event.target.value)
                 setSelectedAnswer(transliterateLatinToKannada(event.target.value))
+                if (feedback === 'almost') {
+                  setFeedback(null)
+                  setAlmostTypingDistance(null)
+                }
               }}
               placeholder="Type namaskara saar"
               value={typedAnswer}
@@ -2967,6 +3116,10 @@ function App() {
                   onClick={() => {
                     setTypedAnswer(option)
                     setSelectedAnswer(transliterateLatinToKannada(option))
+                    if (feedback === 'almost') {
+                      setFeedback(null)
+                      setAlmostTypingDistance(null)
+                    }
                   }}
                   type="button"
                 >

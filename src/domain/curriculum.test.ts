@@ -45,6 +45,8 @@ describe('KannadaOS level 1 curriculum', () => {
       'listening',
       'speaking',
       'matchPairs',
+      'typeKannada',
+      'dialogue',
     ])
   })
 

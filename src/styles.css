@@ -559,6 +559,11 @@ h2 {
   color: #fda4af;
 }
 
+.feedback.almost {
+  background: rgba(255, 200, 0, 0.18);
+  color: #facc15;
+}
+
 .listening-card,
 .speaking-card,
 .xp-card {
