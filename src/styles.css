@@ -1109,8 +1109,20 @@ h2 {
   display: grid;
   gap: 4px;
   margin: 4px 0;
-  padding-left: 18px;
+  padding: 0;
   color: #d7d5e4;
+  list-style: none;
+}
+
+.scenario-checklist label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.scenario-checklist input {
+  accent-color: #58cc02;
 }
 
 .scenario-phrase-list {

@@ -167,6 +167,7 @@ export function completeLessonProgress(
   lessonId: string,
   completedAt: string,
   perfect = false,
+  durationMs = 0,
 ): ProgressState {
   const previous = state.lessonProgress[lessonId]
   const masteryLevel = Math.min(5, (previous?.masteryLevel ?? 0) + 1)
@@ -174,6 +175,7 @@ export function completeLessonProgress(
   return {
     ...state,
     gems: state.gems + (previous ? 5 : 15),
+    totalPracticeTimeMs: state.totalPracticeTimeMs + Math.max(0, Math.round(durationMs)),
     lessonProgress: {
       ...state.lessonProgress,
       [lessonId]: {
@@ -289,6 +291,32 @@ export function rateReviewItem(
         attempts: (previous?.attempts ?? 0) + 1,
         leitnerBox,
       },
+    },
+  }
+}
+
+export function recordChatMessageSent(state: ProgressState): ProgressState {
+  return {
+    ...state,
+    chatMessagesSent: state.chatMessagesSent + 1,
+  }
+}
+
+export function toggleScenarioChecklistItem(
+  state: ProgressState,
+  scenarioId: string,
+  item: string,
+): ProgressState {
+  const completedItems = state.scenarioChecklist[scenarioId] ?? []
+  const nextItems = completedItems.includes(item)
+    ? completedItems.filter((completedItem) => completedItem !== item)
+    : [...completedItems, item]
+
+  return {
+    ...state,
+    scenarioChecklist: {
+      ...state.scenarioChecklist,
+      [scenarioId]: nextItems,
     },
   }
 }

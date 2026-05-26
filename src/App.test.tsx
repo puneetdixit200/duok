@@ -221,6 +221,58 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
   }, 30_000)
 
+  it('shows lesson completion accuracy from actual correct and wrong attempts', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    expect(screen.getByRole('button', { name: /question will return/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /question will return/i }))
+
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ticket eshtu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /record phrase/i }))
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+    expect(await screen.findByText(/Score: 100%/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello' }))
+    await user.click(screen.getByRole('button', { name: /ಧನ್ಯವಾದ/i }))
+    await user.click(screen.getByRole('button', { name: 'Thank you' }))
+    await user.click(screen.getByRole('button', { name: /ಹೋಗು/i }))
+    await user.click(screen.getByRole('button', { name: 'Go' }))
+    await user.click(screen.getByRole('button', { name: /ಬಾ/i }))
+    await user.click(screen.getByRole('button', { name: 'Come' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
+    expect(screen.getByLabelText('86 Accuracy')).toBeInTheDocument()
+    expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
+    expect(screen.getByLabelText('1 Wrong')).toBeInTheDocument()
+  }, 30_000)
+
   it('uses the offline tutor fallback in chat when Ollama is unavailable', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -231,6 +283,19 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /send/i }))
 
     expect((await screen.findAllByText(/Majestic-ge hogbeku/i)).length).toBeGreaterThanOrEqual(1)
+    expect(localStorage.getItem('kannadaos:progress')).toContain('"chatMessagesSent":1')
+  })
+
+  it('persists Bangalore checklist progress from scenario checkboxes', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /blr/i }))
+    await user.click(screen.getByRole('checkbox', { name: /Ask the fare/i }))
+
+    expect(screen.getByRole('checkbox', { name: /Ask the fare/i })).toBeChecked()
+    expect(localStorage.getItem('kannadaos:progress')).toContain('"bmtc-bus":["Ask the fare"]')
   })
 
   it('persists chat history across app reloads', async () => {

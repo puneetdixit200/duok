@@ -13,8 +13,10 @@ import {
   getWeakSkillSummaries,
   hydrateProgress,
   rateReviewItem,
+  recordChatMessageSent,
   refillHeartsWithGems,
   serializeProgress,
+  toggleScenarioChecklistItem,
 } from './progress'
 
 const now = '2026-05-23T09:00:00.000Z'
@@ -252,6 +254,28 @@ describe('learner progress', () => {
       perfectCompletions: 1,
       lastCompletedAt: '2026-05-29T10:00:00.000Z',
     })
+  })
+
+  it('adds lesson duration to total practice time when a lesson is completed', () => {
+    const progress = completeLessonProgress(
+      createInitialProgress(),
+      'unit-1-greetings-lesson-1',
+      '2026-05-27T10:00:00.000Z',
+      false,
+      204_000,
+    )
+
+    expect(progress.totalPracticeTimeMs).toBe(204_000)
+  })
+
+  it('tracks chat message count and Bangalore scenario checklist completions', () => {
+    const afterChat = recordChatMessageSent(createInitialProgress())
+    const checked = toggleScenarioChecklistItem(afterChat, 'bmtc-bus', 'Ask the fare')
+    const unchecked = toggleScenarioChecklistItem(checked, 'bmtc-bus', 'Ask the fare')
+
+    expect(afterChat.chatMessagesSent).toBe(1)
+    expect(checked.scenarioChecklist['bmtc-bus']).toEqual(['Ask the fare'])
+    expect(unchecked.scenarioChecklist['bmtc-bus']).toEqual([])
   })
 
   it('supports daily quests plus gem economy actions for hearts and streak freezes', () => {

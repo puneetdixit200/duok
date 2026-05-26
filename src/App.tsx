@@ -29,8 +29,10 @@ import {
   getWeakSkillSummaries,
   hydrateProgress,
   rateReviewItem,
+  recordChatMessageSent,
   refillHeartsWithGems,
   serializeProgress,
+  toggleScenarioChecklistItem,
   type DailyQuest,
   type ProgressState,
   type ReviewRating,
@@ -497,6 +499,10 @@ function formatReadableExample(example: string): string {
   return `${example} (${subtitle.romanization}${english})`
 }
 
+function getNowMs(): number {
+  return Date.now()
+}
+
 function App() {
   const curriculum = useMemo(() => getLevelOneCurriculum(), [])
   const allCurriculumUnits = useMemo(() => [getScriptCurriculumUnit(), ...coreCurriculumUnits], [])
@@ -584,6 +590,10 @@ function App() {
   ])
   const [lessonIndex, setLessonIndex] = useState(0)
   const [totalLessonXp, setTotalLessonXp] = useState(0)
+  const [lessonStartedAtMs, setLessonStartedAtMs] = useState(getNowMs)
+  const [completedLessonDurationMs, setCompletedLessonDurationMs] = useState(0)
+  const [lessonCorrectCount, setLessonCorrectCount] = useState(0)
+  const [lessonWrongCount, setLessonWrongCount] = useState(0)
   const [placedWords, setPlacedWords] = useState<string[]>([])
   const [audioStatus, setAudioStatus] = useState('')
   const [speakingScore, setSpeakingScore] = useState<number | null>(null)
@@ -742,46 +752,6 @@ function App() {
   }, [])
 
   useEffect(() => {
-    function handleShortcut(event: KeyboardEvent) {
-      if (!event.metaKey && !event.ctrlKey) {
-        return
-      }
-
-      const shortcutTab = tabShortcutByKey[event.key]
-      if (shortcutTab) {
-        event.preventDefault()
-        setScreen('app')
-        setTab(shortcutTab)
-        return
-      }
-
-      if (event.key.toLowerCase() === 'm') {
-        event.preventDefault()
-        setScreen('models')
-        return
-      }
-
-      if (event.key.toLowerCase() === 'r' && screen === 'lesson') {
-        event.preventDefault()
-        openLesson(activeLessonId)
-        return
-      }
-
-      if (event.key === 'Enter' && screen === 'lesson' && activeExercise && selectedAnswer && !feedback) {
-        event.preventDefault()
-        checkAnswer(activeExercise)
-      }
-    }
-
-    window.addEventListener('keydown', handleShortcut)
-    return () => {
-      window.removeEventListener('keydown', handleShortcut)
-    }
-  // The shortcut handler intentionally uses the latest render's lesson actions.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeExercise, activeLessonId, feedback, screen, selectedAnswer])
-
-  useEffect(() => {
     if (screen !== 'lesson' || lessonIndex >= lessonRunExercises.length || !activeExercise?.kannada) {
       return
     }
@@ -859,6 +829,18 @@ function App() {
     setScreen('app')
   }
 
+  function resetExerciseInteraction() {
+    setSelectedAnswer('')
+    setTypedAnswer('')
+    setFeedback(null)
+    setPlacedWords([])
+    setAudioStatus('')
+    setSpeakingScore(null)
+    setSpeakingTip('')
+    setSelectedMatch({})
+    setMatchedPairs([])
+  }
+
   function openLesson(lessonId?: string) {
     const nextLesson =
       (lessonId ? getLessonById(lessonId) : getNextAvailableLesson(coreCurriculumUnits, progress)) ??
@@ -867,6 +849,10 @@ function App() {
     setLessonRunExercises([...nextLesson.exercises])
     setLessonIndex(0)
     setTotalLessonXp(0)
+    setLessonStartedAtMs(getNowMs())
+    setCompletedLessonDurationMs(0)
+    setLessonCorrectCount(0)
+    setLessonWrongCount(0)
     resetExerciseInteraction()
     setScreen('lesson')
   }
@@ -879,12 +865,17 @@ function App() {
     const correct = selectedAnswer === exercise.answer
     const now = new Date().toISOString()
     const completesLesson = correct && lessonIndex === lessonRunExercises.length - 1
-    const completesPerfectLesson = completesLesson && lessonRunExercises.length === activeLesson.exercises.length && progress.hearts === 5
+    const nextCorrectCount = lessonCorrectCount + (correct ? 1 : 0)
+    const nextWrongCount = lessonWrongCount + (correct ? 0 : 1)
+    const completesPerfectLesson = completesLesson && nextWrongCount === 0
+    const lessonDurationMs = completesLesson ? getNowMs() - lessonStartedAtMs : 0
     setFeedback(correct ? 'correct' : 'wrong')
 
     if (correct) {
       setTotalLessonXp((current) => current + exercise.xp)
+      setLessonCorrectCount(nextCorrectCount)
     } else {
+      setLessonWrongCount(nextWrongCount)
       setLessonRunExercises((current) =>
         current.slice(lessonIndex + 1).some((queuedExercise) => queuedExercise.id === exercise.id)
           ? current
@@ -903,16 +894,57 @@ function App() {
           now,
         })
 
-        return completesLesson ? completeLessonProgress(nextProgress, activeLesson.id, now, completesPerfectLesson) : nextProgress
+        return completesLesson ? completeLessonProgress(nextProgress, activeLesson.id, now, completesPerfectLesson, lessonDurationMs) : nextProgress
       },
     )
 
     if (completesLesson) {
+      setCompletedLessonDurationMs(lessonDurationMs)
       setLessonIndex(lessonRunExercises.length)
       setSelectedAnswer('')
       setFeedback(null)
     }
   }
+
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if (!event.metaKey && !event.ctrlKey) {
+        return
+      }
+
+      const shortcutTab = tabShortcutByKey[event.key]
+      if (shortcutTab) {
+        event.preventDefault()
+        setScreen('app')
+        setTab(shortcutTab)
+        return
+      }
+
+      if (event.key.toLowerCase() === 'm') {
+        event.preventDefault()
+        setScreen('models')
+        return
+      }
+
+      if (event.key.toLowerCase() === 'r' && screen === 'lesson') {
+        event.preventDefault()
+        openLesson(activeLessonId)
+        return
+      }
+
+      if (event.key === 'Enter' && screen === 'lesson' && activeExercise && selectedAnswer && !feedback) {
+        event.preventDefault()
+        checkAnswer(activeExercise)
+      }
+    }
+
+    window.addEventListener('keydown', handleShortcut)
+    return () => {
+      window.removeEventListener('keydown', handleShortcut)
+    }
+  // The shortcut handler intentionally uses the latest render's lesson actions.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeExercise, activeLessonId, feedback, screen, selectedAnswer])
 
   function goToNextExercise() {
     if (lessonIndex + 1 >= lessonRunExercises.length) {
@@ -923,18 +955,6 @@ function App() {
 
     setLessonIndex((current) => current + 1)
     resetExerciseInteraction()
-  }
-
-  function resetExerciseInteraction() {
-    setSelectedAnswer('')
-    setTypedAnswer('')
-    setFeedback(null)
-    setPlacedWords([])
-    setAudioStatus('')
-    setSpeakingScore(null)
-    setSpeakingTip('')
-    setSelectedMatch({})
-    setMatchedPairs([])
   }
 
   function selectArrangeWord(word: string) {
@@ -1072,10 +1092,11 @@ function App() {
 
     const nextMessages: ChatMessage[] = [
       ...chatMessages,
-      { id: `learner-${Date.now()}`, speaker: 'learner', text, subtext },
-      { id: `tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
+      { id: `learner-${getNowMs()}`, speaker: 'learner', text, subtext },
+      { id: `tutor-${getNowMs()}`, speaker: 'tutor', ...tutorReply },
     ]
     setChatMessages(nextMessages)
+    setProgress((current) => recordChatMessageSent(current))
     setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, nextMessages))
   }
 
@@ -1085,6 +1106,10 @@ function App() {
     setChatMessages(getScenarioMessages(conversationStore, scenario.id, [createOpeningMessage(scenario)]))
     setChatInput('')
     setVoiceStatus('')
+  }
+
+  function toggleScenarioChecklist(scenarioId: string, item: string) {
+    setProgress((current) => toggleScenarioChecklistItem(current, scenarioId, item))
   }
 
   async function recordVoiceInput() {
@@ -1287,7 +1312,7 @@ function App() {
       targetParts: getPronunciationParts(activePronunciationPhrase.kannada),
     })
     const attempt: PronunciationAttempt = {
-      id: `pronunciation-${Date.now()}`,
+      id: `pronunciation-${getNowMs()}`,
       phraseId: activePronunciationPhrase.id,
       phrase: activePronunciationPhrase.kannada,
       transcript,
@@ -1425,6 +1450,10 @@ function App() {
     setChatInput('')
     setVoiceStatus('')
     resetExerciseInteraction()
+    setLessonStartedAtMs(getNowMs())
+    setCompletedLessonDurationMs(0)
+    setLessonCorrectCount(0)
+    setLessonWrongCount(0)
     setLessonIndex(0)
     setTotalLessonXp(0)
     setExportPayload('')
@@ -1563,6 +1592,11 @@ function App() {
 
   if (screen === 'lesson') {
     if (lessonIndex >= lessonRunExercises.length) {
+      const lessonAttemptCount = lessonCorrectCount + lessonWrongCount
+      const lessonAccuracy = lessonAttemptCount > 0 ? Math.round((lessonCorrectCount / lessonAttemptCount) * 100) : 0
+      const lessonTime = formatLessonDuration(completedLessonDurationMs)
+      const newWordCount = new Set(activeLesson.exercises.flatMap((exercise) => exercise.vocabularyIds)).size
+
       return (
         <main className="app-shell lesson-shell">
           <section className="lesson-card lesson-complete" aria-labelledby="lesson-complete-title">
@@ -1586,9 +1620,11 @@ function App() {
               <small>{activeLesson.title} mastery crown earned</small>
             </article>
             <div className="completion-stats">
-              <Stat value={100} label="Accuracy" />
-              <Stat value={lessonRunExercises.length} label="Correct" />
-              <Stat value={0} label="Wrong" />
+              <Stat value={lessonAccuracy} label="Accuracy" />
+              <Stat value={lessonCorrectCount} label="Correct" />
+              <Stat value={lessonWrongCount} label="Wrong" />
+              <Stat value={newWordCount} label="New words" />
+              <Stat value={lessonTime} label="Time" />
             </div>
             <button className="primary-action" onClick={() => setScreen('app')} type="button">
               Continue
@@ -2473,9 +2509,21 @@ function App() {
                 <small>{scenario.difficulty}</small>
                 <p>{scenario.situation}</p>
                 <ul className="scenario-checklist" aria-label={`${scenario.title} checklist`}>
-                  {scenario.checklist.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
+                  {scenario.checklist.map((item) => {
+                    const checked = (progress.scenarioChecklist[scenario.id] ?? []).includes(item)
+                    return (
+                      <li key={item}>
+                        <label>
+                          <input
+                            checked={checked}
+                            onChange={() => toggleScenarioChecklist(scenario.id, item)}
+                            type="checkbox"
+                          />
+                          <span>{item}</span>
+                        </label>
+                      </li>
+                    )
+                  })}
                 </ul>
                 <div className="scenario-phrase-list" aria-label={`${scenario.title} useful phrases`}>
                   {scenario.usefulPhrases.map((phrase) => (
@@ -3016,13 +3064,25 @@ function App() {
   }
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ value, label }: { value: number | string; label: string }) {
   return (
     <article className="stat-card" aria-label={`${value} ${label}`}>
       <strong>{value}</strong>
       <span>{label}</span>
     </article>
   )
+}
+
+function formatLessonDuration(durationMs: number): string {
+  const totalSeconds = Math.max(0, Math.round(durationMs / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+
+  if (minutes <= 0) {
+    return `${seconds}s`
+  }
+
+  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`
 }
 
 function createOpeningMessage(scenario: Scenario): ChatMessage {
