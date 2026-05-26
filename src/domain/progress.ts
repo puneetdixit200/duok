@@ -209,6 +209,12 @@ export function getAchievementSummaries(state: ProgressState): AchievementSummar
     exerciseId.startsWith('survival-'),
   ).length
   const practicedWordCount = Object.keys(state.reviewQueue).length
+  const storyCount = countCompletedStories(state)
+  const scriptLessonCount = countCompletedScriptLessons(state)
+  const practicedScenarioCount = Object.values(state.scenarioChecklist).filter((items) => items.length > 0).length
+  const chatMessageCount = state.chatMessagesSent
+  const masteredUnitCount = countMasteredUnits(state)
+  const perfectLessonCount = Object.values(state.lessonProgress).filter((lesson) => lesson.perfectCompletions > 0).length
 
   return [
     {
@@ -236,8 +242,10 @@ export function getAchievementSummaries(state: ProgressState): AchievementSummar
       code: 'story_starter',
       name: 'Story Starter',
       description: 'Complete your first Kannada story.',
-      unlocked: state.completedExerciseIds.some((exerciseId) => exerciseId.startsWith('story-')),
-      progressLabel: state.completedExerciseIds.some((exerciseId) => exerciseId.startsWith('story-')) ? '1 story complete' : 'No stories complete',
+      unlocked: storyCount > 0,
+      progressLabel: storyCount > 0
+        ? `${storyCount} ${storyCount === 1 ? 'story' : 'stories'} complete`
+        : 'No stories complete',
     },
     {
       code: 'streak_7',
@@ -253,7 +261,86 @@ export function getAchievementSummaries(state: ProgressState): AchievementSummar
       unlocked: Object.values(state.reviewQueue).some((item) => item.attempts >= 3 && item.strength >= 0.7),
       progressLabel: `${practicedWordCount} practiced ${practicedWordCount === 1 ? 'word' : 'words'}`,
     },
+    {
+      code: 'script_reader',
+      name: 'Script Reader',
+      description: 'Complete all nine Kannada Script Academy lessons.',
+      unlocked: scriptLessonCount >= 9,
+      progressLabel: `${Math.min(9, scriptLessonCount)}/9 script lessons`,
+    },
+    {
+      code: 'bangalore_pro',
+      name: 'Bangalore Pro',
+      description: 'Practice every Bangalore Mode scenario.',
+      unlocked: practicedScenarioCount >= 6,
+      progressLabel: `${Math.min(6, practicedScenarioCount)}/6 scenarios`,
+    },
+    {
+      code: 'chat_master',
+      name: 'Chat Master',
+      description: 'Send 100 messages to the Kannada tutor.',
+      unlocked: chatMessageCount >= 100,
+      progressLabel: `${Math.min(100, chatMessageCount)}/100 messages`,
+    },
+    {
+      code: 'streak_30',
+      name: '30 Day Streak',
+      description: 'Build a thirty-day learning streak.',
+      unlocked: state.streakDays >= 30,
+      progressLabel: `${Math.min(30, state.streakDays)}/30 streak days`,
+    },
+    {
+      code: 'unit_champion',
+      name: 'Unit Champion',
+      description: 'Master every lesson in any unit to crown level five.',
+      unlocked: masteredUnitCount > 0,
+      progressLabel: `${masteredUnitCount} ${masteredUnitCount === 1 ? 'unit' : 'units'} mastered`,
+    },
+    {
+      code: 'perfect_lesson',
+      name: 'Perfect Lesson',
+      description: 'Complete a lesson without mistakes.',
+      unlocked: perfectLessonCount > 0,
+      progressLabel: `${perfectLessonCount} perfect ${perfectLessonCount === 1 ? 'lesson' : 'lessons'}`,
+    },
   ]
+}
+
+function countCompletedStories(state: ProgressState): number {
+  const storyIds = new Set(state.completedStoryIds)
+
+  for (const exerciseId of state.completedExerciseIds) {
+    if (exerciseId.startsWith('story-')) {
+      storyIds.add(exerciseId.slice('story-'.length))
+    }
+  }
+
+  return storyIds.size
+}
+
+function countCompletedScriptLessons(state: ProgressState): number {
+  return Object.values(state.lessonProgress).filter((lesson) => lesson.lessonId.startsWith('script-')).length
+}
+
+function countMasteredUnits(state: ProgressState): number {
+  const masteredLessonsByUnit = new Map<string, Set<string>>()
+
+  for (const lesson of Object.values(state.lessonProgress)) {
+    if (lesson.lessonId.startsWith('script-') || lesson.masteryLevel < 5) {
+      continue
+    }
+
+    const [unitId] = lesson.lessonId.split('-lesson-')
+    if (!unitId || unitId === lesson.lessonId) {
+      continue
+    }
+
+    const masteredLessons = masteredLessonsByUnit.get(unitId) ?? new Set<string>()
+    masteredLessons.add(lesson.lessonId)
+    masteredLessonsByUnit.set(unitId, masteredLessons)
+  }
+
+  return Array.from(masteredLessonsByUnit.values()).filter((lessonIds) => lessonIds.size >= 5).length
 }
 
 export function getDueReviewItems(state: ProgressState, now: string): string[] {

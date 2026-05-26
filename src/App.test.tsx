@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import { coreCurriculumUnits } from './domain/curriculum'
+import { coreCurriculumUnits, getScriptCurriculumUnit } from './domain/curriculum'
 import { completeLessonProgress, createInitialProgress, serializeProgress } from './domain/progress'
 
 const voiceCaptureMock = vi.hoisted(() => ({
@@ -574,6 +574,30 @@ describe('KannadaOS desktop app', () => {
 
   it('shows unlocked achievements and learner-owned stats in profile', async () => {
     const user = userEvent.setup()
+    const scriptLessonProgress = Object.fromEntries(
+      getScriptCurriculumUnit().lessons.map((lesson) => [
+        lesson.id,
+        {
+          lessonId: lesson.id,
+          masteryLevel: 1,
+          attempts: 1,
+          perfectCompletions: 0,
+          lastCompletedAt: '2026-05-23T10:00:00.000Z',
+        },
+      ]),
+    )
+    const masteredUnitProgress = Object.fromEntries(
+      coreCurriculumUnits[0].lessons.map((lesson, index) => [
+        lesson.id,
+        {
+          lessonId: lesson.id,
+          masteryLevel: 5,
+          attempts: 5,
+          perfectCompletions: index === 0 ? 1 : 0,
+          lastCompletedAt: '2026-05-23T10:00:00.000Z',
+        },
+      ]),
+    )
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem(
       'kannadaos:progress',
@@ -582,7 +606,7 @@ describe('KannadaOS desktop app', () => {
         dailyXp: 10,
         hearts: 4,
         gems: 132,
-        streakDays: 7,
+        streakDays: 30,
         lastPracticeDate: '2026-05-23',
         completedExerciseIds: [
           'survival-translate-1',
@@ -602,6 +626,19 @@ describe('KannadaOS desktop app', () => {
             attempts: 3,
           },
         },
+        lessonProgress: {
+          ...scriptLessonProgress,
+          ...masteredUnitProgress,
+        },
+        scenarioChecklist: {
+          'bmtc-bus': ['Ask the fare'],
+          'auto-ride': ['Say destination'],
+          darshini: ['Order food'],
+          kirana: ['Ask price'],
+          office: ['Greet coworker'],
+          'pg-owner': ['Explain issue'],
+        },
+        chatMessagesSent: 100,
       }),
     )
     render(<App />)
@@ -611,13 +648,26 @@ describe('KannadaOS desktop app', () => {
     const stats = screen.getByTestId('profile-stats')
     expect(within(stats).getByLabelText('92 XP')).toBeInTheDocument()
     expect(within(stats).getByLabelText('1 Words')).toBeInTheDocument()
-    expect(within(stats).getByLabelText('7 Streak')).toBeInTheDocument()
-    expect(screen.getByText(/Getting Started/i)).toBeInTheDocument()
-    expect(screen.getByText(/6\/6 lesson exercises/i)).toBeInTheDocument()
-    expect(screen.getByText(/One Week/i)).toBeInTheDocument()
-    expect(screen.getByText(/7\/7 streak days/i)).toBeInTheDocument()
-    expect(screen.getByText(/Review Pro/i)).toBeInTheDocument()
-    expect(screen.getByText(/1 practiced word/i)).toBeInTheDocument()
+    expect(within(stats).getByLabelText('30 Streak')).toBeInTheDocument()
+    const achievements = screen.getByLabelText('Achievements')
+    expect(within(achievements).getByText('Getting Started')).toBeInTheDocument()
+    expect(within(achievements).getByText(/6\/6 lesson exercises/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('One Week')).toBeInTheDocument()
+    expect(within(achievements).getByText(/7\/7 streak days/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('Review Pro')).toBeInTheDocument()
+    expect(within(achievements).getByText(/1 practiced word/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('Script Reader')).toBeInTheDocument()
+    expect(within(achievements).getByText(/9\/9 script lessons/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('Bangalore Pro')).toBeInTheDocument()
+    expect(within(achievements).getByText(/6\/6 scenarios/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('Chat Master')).toBeInTheDocument()
+    expect(within(achievements).getByText(/100\/100 messages/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('30 Day Streak')).toBeInTheDocument()
+    expect(within(achievements).getByText(/30\/30 streak days/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('Unit Champion')).toBeInTheDocument()
+    expect(within(achievements).getByText(/1 unit mastered/i)).toBeInTheDocument()
+    expect(within(achievements).getByText('Perfect Lesson')).toBeInTheDocument()
+    expect(within(achievements).getByText(/1 perfect lesson/i)).toBeInTheDocument()
   })
 
   it('resets learner progress without removing AI provider settings', async () => {

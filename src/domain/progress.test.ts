@@ -195,10 +195,35 @@ describe('learner progress', () => {
   })
 
   it('summarizes unlocked achievements from learner progress', () => {
+    const scriptLessonProgress = Object.fromEntries(
+      Array.from({ length: 9 }, (_, index) => [
+        `script-lesson-${index + 1}`,
+        {
+          lessonId: `script-lesson-${index + 1}`,
+          masteryLevel: 1,
+          attempts: 1,
+          perfectCompletions: 0,
+          lastCompletedAt: '2026-05-23T10:00:00.000Z',
+        },
+      ]),
+    )
+    const masteredUnitProgress = Object.fromEntries(
+      Array.from({ length: 5 }, (_, index) => [
+        `unit-1-greetings-lesson-${index + 1}`,
+        {
+          lessonId: `unit-1-greetings-lesson-${index + 1}`,
+          masteryLevel: 5,
+          attempts: 5,
+          perfectCompletions: index === 0 ? 1 : 0,
+          lastCompletedAt: '2026-05-23T10:00:00.000Z',
+        },
+      ]),
+    )
     const progress = {
       ...createInitialProgress(),
       xp: 92,
-      streakDays: 7,
+      streakDays: 30,
+      chatMessagesSent: 100,
       completedExerciseIds: [
         'survival-translate-1',
         'survival-arrange-1',
@@ -216,15 +241,33 @@ describe('learner progress', () => {
           attempts: 3,
         },
       },
+      lessonProgress: {
+        ...scriptLessonProgress,
+        ...masteredUnitProgress,
+      },
+      scenarioChecklist: {
+        'bmtc-bus': ['Ask the fare'],
+        'auto-ride': ['Say destination'],
+        darshini: ['Order food'],
+        kirana: ['Ask price'],
+        office: ['Greet coworker'],
+        'pg-owner': ['Explain issue'],
+      },
     }
 
     expect(getAchievementSummaries(progress)).toEqual([
       expect.objectContaining({ code: 'first_word', unlocked: true, progressLabel: '7 activities' }),
       expect.objectContaining({ code: 'first_lesson', unlocked: true, progressLabel: '6/6 lesson exercises' }),
       expect.objectContaining({ code: 'voice_ready', unlocked: true }),
-      expect.objectContaining({ code: 'story_starter', unlocked: true }),
+      expect.objectContaining({ code: 'story_starter', unlocked: true, progressLabel: '1 story complete' }),
       expect.objectContaining({ code: 'streak_7', unlocked: true, progressLabel: '7/7 streak days' }),
       expect.objectContaining({ code: 'review_pro', unlocked: true, progressLabel: '1 practiced word' }),
+      expect.objectContaining({ code: 'script_reader', unlocked: true, progressLabel: '9/9 script lessons' }),
+      expect.objectContaining({ code: 'bangalore_pro', unlocked: true, progressLabel: '6/6 scenarios' }),
+      expect.objectContaining({ code: 'chat_master', unlocked: true, progressLabel: '100/100 messages' }),
+      expect.objectContaining({ code: 'streak_30', unlocked: true, progressLabel: '30/30 streak days' }),
+      expect.objectContaining({ code: 'unit_champion', unlocked: true, progressLabel: '1 unit mastered' }),
+      expect.objectContaining({ code: 'perfect_lesson', unlocked: true, progressLabel: '1 perfect lesson' }),
     ])
   })
 
