@@ -269,6 +269,44 @@ async function transcribeNativeAudioInMain(
     : { ok: false, text: '', error: 'Whisper produced no transcript.' }
 }
 
+async function transcribeRecordedAudioInMain(
+  config = {},
+  audioBytes = [],
+  source = 'recording',
+  outputDirectory = '',
+  transcriber = transcribeNativeAudioInMain,
+) {
+  const bytes = Buffer.from(audioBytes)
+  const normalizedOutputDirectory = normalizePath(outputDirectory)
+
+  if (bytes.length === 0) {
+    return {
+      ok: false,
+      text: '',
+      error: 'Recorded audio is empty.',
+    }
+  }
+
+  if (!normalizedOutputDirectory) {
+    return {
+      ok: false,
+      text: '',
+      error: 'Recording output directory is not configured.',
+    }
+  }
+
+  fs.mkdirSync(normalizedOutputDirectory, { recursive: true })
+  const safeSource = normalizeRecordingSource(source)
+  const audioPath = path.join(normalizedOutputDirectory, `${safeSource}-${Date.now()}.wav`)
+
+  try {
+    fs.writeFileSync(audioPath, bytes)
+    return await transcriber(config, audioPath)
+  } finally {
+    fs.rmSync(audioPath, { force: true })
+  }
+}
+
 async function synthesizeNativeSpeechInMain(
   config = {},
   text = '',
@@ -408,10 +446,20 @@ function normalizeWhisperTranscript(output) {
     .join(' ')
 }
 
+function normalizeRecordingSource(source) {
+  const normalized = String(source || 'recording')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return normalized || 'recording'
+}
+
 module.exports = {
   generateNativeExerciseInMain,
   inspectLocalRuntimeInMain,
   runLocalRuntimeSmokeInMain,
   synthesizeNativeSpeechInMain,
   transcribeNativeAudioInMain,
+  transcribeRecordedAudioInMain,
 }

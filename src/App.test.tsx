@@ -3,10 +3,30 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
+const voiceCaptureMock = vi.hoisted(() => ({
+  startVoiceCapture: vi.fn(),
+}))
+
+vi.mock('./services/voiceCapture', () => ({
+  startVoiceCapture: voiceCaptureMock.startVoiceCapture,
+}))
+
 describe('KannadaOS desktop app', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+    voiceCaptureMock.startVoiceCapture.mockReset()
+    voiceCaptureMock.startVoiceCapture.mockResolvedValue({
+      stop: vi.fn().mockResolvedValue({
+        audioBytes: new Uint8Array([82, 73, 70, 70]),
+        durationMs: 800,
+        sampleRate: 16000,
+      }),
+    })
+    vi.stubGlobal('kannadaOS', {
+      platform: 'darwin',
+      transcribeRecordedAudio: vi.fn().mockResolvedValue({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' }),
+    })
   })
 
   afterEach(() => {
@@ -73,7 +93,9 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByText('speaking')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /record phrase/i }))
-    expect(screen.getByText(/Score: 87%/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+    expect(await screen.findByText(/Score: 98%/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
@@ -91,7 +113,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
     expect(screen.getByText(/\+18 XP/i)).toBeInTheDocument()
     expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
-  })
+  }, 30_000)
 
   it('uses the offline tutor fallback in chat when Ollama is unavailable', async () => {
     const user = userEvent.setup()
@@ -191,8 +213,12 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/add the destination first/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /record voice/i }))
+    expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
 
-    expect(screen.getByText(/Voice input transcribed: koramangala-ge ticket beku/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/namaskara saar = Hello sir/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
   })
 
   it('renders practice flashcards, Bangalore scenarios, and profile stats', async () => {
@@ -375,6 +401,66 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByText(/Last score 98/i)).toBeInTheDocument()
     expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+  })
+
+  it('records pronunciation audio, transcribes it through Whisper, and scores the transcript', async () => {
+    const user = userEvent.setup()
+    const transcribeRecordedAudio = vi.fn().mockResolvedValue({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
+    vi.stubGlobal('kannadaOS', {
+      platform: 'darwin',
+      transcribeRecordedAudio,
+    })
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem(
+      'kannadaos:local-runtime',
+      JSON.stringify({
+        llmModelPath: '/models/aya.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      }),
+    )
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    await user.click(screen.getByRole('button', { name: /record pronunciation/i }))
+    expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+
+    expect(transcribeRecordedAudio).toHaveBeenCalledWith({
+      runtimeConfig: {
+        llmModelPath: '/models/aya.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      },
+      audioBytes: [82, 73, 70, 70],
+      source: 'pronunciation',
+    })
+    expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    expect(screen.getByText(/namaskara saar = Hello sir/i)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score 98/i)
+  })
+
+  it('shows a clear error when recorded chat audio cannot be transcribed', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('kannadaOS', {
+      platform: 'darwin',
+      transcribeRecordedAudio: vi.fn().mockResolvedValue({ ok: false, text: '', error: 'Whisper runtime is not ready.' }),
+    })
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+    await user.click(screen.getByRole('button', { name: /record voice/i }))
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+
+    expect(await screen.findByText(/Whisper runtime is not ready/i)).toBeInTheDocument()
   })
 
   it('synthesizes pronunciation reference audio through the desktop Piper bridge', async () => {

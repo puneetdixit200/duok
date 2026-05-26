@@ -7,6 +7,12 @@ interface NativeTranscriptionRequest {
   audioPath: string
 }
 
+interface NativeRecordedTranscriptionRequest {
+  runtimeConfig: LocalRuntimeConfig
+  audioBytes: number[]
+  source: string
+}
+
 interface NativeTranscriptionResponse {
   ok: boolean
   text: string
@@ -33,6 +39,7 @@ declare global {
       smokeLocalRuntime?: (config: LocalRuntimeConfig) => Promise<LocalRuntimeSmokeSummary>
       generateNativeExercise?: (request: NativeExerciseRequest) => Promise<NativeExerciseResponse>
       transcribeNativeAudio?: (request: NativeTranscriptionRequest) => Promise<NativeTranscriptionResponse>
+      transcribeRecordedAudio?: (request: NativeRecordedTranscriptionRequest) => Promise<NativeTranscriptionResponse>
       synthesizeNativeSpeech?: (request: NativeSpeechRequest) => Promise<NativeSpeechResponse>
       loadLearnerData?: () => Promise<LearnerDataPayload | null>
       saveLearnerData?: (values: LearnerStorageValues) => Promise<LearnerDataPayload>

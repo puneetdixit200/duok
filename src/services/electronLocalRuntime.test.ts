@@ -10,6 +10,7 @@ const {
   runLocalRuntimeSmokeInMain,
   synthesizeNativeSpeechInMain,
   transcribeNativeAudioInMain,
+  transcribeRecordedAudioInMain,
 } = require('../../electron/local-runtime.cjs') as {
   generateNativeExerciseInMain: (
     config: LocalRuntimeConfig,
@@ -43,6 +44,13 @@ const {
     audioPath: string,
     commandRunner: (binaryPath: string, args: string[]) => Promise<{ ok: boolean; output: string }>,
     pathExists: (runtimePath: string) => boolean,
+  ) => Promise<{ ok: boolean; text: string; error?: string }>
+  transcribeRecordedAudioInMain: (
+    config: LocalRuntimeConfig,
+    audioBytes: number[] | Uint8Array,
+    source: string,
+    outputDirectory: string,
+    transcriber: (config: LocalRuntimeConfig, audioPath: string) => Promise<{ ok: boolean; text: string; error?: string }>,
   ) => Promise<{ ok: boolean; text: string; error?: string }>
 }
 
@@ -156,6 +164,135 @@ describe('electron local runtime inspection', () => {
       },
     ])
     expect(result).toEqual({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
+  })
+
+  it('saves recorded WAV bytes for Whisper and removes the temp file afterward', async () => {
+    const fs = await import('node:fs')
+    const os = await import('node:os')
+    const path = await import('node:path')
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-recording-test-'))
+    const seenAudioPaths: string[] = []
+
+    try {
+      const result = await transcribeRecordedAudioInMain(
+        {
+          llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+          whisperModelPath: '/models/whisper-small.bin',
+          piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+          llamaBinaryPath: '/bin/llama-cli',
+          whisperBinaryPath: '/bin/whisper-cli',
+          piperBinaryPath: '/bin/piper',
+        },
+        new Uint8Array([82, 73, 70, 70]),
+        'chat',
+        tempDir,
+        async (_config, audioPath) => {
+          seenAudioPaths.push(audioPath)
+          expect(fs.existsSync(audioPath)).toBe(true)
+          expect(fs.readFileSync(audioPath)).toEqual(Buffer.from([82, 73, 70, 70]))
+          return { ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' }
+        },
+      )
+
+      expect(result).toEqual({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
+      expect(seenAudioPaths).toHaveLength(1)
+      expect(path.basename(seenAudioPaths[0])).toMatch(/^chat-\d+\.wav$/)
+      expect(fs.readdirSync(tempDir)).toEqual([])
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects empty recorded audio before creating temp files', async () => {
+    const fs = await import('node:fs')
+    const os = await import('node:os')
+    const path = await import('node:path')
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-empty-recording-test-'))
+
+    try {
+      const result = await transcribeRecordedAudioInMain(
+        {
+          llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+          whisperModelPath: '/models/whisper-small.bin',
+          piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+          llamaBinaryPath: '/bin/llama-cli',
+          whisperBinaryPath: '/bin/whisper-cli',
+          piperBinaryPath: '/bin/piper',
+        },
+        [],
+        'chat',
+        tempDir,
+        async () => {
+          throw new Error('transcriber should not run')
+        },
+      )
+
+      expect(result).toEqual({ ok: false, text: '', error: 'Recorded audio is empty.' })
+      expect(fs.readdirSync(tempDir)).toEqual([])
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it('removes recorded audio temp files when Whisper returns a failure', async () => {
+    const fs = await import('node:fs')
+    const os = await import('node:os')
+    const path = await import('node:path')
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-recording-failure-test-'))
+    const seenAudioPaths: string[] = []
+
+    try {
+      const result = await transcribeRecordedAudioInMain(
+        {
+          llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+          whisperModelPath: '/models/whisper-small.bin',
+          piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+          llamaBinaryPath: '/bin/llama-cli',
+          whisperBinaryPath: '/bin/whisper-cli',
+          piperBinaryPath: '/bin/piper',
+        },
+        new Uint8Array([82, 73, 70, 70]),
+        '../Chat Input',
+        tempDir,
+        async (_config, audioPath) => {
+          seenAudioPaths.push(audioPath)
+          expect(path.dirname(audioPath)).toBe(tempDir)
+          expect(path.basename(audioPath)).toMatch(/^chat-input-\d+\.wav$/)
+          return { ok: false, text: '', error: 'Whisper runtime is not ready.' }
+        },
+      )
+
+      expect(result).toEqual({ ok: false, text: '', error: 'Whisper runtime is not ready.' })
+      expect(seenAudioPaths).toHaveLength(1)
+      expect(fs.readdirSync(tempDir)).toEqual([])
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects recorded audio requests without a writable output directory', async () => {
+    const result = await transcribeRecordedAudioInMain(
+      {
+        llmModelPath: '/models/aya-8b-q4_K_M.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/kn_IN-piper-medium.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      },
+      new Uint8Array([82, 73, 70, 70]),
+      'chat',
+      '',
+      async () => {
+        throw new Error('transcriber should not run')
+      },
+    )
+
+    expect(result).toEqual({
+      ok: false,
+      text: '',
+      error: 'Recording output directory is not configured.',
+    })
   })
 
   it('synthesizes speech through Piper with the configured voice model', async () => {

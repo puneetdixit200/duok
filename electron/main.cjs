@@ -6,6 +6,7 @@ const {
   runLocalRuntimeSmokeInMain,
   synthesizeNativeSpeechInMain,
   transcribeNativeAudioInMain,
+  transcribeRecordedAudioInMain,
 } = require('./local-runtime.cjs')
 const {
   getLearnerDataStorePath,
@@ -26,6 +27,14 @@ ipcMain.handle('local-runtime:generate-exercise', (_event, request) =>
 )
 ipcMain.handle('local-runtime:transcribe-audio', (_event, request) =>
   transcribeNativeAudioInMain(request?.runtimeConfig, request?.audioPath),
+)
+ipcMain.handle('local-runtime:transcribe-recorded-audio', (_event, request) =>
+  transcribeRecordedAudioInMain(
+    request?.runtimeConfig,
+    request?.audioBytes,
+    request?.source,
+    path.join(app.getPath('userData'), 'recordings'),
+  ),
 )
 ipcMain.handle('local-runtime:synthesize-speech', (_event, request) =>
   synthesizeNativeSpeechInMain(request?.runtimeConfig, request?.text, path.join(app.getPath('userData'), 'tts')),

@@ -28,6 +28,7 @@ import {
   type LocalRuntimeSummary,
 } from './services/localRuntime'
 import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
+import { startVoiceCapture, type RecordedAudio, type VoiceCaptureSession } from './services/voiceCapture'
 import { buildExportSnapshot, serializeExportSnapshot } from './services/exportSnapshot'
 import {
   appendScenarioMessages,
@@ -43,6 +44,7 @@ import './styles.css'
 type Tab = 'home' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
 type Screen = 'onboarding' | 'app' | 'lesson' | 'models'
 type StoryMode = 'list' | 'reader' | 'quiz' | 'complete'
+type VoiceRecordingTarget = 'chat' | 'pronunciation' | 'lesson'
 
 interface ChatMessage {
   id: string
@@ -226,8 +228,11 @@ function App() {
   const [placedWords, setPlacedWords] = useState<string[]>([])
   const [audioStatus, setAudioStatus] = useState('')
   const [speakingScore, setSpeakingScore] = useState<number | null>(null)
+  const [speakingTip, setSpeakingTip] = useState('')
   const [selectedMatch, setSelectedMatch] = useState<{ left?: string; right?: string }>({})
   const [matchedPairs, setMatchedPairs] = useState<string[]>([])
+  const [voiceCaptureSession, setVoiceCaptureSession] = useState<VoiceCaptureSession | null>(null)
+  const [recordingTarget, setRecordingTarget] = useState<VoiceRecordingTarget | null>(null)
 
   const activeExercise = lessonExercises[Math.min(lessonIndex, lessonExercises.length - 1)]
   const activeStory = stories.find((story) => story.id === selectedStoryId) ?? stories[0]
@@ -407,6 +412,7 @@ function App() {
     setPlacedWords([])
     setAudioStatus('')
     setSpeakingScore(null)
+    setSpeakingTip('')
     setSelectedMatch({})
     setMatchedPairs([])
   }
@@ -421,9 +427,26 @@ function App() {
     setSelectedAnswer(nextWords.join(' '))
   }
 
-  function recordPhrase(exercise: LessonExercise) {
-    setSpeakingScore(87)
-    setSelectedAnswer(exercise.answer)
+  async function recordPhrase(exercise: LessonExercise) {
+    await toggleVoiceRecording(
+      'lesson',
+      'lesson-speaking',
+      async (transcript) => {
+        const result = scorePronunciation({
+          expectedText: exercise.kannada ?? exercise.answer,
+          expectedTransliteration: exercise.transliteration ?? exercise.answer,
+          transcript,
+          targetParts: getPronunciationParts(exercise.kannada ?? exercise.answer),
+        })
+        setSpeakingScore(result.score)
+        setSpeakingTip(result.tip)
+
+        if (result.score >= 70) {
+          setSelectedAnswer(exercise.answer)
+        }
+      },
+      setAudioStatus,
+    )
   }
 
   function handleMatchSelection(value: string, side: 'left' | 'right', exercise: LessonExercise) {
@@ -480,16 +503,20 @@ function App() {
       return
     }
 
-    const tutorReply = buildTutorReply(trimmed, selectedScenario, selectedTutorPersona)
+    appendChatTurn(trimmed)
+    setChatInput('')
+    setVoiceStatus('')
+  }
+
+  function appendChatTurn(text: string, subtext?: string) {
+    const tutorReply = buildTutorReply(text, selectedScenario, selectedTutorPersona)
     const nextMessages: ChatMessage[] = [
       ...chatMessages,
-      { id: `learner-${Date.now()}`, speaker: 'learner', text: trimmed },
+      { id: `learner-${Date.now()}`, speaker: 'learner', text, subtext },
       { id: `tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
     ]
     setChatMessages(nextMessages)
     setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, nextMessages))
-    setChatInput('')
-    setVoiceStatus('')
   }
 
   function selectChatScenario(scenarioId: string) {
@@ -500,22 +527,15 @@ function App() {
     setVoiceStatus('')
   }
 
-  function recordVoiceInput() {
-    const voiceLine = getScenarioVoiceLine(selectedScenario)
-    const tutorReply = buildTutorReply(voiceLine.text, selectedScenario, selectedTutorPersona)
-    setVoiceStatus(`Voice input transcribed: ${voiceLine.transliteration}`)
-    const nextMessages: ChatMessage[] = [
-      ...chatMessages,
-      {
-        id: `voice-${Date.now()}`,
-        speaker: 'learner',
-        text: voiceLine.text,
-        subtext: voiceLine.transliteration,
+  async function recordVoiceInput() {
+    await toggleVoiceRecording(
+      'chat',
+      'chat',
+      async (transcript) => {
+        appendChatTurn(transcript, getTranscriptCompanion(transcript))
       },
-      { id: `voice-tutor-${Date.now()}`, speaker: 'tutor', ...tutorReply },
-    ]
-    setChatMessages(nextMessages)
-    setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, nextMessages))
+      setVoiceStatus,
+    )
   }
 
   function toggleDailyReminder() {
@@ -637,6 +657,10 @@ function App() {
 
   function scorePronunciationPractice() {
     const transcript = pronunciationTranscript.trim() || getSimulatedPronunciationTranscript(activePronunciationPhrase)
+    scorePronunciationTranscript(transcript)
+  }
+
+  function scorePronunciationTranscript(transcript: string) {
     const result = scorePronunciation({
       expectedText: activePronunciationPhrase.kannada,
       expectedTransliteration: activePronunciationPhrase.transliteration,
@@ -659,6 +683,79 @@ function App() {
     setPronunciationTranscript(transcript)
     setPronunciationResult(result)
     setPronunciationHistory((current) => [attempt, ...current].slice(0, 5))
+  }
+
+  async function recordPronunciationAudio() {
+    await toggleVoiceRecording(
+      'pronunciation',
+      'pronunciation',
+      async (transcript) => {
+        setPronunciationTranscript(transcript)
+        scorePronunciationTranscript(transcript)
+      },
+      setPronunciationAudioStatus,
+    )
+  }
+
+  async function toggleVoiceRecording(
+    target: VoiceRecordingTarget,
+    source: string,
+    onTranscript: (transcript: string) => Promise<void> | void,
+    setStatus: (status: string) => void,
+  ) {
+    if (recordingTarget === target && voiceCaptureSession) {
+      setStatus('Transcribing recorded speech...')
+
+      try {
+        const recording = await voiceCaptureSession.stop()
+        setVoiceCaptureSession(null)
+        setRecordingTarget(null)
+        const result = await transcribeRecordedAudio(recording, source)
+
+        if (result.ok) {
+          setStatus(formatVoiceTranscriptStatus(result.text))
+          await onTranscript(result.text)
+          return
+        }
+
+        setStatus(result.error ?? 'Whisper transcription failed.')
+      } catch (error) {
+        setVoiceCaptureSession(null)
+        setRecordingTarget(null)
+        setStatus(error instanceof Error ? error.message : 'Voice recording failed.')
+      }
+      return
+    }
+
+    if (recordingTarget) {
+      setStatus('Finish the current recording first.')
+      return
+    }
+
+    try {
+      const session = await startVoiceCapture()
+      setVoiceCaptureSession(session)
+      setRecordingTarget(target)
+      setStatus('Recording... click Stop Recording when done.')
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Microphone recording failed.')
+    }
+  }
+
+  async function transcribeRecordedAudio(recording: RecordedAudio, source: string) {
+    if (!window.kannadaOS?.transcribeRecordedAudio) {
+      return {
+        ok: false,
+        text: '',
+        error: 'Whisper recorder unavailable in browser preview.',
+      }
+    }
+
+    return window.kannadaOS.transcribeRecordedAudio({
+      runtimeConfig,
+      audioBytes: Array.from(recording.audioBytes),
+      source,
+    })
   }
 
   function exportLearnerData() {
@@ -1034,7 +1131,7 @@ function App() {
               <h2 id="chat-title">{selectedScenario.title}</h2>
             </div>
             <button className="secondary-action" onClick={recordVoiceInput} type="button">
-              Record Voice
+              {recordingTarget === 'chat' ? 'Stop Recording' : 'Record Voice'}
             </button>
           </header>
           <div className="scenario-picker" aria-label="Chat scenarios">
@@ -1192,6 +1289,9 @@ function App() {
             <div className="pronunciation-controls">
               <button className="secondary-action" onClick={playPronunciationReference} type="button">
                 Play Reference
+              </button>
+              <button className="secondary-action" onClick={recordPronunciationAudio} type="button">
+                {recordingTarget === 'pronunciation' ? 'Stop Recording' : 'Record Pronunciation'}
               </button>
               <label className="transcript-field">
                 <span>Audio file path</span>
@@ -1643,14 +1743,15 @@ function App() {
               ))}
             </div>
             <button className="speaker-button" onClick={() => recordPhrase(exercise)} type="button">
-              Record phrase
+              {recordingTarget === 'lesson' ? 'Stop Recording' : 'Record phrase'}
             </button>
             {speakingScore !== null && (
               <div className="score-card" role="status">
                 <strong>Score: {speakingScore}%</strong>
-                <span>Tip: Extend the aa sound in saar.</span>
+                <span>Tip: {speakingTip || 'Extend the aa sound in saar.'}</span>
               </div>
             )}
+            {audioStatus && <p role="status">{audioStatus}</p>}
           </div>
         </>
       )
@@ -1770,21 +1871,6 @@ function buildTutorReply(input: string, scenario: Scenario, persona: TutorPerson
   }
 }
 
-function getScenarioVoiceLine(scenario: Scenario) {
-  if (scenario.id === 'bmtc-bus') {
-    return {
-      text: 'ಕೊರಮಂಗಲಕ್ಕೆ ಟಿಕೆಟ್ ಬೇಕು',
-      transliteration: 'koramangala-ge ticket beku',
-    }
-  }
-
-  const phrase = scenario.usefulPhrases[0]
-  return {
-    text: phrase.kannada,
-    transliteration: phrase.transliteration,
-  }
-}
-
 function hydrateReminder(serialized: string | null): ReminderPreference {
   if (!serialized) {
     return defaultReminderPreference
@@ -1861,6 +1947,21 @@ function getPronunciationParts(kannada: string): string[] {
     .replace(/[?]/g, '')
     .split(/\s+/)
     .filter(Boolean)
+}
+
+function formatVoiceTranscriptStatus(transcript: string) {
+  return `Voice transcript ready: ${transcript} (${getTranscriptCompanion(transcript)})`
+}
+
+function getTranscriptCompanion(transcript: string) {
+  const normalizedTranscript = transcript.trim().normalize('NFC')
+  const phrase = survivalPhrases.find((item) => item.kannada.normalize('NFC') === normalizedTranscript)
+
+  if (phrase) {
+    return `${phrase.transliteration} = ${phrase.english}`
+  }
+
+  return 'Kannada transcript'
 }
 
 function getSimulatedPronunciationTranscript(phrase: Phrase): string {

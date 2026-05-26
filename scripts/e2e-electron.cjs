@@ -1,4 +1,5 @@
 const { _electron: electron } = require('playwright')
+const childProcess = require('node:child_process')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
@@ -8,8 +9,14 @@ async function main() {
   const runtimeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-runtime-'))
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kannadaos-user-data-'))
   const runtimePaths = createRuntimePlaceholders(runtimeDir)
+  seedLearnerStore(userDataDir, runtimePaths)
   const app = await electron.launch({
-    args: [rootDir],
+    args: [
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
+      `--use-file-for-fake-audio-capture=${runtimePaths.fakeMicAudioPath}`,
+      rootDir,
+    ],
     env: { ...process.env, E2E: '1', KANNADAOS_USER_DATA_DIR: userDataDir },
   })
   const pageErrors = []
@@ -25,8 +32,10 @@ async function main() {
       }
     })
 
-    await page.evaluate(() => localStorage.clear())
-    await page.reload()
+    await page.getByRole('button', { name: /zero/i }).waitFor()
+    await page.waitForFunction(() =>
+      localStorage.getItem('kannadaos:local-runtime')?.includes('whisper-small.bin'),
+    )
     await page.getByRole('button', { name: /zero/i }).click()
     await page.getByRole('button', { name: /start learning/i }).click()
     await page.getByRole('button', { name: /continue: greetings/i }).click()
@@ -45,7 +54,11 @@ async function main() {
     await page.getByRole('heading', { name: /BMTC Bus/i }).waitFor()
     await page.getByRole('button', { name: /Grammar Teacher/i }).click()
     await page.getByRole('button', { name: /record voice/i }).click()
-    await page.getByText(/Voice input transcribed: koramangala-ge ticket beku/i).waitFor()
+    await page.getByText(/Recording... click Stop Recording when done/i).waitFor()
+    await page.waitForTimeout(1200)
+    await page.getByRole('button', { name: /stop recording/i }).click()
+    await page.getByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i).waitFor()
+    await page.locator('.chat-stream').getByText('ನಮಸ್ಕಾರ ಸಾರ್', { exact: true }).waitFor()
 
     await page.getByRole('button', { name: /practice/i }).click()
     await page.getByRole('button', { name: /ಹೋಗಬೇಕು/i }).click()
@@ -53,7 +66,7 @@ async function main() {
     await page.getByText(/Adaptive difficulty: Steady/i).waitFor()
     await page.getByRole('heading', { name: /Pronunciation Lab/i }).waitFor()
     await page.getByRole('button', { name: /play reference/i }).click()
-    await page.getByText(/Reference audio: namaskara saar/i).waitFor()
+    await page.getByText(/Piper audio ready:/i).waitFor()
     await page.getByLabel(/Transcribed speech/i).fill('ನಮಸ್ಕಾರ ಸಾರ್')
     await page.getByRole('button', { name: /score pronunciation/i }).click()
     await page.locator('[aria-label="Pronunciation result"]').getByText(/Score 98/i).waitFor()
@@ -143,6 +156,11 @@ async function main() {
       )
       return input?.value === 'ನಮಸ್ಕಾರ ಸಾರ್'
     })
+    await page.getByRole('button', { name: /record pronunciation/i }).click()
+    await page.getByText(/Recording... click Stop Recording when done/i).waitFor()
+    await page.waitForTimeout(1200)
+    await page.getByRole('button', { name: /stop recording/i }).click()
+    await page.getByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i).waitFor()
     await page.getByRole('button', { name: /play reference/i }).click()
     await page.getByText(/Piper audio ready:/i).waitFor()
 
@@ -164,9 +182,13 @@ async function main() {
       )
     }
   } finally {
-    fs.rmSync(runtimeDir, { recursive: true, force: true })
-    fs.rmSync(userDataDir, { recursive: true, force: true })
-    await closeElectron(app)
+    try {
+      await closeElectron(app)
+      killLeftoverElectronHelpers(userDataDir)
+    } finally {
+      fs.rmSync(runtimeDir, { recursive: true, force: true })
+      fs.rmSync(userDataDir, { recursive: true, force: true })
+    }
   }
 }
 
@@ -179,6 +201,7 @@ function createRuntimePlaceholders(runtimeDir) {
     whisperBinaryPath: path.join(runtimeDir, 'whisper-cli'),
     piperBinaryPath: path.join(runtimeDir, 'piper'),
     sampleAudioPath: path.join(runtimeDir, 'namaskara.wav'),
+    fakeMicAudioPath: path.join(runtimeDir, 'fake-mic.wav'),
   }
 
   Object.entries(runtimePaths).forEach(([key, runtimePath]) => {
@@ -227,10 +250,73 @@ function createRuntimePlaceholders(runtimeDir) {
       return
     }
 
+    if (key === 'fakeMicAudioPath') {
+      fs.writeFileSync(runtimePath, createFakeMicWav())
+      return
+    }
+
     fs.writeFileSync(runtimePath, 'placeholder model file')
   })
 
   return runtimePaths
+}
+
+function pickRuntimeConfig(runtimePaths) {
+  return {
+    llmModelPath: runtimePaths.llmModelPath,
+    whisperModelPath: runtimePaths.whisperModelPath,
+    piperVoicePath: runtimePaths.piperVoicePath,
+    llamaBinaryPath: runtimePaths.llamaBinaryPath,
+    whisperBinaryPath: runtimePaths.whisperBinaryPath,
+    piperBinaryPath: runtimePaths.piperBinaryPath,
+  }
+}
+
+function seedLearnerStore(userDataDir, runtimePaths) {
+  fs.writeFileSync(
+    path.join(userDataDir, 'learner-data.json'),
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        appName: 'KannadaOS',
+        savedAt: new Date().toISOString(),
+        values: {
+          'kannadaos:local-runtime': JSON.stringify(pickRuntimeConfig(runtimePaths)),
+        },
+      },
+      null,
+      2,
+    ),
+  )
+}
+
+function createFakeMicWav() {
+  const sampleRate = 16000
+  const seconds = 2
+  const sampleCount = sampleRate * seconds
+  const dataLength = sampleCount * 2
+  const buffer = Buffer.alloc(44 + dataLength)
+
+  buffer.write('RIFF', 0)
+  buffer.writeUInt32LE(36 + dataLength, 4)
+  buffer.write('WAVE', 8)
+  buffer.write('fmt ', 12)
+  buffer.writeUInt32LE(16, 16)
+  buffer.writeUInt16LE(1, 20)
+  buffer.writeUInt16LE(1, 22)
+  buffer.writeUInt32LE(sampleRate, 24)
+  buffer.writeUInt32LE(sampleRate * 2, 28)
+  buffer.writeUInt16LE(2, 32)
+  buffer.writeUInt16LE(16, 34)
+  buffer.write('data', 36)
+  buffer.writeUInt32LE(dataLength, 40)
+
+  for (let index = 0; index < sampleCount; index += 1) {
+    const sample = Math.sin((index / sampleRate) * Math.PI * 2 * 440)
+    buffer.writeInt16LE(Math.round(sample * 0x3fff), 44 + index * 2)
+  }
+
+  return buffer
 }
 
 async function completeLesson(page) {
@@ -260,7 +346,10 @@ async function completeLesson(page) {
 
   await page.getByText('speaking', { exact: true }).waitFor()
   await page.getByRole('button', { name: /record phrase/i }).click()
-  await page.getByText(/Score: 87%/i).waitFor()
+  await page.getByText(/Recording... click Stop Recording when done/i).waitFor()
+  await page.waitForTimeout(1200)
+  await page.getByRole('button', { name: /stop recording/i }).click()
+  await page.getByText(/Score: 98%/i).waitFor()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
@@ -324,6 +413,25 @@ function waitForExit(child, timeoutMs) {
     new Promise((resolve) => child.once('exit', resolve)),
     new Promise((resolve) => setTimeout(resolve, timeoutMs)),
   ])
+}
+
+function killLeftoverElectronHelpers(userDataDir) {
+  const processes = childProcess.execFileSync('ps', ['-ax', '-o', 'pid=,command='], {
+    encoding: 'utf8',
+  })
+
+  processes
+    .split('\n')
+    .filter((line) => line.includes(userDataDir))
+    .map((line) => Number(line.trim().split(/\s+/, 1)[0]))
+    .filter((pid) => Number.isInteger(pid) && pid > 0 && pid !== process.pid)
+    .forEach((pid) => {
+      try {
+        process.kill(pid, 'SIGTERM')
+      } catch {
+        // The helper may already be gone by the time we reach it.
+      }
+    })
 }
 
 main()
