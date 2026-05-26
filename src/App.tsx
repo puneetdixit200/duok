@@ -9,6 +9,7 @@ import {
 } from './domain/curriculum'
 import {
   applyExerciseResult,
+  createInitialProgress,
   getAdaptiveDifficulty,
   getAchievementSummaries,
   getDueReviewItems,
@@ -206,6 +207,7 @@ function App() {
   )
   const [exportPayload, setExportPayload] = useState('')
   const [exportStatus, setExportStatus] = useState<ExportStatus | null>(null)
+  const [resetStatus, setResetStatus] = useState('')
   const [conversationStore, setConversationStore] = useState<ConversationStore>(() =>
     hydrateConversationStore(localStorage.getItem(conversationKey)),
   )
@@ -838,6 +840,39 @@ function App() {
     })
   }
 
+  function resetAllProgress() {
+    const shouldReset = window.confirm(
+      'Reset all lesson progress, pronunciation attempts, and chat history? AI model paths and hosted AI keys will be kept.',
+    )
+
+    if (!shouldReset) {
+      return
+    }
+
+    const nextProgress = createInitialProgress()
+    setProgress(nextProgress)
+    setPronunciationTranscript('')
+    setPronunciationAudioPath('')
+    setPronunciationAudioStatus('')
+    setPronunciationResult(null)
+    setPronunciationHistory([])
+    setConversationStore({})
+    setSelectedScenarioId(defaultChatScenario.id)
+    setSelectedTutorPersonaId(defaultTutorPersona.id)
+    setChatMessages([createOpeningMessage(defaultChatScenario)])
+    setChatInput('')
+    setVoiceStatus('')
+    resetExerciseInteraction()
+    setLessonIndex(0)
+    setTotalLessonXp(0)
+    setExportPayload('')
+    setExportStatus(null)
+    setResetStatus('Progress reset. Your AI model paths and hosted AI keys were kept.')
+    localStorage.setItem(progressKey, serializeProgress(nextProgress))
+    localStorage.setItem(pronunciationKey, '[]')
+    localStorage.setItem(conversationKey, '{}')
+  }
+
   function openStory(storyId: string) {
     setSelectedStoryId(storyId)
     setSelectedStoryWord(null)
@@ -1074,7 +1109,7 @@ function App() {
                 <span>NVIDIA model</span>
                 <input
                   onChange={(event) => updateAiProviderSetting('nvidiaModel', event.target.value)}
-                  placeholder="meta/llama-3.1-8b-instruct"
+                  placeholder="sarvamai/sarvam-m"
                   value={aiProviderSettings.nvidiaModel}
                 />
               </label>
@@ -1766,7 +1801,16 @@ function App() {
             <button className="secondary-action" onClick={exportLearnerData} type="button">
               Export Data
             </button>
+            <button className="secondary-action danger-action" onClick={resetAllProgress} type="button">
+              Reset All Progress
+            </button>
           </div>
+          {resetStatus && (
+            <section className="reset-card" aria-label="Reset status">
+              <strong>{resetStatus}</strong>
+              <small>Use this when you want a fresh start. Provider keys, model paths, and reminders stay saved.</small>
+            </section>
+          )}
           {exportStatus && (
             <section className="export-card" aria-label="Data export">
               <div>

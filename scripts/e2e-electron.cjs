@@ -180,6 +180,26 @@ async function main() {
       console.log('Ollama live smoke: unavailable, offline fallback visible')
     }
 
+    await page.getByRole('button', { name: /^me$/i }).click()
+    page.once('dialog', (dialog) => dialog.accept())
+    await page.getByRole('button', { name: /reset all progress/i }).click()
+    await page.getByText(/Progress reset. Your AI model paths and hosted AI keys were kept./i).waitFor()
+    await page.getByLabel('0 XP').waitFor()
+    await page.waitForFunction(async () => {
+      const data = await window.kannadaOS?.loadLearnerData?.()
+      const progress = data?.values?.['kannadaos:progress'] ?? ''
+      const conversations = data?.values?.['kannadaos:conversation-log'] ?? ''
+      const pronunciation = data?.values?.['kannadaos:pronunciation-history'] ?? ''
+      const provider = data?.values?.['kannadaos:ai-provider'] ?? ''
+
+      return (
+        progress.includes('"xp":0') &&
+        conversations === '{}' &&
+        pronunciation === '[]' &&
+        provider.includes('sk-or-e2e-placeholder')
+      )
+    })
+
     if (pageErrors.length || consoleErrors.length) {
       throw new Error(
         [

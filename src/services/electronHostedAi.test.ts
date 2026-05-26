@@ -49,7 +49,7 @@ describe('electron hosted AI bridge', () => {
       {
         provider: 'nvidia',
         apiKey: '',
-        model: 'meta/llama-3.1-8b-instruct',
+        model: 'sarvamai/sarvam-m',
         baseUrl: 'https://integrate.api.nvidia.com/v1',
         messages: [{ role: 'user', content: 'Hello' }],
       },

@@ -165,6 +165,12 @@ h2 {
   background: #25253d;
 }
 
+.danger-action {
+  border-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.16);
+  color: #fecdd3;
+}
+
 .desktop-frame {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -1266,7 +1272,29 @@ h2 {
 }
 
 .settings-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 18px;
+}
+
+.reset-card {
+  display: grid;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #3d3d5c;
+  border-left: 5px solid #f43f5e;
+  border-radius: 14px;
+  background: #202037;
+}
+
+.reset-card strong {
+  color: #fecdd3;
+}
+
+.reset-card small {
+  color: #c9c7d6;
 }
 
 .export-card {

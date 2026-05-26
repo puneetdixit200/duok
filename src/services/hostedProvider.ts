@@ -77,7 +77,7 @@ export const defaultAiProviderSettings: AiProviderSettings = {
   openRouterModel: 'openai/gpt-4o-mini',
   openRouterBaseUrl: 'https://openrouter.ai/api/v1',
   nvidiaApiKey: '',
-  nvidiaModel: 'meta/llama-3.1-8b-instruct',
+  nvidiaModel: 'sarvamai/sarvam-m',
   nvidiaBaseUrl: 'https://integrate.api.nvidia.com/v1',
 }
 

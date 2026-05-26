@@ -84,7 +84,7 @@ describe('hosted AI provider routing', () => {
         ...defaultAiProviderSettings,
         activeProvider: 'nvidia',
         nvidiaApiKey: 'nvapi-test',
-        nvidiaModel: 'meta/llama-3.1-8b-instruct',
+        nvidiaModel: 'sarvamai/sarvam-m',
       },
       weakArea: 'postpositions',
     })
@@ -155,7 +155,7 @@ describe('hosted AI provider routing', () => {
         openRouterApiKey: 'sk-or-test',
         openRouterModel: 'openai/gpt-4o-mini',
         nvidiaApiKey: 'nvapi-test',
-        nvidiaModel: 'meta/llama-3.1-8b-instruct',
+        nvidiaModel: 'sarvamai/sarvam-m',
       }),
     )
 
@@ -167,9 +167,13 @@ describe('hosted AI provider routing', () => {
       openRouterModel: 'openai/gpt-4o-mini',
       openRouterBaseUrl: 'https://openrouter.ai/api/v1',
       openRouterApiKeyConfigured: true,
-      nvidiaModel: 'meta/llama-3.1-8b-instruct',
+      nvidiaModel: 'sarvamai/sarvam-m',
       nvidiaBaseUrl: 'https://integrate.api.nvidia.com/v1',
       nvidiaApiKeyConfigured: true,
     })
+  })
+
+  it('defaults NVIDIA hosted generation to the configured Sarvam model', () => {
+    expect(hydrateAiProviderSettings(null).nvidiaModel).toBe('sarvamai/sarvam-m')
   })
 })

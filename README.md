@@ -2,6 +2,8 @@
 
 KannadaOS is a desktop MVP for the offline Kannada learning system described in `/Users/deepakkudi23/Downloads/duo.md`. The original handoff spec targets Flutter, but this repository uses Electron, React, TypeScript, and Vite so the app can be built for macOS and Windows from this Mac without a Flutter/Xcode desktop toolchain.
 
+For a full English product and engineering explanation, including app flow, storage, AI routing, voice capture, and scoring/progress formulas, see [`KANNADAOS_APP_GUIDE.md`](./KANNADAOS_APP_GUIDE.md).
+
 ## What Is Implemented
 
 - Onboarding with learner level selection.
@@ -12,9 +14,9 @@ KannadaOS is a desktop MVP for the offline Kannada learning system described in 
 - Story Mode with illustrated story cards, locked stories, sentence reader, tap-for-word meanings, and a comprehension quiz.
 - Bangalore Mode with BMTC, auto, darshini, kirana, office, and PG owner scenarios.
 - Tutor chat with selectable real-world scenarios, tutor personalities, live microphone voice input through Whisper, persisted conversation logs, and a deterministic offline correction fallback.
-- Profile/stats screen with progress-derived achievements, daily reminder notification settings, AI model management entry points, desktop learner data sync, and learner data export snapshots.
+- Profile/stats screen with progress-derived achievements, daily reminder notification settings, AI model management entry points, desktop learner data sync, learner data export snapshots, and a confirmed Reset All Progress action that keeps model paths and hosted AI keys.
 - AI model setup screen for required Aya, Whisper, and Piper assets plus an optional Whisper upgrade, with download progress and offline-first status states.
-- AI provider selector for Local-first, Ollama-only, OpenRouter, and NVIDIA hosted NIM choices, with user-entered API keys, model IDs, and base URLs.
+- AI provider selector for Local-first, Ollama-only, OpenRouter, and NVIDIA hosted NIM choices, with user-entered API keys, model IDs, and base URLs. The default NVIDIA hosted model is `sarvamai/sarvam-m`.
 - On-device runtime readiness and smoke checks for Llama.cpp, Whisper.cpp, and Piper model plus executable paths through the Electron preload IPC bridge.
 - Native llama.cpp exercise generation path for adaptive practice, with Ollama and local fallback still available.
 - Hosted OpenRouter and NVIDIA generation paths for tutor chat and AI exercises when the learner selects those providers.
@@ -36,16 +38,16 @@ npm run package:mac
 npm run package:win
 ```
 
-`npm run dev` starts Vite and Electron together. `npm run test:e2e` builds the renderer, launches Electron with a fake microphone, completes onboarding, answers a lesson with recorded speaking input, checks chat fallback plus persisted conversation reload and scenario/persona voice input, opens adaptive practice, records and scores pronunciation, completes a story quiz, opens Bangalore Mode, opens profile achievements, daily reminders, data export, and desktop learner storage, verifies model setup controls, checks hosted provider selection controls, checks local native model and executable paths through IPC, runs native command smoke checks, generates an exercise through the native llama.cpp bridge, transcribes pronunciation audio through the native whisper.cpp bridge, synthesizes and starts playback for reference audio through the native Piper bridge, and probes Ollama live status.
+`npm run dev` starts Vite and Electron together. `npm run test:e2e` builds the renderer, launches Electron with a fake microphone, completes onboarding, answers a lesson with recorded speaking input, checks chat fallback plus persisted conversation reload and scenario/persona voice input, opens adaptive practice, records and scores pronunciation, completes a story quiz, opens Bangalore Mode, opens profile achievements, daily reminders, data export, reset-progress preservation, and desktop learner storage, verifies model setup controls, checks hosted provider selection controls, checks local native model and executable paths through IPC, runs native command smoke checks, generates an exercise through the native llama.cpp bridge, transcribes pronunciation audio through the native whisper.cpp bridge, synthesizes and starts playback for reference audio through the native Piper bridge, and probes Ollama live status.
 
 ## Latest Verification
 
 Run on May 26, 2026:
 
-- `npm test`: 15 files, 69 tests passed.
+- `npm test`: 15 files, 71 tests passed.
 - `npm run lint`: passed.
 - `npm run build`: TypeScript and Vite production build passed.
-- `npm run test:e2e`: passed across onboarding, all six lesson exercise types including fake-microphone speaking capture, lesson completion, persisted chat reload, chat scenario/persona voice input, adaptive practice, live Pronunciation Lab recording and scoring, Story Mode quiz, Bangalore Mode, profile achievements, daily reminder settings, data export snapshot with conversation logs, desktop learner storage, model setup controls, hosted OpenRouter/NVIDIA provider selection controls, local runtime model/executable IPC path checks, native command smoke checks, native llama.cpp exercise generation, native whisper.cpp transcription, native Piper synthesis/playback, and live Ollama smoke with `llama3.1:8b` and `qwen2.5:0.5b`.
+- `npm run test:e2e`: passed across onboarding, all six lesson exercise types including fake-microphone speaking capture, lesson completion, persisted chat reload, chat scenario/persona voice input, adaptive practice, live Pronunciation Lab recording and scoring, Story Mode quiz, Bangalore Mode, profile achievements, daily reminder settings, data export snapshot with conversation logs, Reset All Progress with hosted key preservation, desktop learner storage, model setup controls, hosted OpenRouter/NVIDIA provider selection controls, local runtime model/executable IPC path checks, native command smoke checks, native llama.cpp exercise generation, native whisper.cpp transcription, native Piper synthesis/playback, and live Ollama smoke with `llama3.1:8b` and `qwen2.5:0.5b`.
 - `npm run package:mac`: DMG creation remains blocked by the host macOS `hdiutil` service hanging even for a 10 MB smoke image; `npm run build && npx electron-builder --mac zip --arm64 --publish never` passed and refreshed `KannadaOS-0.1.0-arm64-mac.zip`, while the previously retained `KannadaOS-0.1.0-arm64.dmg` artifact remains in `release/`.
 - `npm run package:win`: created Windows portable `KannadaOS 0.1.0.exe`.
 - Electron visual smoke: Chat rendered restored conversation logs, Profile rendered data export, Practice rendered Pronunciation Lab scoring, and model-management rendered the on-device runtime panel with 3 of 3 temp model paths ready.

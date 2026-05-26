@@ -289,6 +289,79 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/1 practiced word/i)).toBeInTheDocument()
   })
 
+  it('resets learner progress without removing AI provider settings', async () => {
+    const user = userEvent.setup()
+    const confirmMock = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem(
+      'kannadaos:progress',
+      JSON.stringify({
+        xp: 92,
+        dailyXp: 10,
+        hearts: 4,
+        gems: 132,
+        streakDays: 7,
+        lastPracticeDate: '2026-05-23',
+        completedExerciseIds: ['survival-translate-1', 'survival-speaking-1'],
+        weakAreas: { verbs: 2 },
+        reviewQueue: {
+          hogbeku: {
+            vocabularyId: 'hogbeku',
+            dueAt: '2026-05-25T09:00:00.000Z',
+            strength: 0.85,
+            attempts: 3,
+          },
+        },
+      }),
+    )
+    localStorage.setItem(
+      'kannadaos:pronunciation-history',
+      JSON.stringify([
+        {
+          id: 'attempt-1',
+          phraseId: 'namaskara-saar',
+          phrase: 'ನಮಸ್ಕಾರ ಸಾರ್',
+          transcript: 'ನಮಸ್ಕಾರ ಸಾರ್',
+          score: 98,
+          level: 'clear',
+          feedback: 'Clear',
+          tip: 'Keep it',
+          problemParts: [],
+          createdAt: '2026-05-23T15:45:00.000Z',
+        },
+      ]),
+    )
+    localStorage.setItem('kannadaos:conversation-log', JSON.stringify({ 'auto-ride': [] }))
+    localStorage.setItem(
+      'kannadaos:ai-provider',
+      JSON.stringify({
+        activeProvider: 'openrouter',
+        openRouterApiKey: 'sk-or-test',
+        openRouterModel: 'openai/gpt-4o-mini',
+        openRouterBaseUrl: 'https://openrouter.ai/api/v1',
+        nvidiaApiKey: '',
+        nvidiaModel: 'sarvamai/sarvam-m',
+        nvidiaBaseUrl: 'https://integrate.api.nvidia.com/v1',
+      }),
+    )
+
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /reset all progress/i }))
+
+    const stats = screen.getByTestId('profile-stats')
+    expect(within(stats).getByLabelText('0 XP')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('0 Words')).toBeInTheDocument()
+    expect(within(stats).getByLabelText('0 Streak')).toBeInTheDocument()
+    expect(screen.getByText(/Progress reset. Your AI model paths and hosted AI keys were kept./i)).toBeInTheDocument()
+    expect(localStorage.getItem('kannadaos:pronunciation-history')).toBe('[]')
+    expect(localStorage.getItem('kannadaos:conversation-log')).toBe('{}')
+    expect(localStorage.getItem('kannadaos:ai-provider')).toContain('sk-or-test')
+    expect(confirmMock).toHaveBeenCalledWith(
+      expect.stringContaining('Reset all lesson progress, pronunciation attempts, and chat history?'),
+    )
+  })
+
   it('configures and persists daily reminder notifications', async () => {
     const user = userEvent.setup()
     localStorage.setItem('kannadaos:onboarded', 'true')
@@ -660,7 +733,7 @@ describe('KannadaOS desktop app', () => {
       JSON.stringify({
         activeProvider: 'nvidia',
         nvidiaApiKey: 'nvapi-test',
-        nvidiaModel: 'meta/llama-3.1-8b-instruct',
+        nvidiaModel: 'sarvamai/sarvam-m',
       }),
     )
     render(<App />)
