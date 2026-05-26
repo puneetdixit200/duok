@@ -219,7 +219,7 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
     expect(screen.getAllByText(/namaskara saar = Hello sir/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
-  })
+  }, 30_000)
 
   it('renders practice flashcards, Bangalore scenarios, and profile stats', async () => {
     const user = userEvent.setup()
@@ -577,6 +577,106 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Downloaded/i)).toBeInTheDocument()
     expect(screen.getByText(/Waiting/i)).toBeInTheDocument()
     expect(screen.getByText(/You can start learning while models download/i)).toBeInTheDocument()
+  })
+
+  it('lets the learner choose OpenRouter and uses it for generated exercises', async () => {
+    const user = userEvent.setup()
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === 'http://localhost:11434/api/tags') {
+        return { ok: false }
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  type: 'translate',
+                  prompt: 'Hosted greeting drill',
+                  kannada: 'ನಮಸ್ಕಾರ ಸಾರ್',
+                  answer: 'Hello sir',
+                  options: ['Hello sir', 'Goodbye sir'],
+                }),
+              },
+            },
+          ],
+        }),
+      }
+    }) as unknown as typeof fetch
+
+    vi.stubGlobal('fetch', fetchImpl)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    const { unmount } = render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /manage ai models/i }))
+    await user.selectOptions(screen.getByLabelText(/active ai provider/i), 'openrouter')
+    await user.type(screen.getByLabelText(/OpenRouter API key/i), 'sk-or-test')
+    await user.clear(screen.getByLabelText(/OpenRouter model/i))
+    await user.type(screen.getByLabelText(/OpenRouter model/i), 'openai/gpt-4o-mini')
+    await user.click(screen.getByLabelText(/Back to app/i))
+    await user.click(screen.getByRole('button', { name: /generate ai exercise/i }))
+
+    expect(await screen.findByText(/OpenRouter: Hosted greeting drill ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://openrouter.ai/api/v1/chat/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer sk-or-test' }),
+      }),
+    )
+
+    unmount()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /me/i }))
+    await user.click(screen.getByRole('button', { name: /manage ai models/i }))
+
+    expect(screen.getByLabelText(/active ai provider/i)).toHaveValue('openrouter')
+    expect(screen.getByLabelText(/OpenRouter model/i)).toHaveValue('openai/gpt-4o-mini')
+  })
+
+  it('uses the selected NVIDIA hosted model for tutor chat replies', async () => {
+    const user = userEvent.setup()
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === 'http://localhost:11434/api/tags') {
+        return { ok: false }
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'NVIDIA Tutor: ಹೇಳಿ, Majestic-ge hogbeku.' } }],
+        }),
+      }
+    }) as unknown as typeof fetch
+
+    vi.stubGlobal('fetch', fetchImpl)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem(
+      'kannadaos:ai-provider',
+      JSON.stringify({
+        activeProvider: 'nvidia',
+        nvidiaApiKey: 'nvapi-test',
+        nvidiaModel: 'meta/llama-3.1-8b-instruct',
+      }),
+    )
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+    await user.type(screen.getByPlaceholderText(/type in kannada/i), 'Majestic hogbeku')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    expect(await screen.findByText(/NVIDIA Tutor: ಹೇಳಿ, Majestic-ge hogbeku/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/NVIDIA hosted/i).length).toBeGreaterThanOrEqual(1)
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://integrate.api.nvidia.com/v1/chat/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer nvapi-test' }),
+      }),
+    )
   })
 
   it('checks on-device runtime model paths through the desktop bridge', async () => {

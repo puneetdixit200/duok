@@ -21,6 +21,15 @@ describe('export snapshot', () => {
         whisperBinaryPath: '',
         piperBinaryPath: '',
       },
+      aiProviderSettings: {
+        activeProvider: 'openrouter',
+        openRouterModel: 'openai/gpt-4o-mini',
+        openRouterBaseUrl: 'https://openrouter.ai/api/v1',
+        openRouterApiKeyConfigured: true,
+        nvidiaModel: 'meta/llama-3.1-8b-instruct',
+        nvidiaBaseUrl: 'https://integrate.api.nvidia.com/v1',
+        nvidiaApiKeyConfigured: false,
+      },
       conversationStore: {
         'auto-ride': [
           { id: 'user-1', speaker: 'learner', text: 'Majestic hogbeku' },
@@ -50,6 +59,7 @@ describe('export snapshot', () => {
     })
     expect(snapshot.settings.reminder).toEqual({ enabled: true, time: '8:30 PM', permission: 'granted' })
     expect(snapshot.settings.runtimeConfig.llmModelPath).toBe('/models/aya.gguf')
+    expect(snapshot.settings.aiProviderSettings.openRouterApiKeyConfigured).toBe(true)
     expect(snapshot.conversationStore['auto-ride']).toHaveLength(2)
   })
 
@@ -65,6 +75,15 @@ describe('export snapshot', () => {
         llamaBinaryPath: '',
         whisperBinaryPath: '',
         piperBinaryPath: '',
+      },
+      aiProviderSettings: {
+        activeProvider: 'local',
+        openRouterModel: 'openai/gpt-4o-mini',
+        openRouterBaseUrl: 'https://openrouter.ai/api/v1',
+        openRouterApiKeyConfigured: false,
+        nvidiaModel: 'meta/llama-3.1-8b-instruct',
+        nvidiaBaseUrl: 'https://integrate.api.nvidia.com/v1',
+        nvidiaApiKeyConfigured: false,
       },
       conversationStore: {},
       pronunciationHistory: [],

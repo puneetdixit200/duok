@@ -1,6 +1,7 @@
 import type { LocalRuntimeConfig, LocalRuntimeSmokeSummary, LocalRuntimeSummary } from './services/localRuntime'
 import type { LearnerDataPayload, LearnerStorageValues } from './services/learnerStore'
 import type { NativeExerciseRequest, NativeExerciseResponse } from './services/nativeExercise'
+import type { HostedChatCompletion } from './services/hostedProvider'
 
 interface NativeTranscriptionRequest {
   runtimeConfig: LocalRuntimeConfig
@@ -41,6 +42,7 @@ declare global {
       transcribeNativeAudio?: (request: NativeTranscriptionRequest) => Promise<NativeTranscriptionResponse>
       transcribeRecordedAudio?: (request: NativeRecordedTranscriptionRequest) => Promise<NativeTranscriptionResponse>
       synthesizeNativeSpeech?: (request: NativeSpeechRequest) => Promise<NativeSpeechResponse>
+      generateHostedChat?: HostedChatCompletion
       loadLearnerData?: () => Promise<LearnerDataPayload | null>
       saveLearnerData?: (values: LearnerStorageValues) => Promise<LearnerDataPayload>
     }

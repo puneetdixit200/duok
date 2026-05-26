@@ -1,11 +1,13 @@
 import type { LocalRuntimeConfig } from './localRuntime'
 import type { ConversationStore } from './conversationLog'
+import type { SanitizedAiProviderSettings } from './hostedProvider'
 
 export interface ExportSnapshotInput {
   exportedAt: string
   progress: unknown
   reminder: unknown
   runtimeConfig: LocalRuntimeConfig
+  aiProviderSettings: SanitizedAiProviderSettings
   conversationStore: ConversationStore
   pronunciationHistory: unknown[]
 }
@@ -25,6 +27,7 @@ export interface ExportSnapshot {
   settings: {
     reminder: unknown
     runtimeConfig: LocalRuntimeConfig
+    aiProviderSettings: SanitizedAiProviderSettings
   }
   conversationStore: ConversationStore
   pronunciationHistory: unknown[]
@@ -57,6 +60,7 @@ export function buildExportSnapshot(input: ExportSnapshotInput): ExportSnapshot 
     settings: {
       reminder: input.reminder,
       runtimeConfig: input.runtimeConfig,
+      aiProviderSettings: input.aiProviderSettings,
     },
     conversationStore: input.conversationStore,
     pronunciationHistory: input.pronunciationHistory,

@@ -666,7 +666,8 @@ h2 {
   font-weight: 900;
 }
 
-.runtime-field input {
+.runtime-field input,
+.runtime-field select {
   min-width: 0;
   min-height: 44px;
   border: 1px solid #3d3d5c;

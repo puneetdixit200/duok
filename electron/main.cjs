@@ -13,6 +13,7 @@ const {
   loadLearnerDataFromDisk,
   saveLearnerDataToDisk,
 } = require('./learner-store.cjs')
+const { requestHostedChatInMain } = require('./hosted-ai.cjs')
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL)
 
@@ -39,6 +40,7 @@ ipcMain.handle('local-runtime:transcribe-recorded-audio', (_event, request) =>
 ipcMain.handle('local-runtime:synthesize-speech', (_event, request) =>
   synthesizeNativeSpeechInMain(request?.runtimeConfig, request?.text, path.join(app.getPath('userData'), 'tts')),
 )
+ipcMain.handle('hosted-ai:chat', (_event, request) => requestHostedChatInMain(request))
 ipcMain.handle('learner-store:load', () => loadLearnerDataFromDisk(getLearnerDataStorePath(app)))
 ipcMain.handle('learner-store:save', (_event, values) =>
   saveLearnerDataToDisk(getLearnerDataStorePath(app), values),

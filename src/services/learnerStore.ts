@@ -3,6 +3,7 @@ export const learnerStorageKeys = [
   'kannadaos:progress',
   'kannadaos:reminder',
   'kannadaos:local-runtime',
+  'kannadaos:ai-provider',
   'kannadaos:pronunciation-history',
   'kannadaos:conversation-log',
 ] as const

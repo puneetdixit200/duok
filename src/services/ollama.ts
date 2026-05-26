@@ -9,7 +9,7 @@ interface GenerateOptions {
 }
 
 export interface ExerciseGenerationResult {
-  source: 'native' | 'ollama' | 'fallback'
+  source: 'native' | 'ollama' | 'openrouter' | 'nvidia' | 'fallback'
   exercise: GeneratedExercise
   error?: string
 }

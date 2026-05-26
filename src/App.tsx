@@ -20,6 +20,15 @@ import {
 import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
 import { generateExerciseWithNativeRuntime } from './services/nativeExercise'
 import {
+  generateExerciseWithHostedProvider,
+  generateTutorReplyWithHostedProvider,
+  getAiProviderLabel,
+  hydrateAiProviderSettings,
+  isHostedProviderConfigured,
+  sanitizeAiProviderSettingsForExport,
+  type AiProviderSettings,
+} from './services/hostedProvider'
+import {
   createMissingLocalRuntimeSummary,
   emptyLocalRuntimeConfig,
   inspectLocalRuntime,
@@ -93,6 +102,7 @@ const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
 const reminderKey = 'kannadaos:reminder'
 const runtimeKey = 'kannadaos:local-runtime'
+const aiProviderKey = 'kannadaos:ai-provider'
 const pronunciationKey = 'kannadaos:pronunciation-history'
 const conversationKey = 'kannadaos:conversation-log'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
@@ -176,6 +186,9 @@ function App() {
   )
   const [runtimeConfig, setRuntimeConfig] = useState<LocalRuntimeConfig>(() =>
     hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey)),
+  )
+  const [aiProviderSettings, setAiProviderSettings] = useState<AiProviderSettings>(() =>
+    hydrateAiProviderSettings(localStorage.getItem(aiProviderKey)),
   )
   const [runtimeSummary, setRuntimeSummary] = useState<LocalRuntimeSummary>(() =>
     createMissingLocalRuntimeSummary(hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))),
@@ -261,6 +274,10 @@ function App() {
   }, [runtimeConfig])
 
   useEffect(() => {
+    localStorage.setItem(aiProviderKey, JSON.stringify(aiProviderSettings))
+  }, [aiProviderSettings])
+
+  useEffect(() => {
     localStorage.setItem(pronunciationKey, JSON.stringify(pronunciationHistory))
   }, [pronunciationHistory])
 
@@ -286,12 +303,14 @@ function App() {
           const nextProgress = hydrateProgress(localStorage.getItem(progressKey))
           const nextReminder = hydrateReminder(localStorage.getItem(reminderKey))
           const nextRuntimeConfig = hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey))
+          const nextAiProviderSettings = hydrateAiProviderSettings(localStorage.getItem(aiProviderKey))
           const nextConversationStore = hydrateConversationStore(localStorage.getItem(conversationKey))
 
           setScreen(localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding')
           setProgress(nextProgress)
           setReminder(nextReminder)
           setRuntimeConfig(nextRuntimeConfig)
+          setAiProviderSettings(nextAiProviderSettings)
           setRuntimeSummary(createMissingLocalRuntimeSummary(nextRuntimeConfig))
           setPronunciationHistory(hydratePronunciationHistory(localStorage.getItem(pronunciationKey)))
           setConversationStore(nextConversationStore)
@@ -339,7 +358,7 @@ function App() {
     return () => {
       active = false
     }
-  }, [conversationStore, learnerStoreReady, progress, pronunciationHistory, reminder, runtimeConfig])
+  }, [aiProviderSettings, conversationStore, learnerStoreReady, progress, pronunciationHistory, reminder, runtimeConfig])
 
   useEffect(() => {
     let active = true
@@ -476,6 +495,23 @@ function App() {
 
   async function generateAiExercise() {
     const weakArea = Object.keys(progress.weakAreas)[0] ?? 'verbs'
+    const result =
+      aiProviderSettings.activeProvider === 'openrouter' || aiProviderSettings.activeProvider === 'nvidia'
+        ? await generateExerciseWithHostedProvider({
+            hostedChatCompletion: window.kannadaOS?.generateHostedChat,
+            providerSettings: aiProviderSettings,
+            weakArea,
+          })
+        : aiProviderSettings.activeProvider === 'ollama'
+          ? await generateExerciseWithOllama({ weakArea })
+          : await generateExerciseWithLocalPreference(weakArea)
+
+    setGeneratedExercise(
+      `${formatGeneratedExerciseSource(result.source)}: ${result.exercise.prompt} ${result.exercise.kannada}`,
+    )
+  }
+
+  async function generateExerciseWithLocalPreference(weakArea: string) {
     const nativeGenerator = window.kannadaOS?.generateNativeExercise
     const smokeSummary = runtimeSmokeSummary
     const canUseNative =
@@ -490,26 +526,48 @@ function App() {
           generateNativeExercise: nativeGenerator,
         })
       : null
-    const result =
-      nativeResult?.source === 'native' ? nativeResult : await generateExerciseWithOllama({ weakArea })
-    setGeneratedExercise(
-      `${formatGeneratedExerciseSource(result.source)}: ${result.exercise.prompt} ${result.exercise.kannada}`,
-    )
+
+    return nativeResult?.source === 'native' ? nativeResult : generateExerciseWithOllama({ weakArea })
   }
 
-  function sendChatMessage() {
+  async function sendChatMessage() {
     const trimmed = chatInput.trim()
     if (!trimmed) {
       return
     }
 
-    appendChatTurn(trimmed)
     setChatInput('')
     setVoiceStatus('')
+    await appendChatTurn(trimmed)
   }
 
-  function appendChatTurn(text: string, subtext?: string) {
-    const tutorReply = buildTutorReply(text, selectedScenario, selectedTutorPersona)
+  async function appendChatTurn(text: string, subtext?: string) {
+    let tutorReply = buildTutorReply(text, selectedScenario, selectedTutorPersona)
+
+    if (aiProviderSettings.activeProvider === 'openrouter' || aiProviderSettings.activeProvider === 'nvidia') {
+      const providerLabel = getAiProviderLabel(aiProviderSettings.activeProvider)
+      setVoiceStatus(`Asking ${providerLabel}...`)
+      const hostedReply = await generateTutorReplyWithHostedProvider({
+        hostedChatCompletion: window.kannadaOS?.generateHostedChat,
+        providerSettings: aiProviderSettings,
+        learnerText: text,
+        scenarioTitle: selectedScenario.title,
+        personaName: selectedTutorPersona.name,
+        personaStyle: selectedTutorPersona.style,
+        usefulPhrases: selectedScenario.usefulPhrases.map((phrase) => `${phrase.transliteration} = ${phrase.english}`),
+      })
+
+      if (hostedReply.source === aiProviderSettings.activeProvider) {
+        tutorReply = {
+          text: hostedReply.text,
+          subtext: `${providerLabel}: ${getActiveHostedModel(aiProviderSettings)}`,
+        }
+        setVoiceStatus(`${providerLabel} tutor reply ready.`)
+      } else {
+        setVoiceStatus(`${providerLabel} unavailable; using offline tutor. ${hostedReply.error ?? ''}`.trim())
+      }
+    }
+
     const nextMessages: ChatMessage[] = [
       ...chatMessages,
       { id: `learner-${Date.now()}`, speaker: 'learner', text, subtext },
@@ -532,10 +590,14 @@ function App() {
       'chat',
       'chat',
       async (transcript) => {
-        appendChatTurn(transcript, getTranscriptCompanion(transcript))
+        await appendChatTurn(transcript, getTranscriptCompanion(transcript))
       },
       setVoiceStatus,
     )
+  }
+
+  function updateAiProviderSetting<K extends keyof AiProviderSettings>(key: K, value: AiProviderSettings[K]) {
+    setAiProviderSettings((current) => ({ ...current, [key]: value }))
   }
 
   function toggleDailyReminder() {
@@ -764,6 +826,7 @@ function App() {
       progress,
       reminder,
       runtimeConfig,
+      aiProviderSettings: sanitizeAiProviderSettingsForExport(aiProviderSettings),
       conversationStore,
       pronunciationHistory,
     })
@@ -950,6 +1013,84 @@ function App() {
           >
             {modelSetupStarted ? 'Setup in Progress' : 'Start Model Setup'}
           </button>
+          <section className="runtime-card" aria-labelledby="provider-title">
+            <header className="runtime-header">
+              <div>
+                <span className="model-category">AI provider</span>
+                <h2 id="provider-title">Choose Generation Provider</h2>
+              </div>
+              <span className="metric-pill">{formatProviderStatus(aiProviderSettings)}</span>
+            </header>
+            <div className="runtime-path-grid">
+              <label className="runtime-field">
+                <span>Active AI provider</span>
+                <select
+                  onChange={(event) =>
+                    updateAiProviderSetting('activeProvider', event.target.value as AiProviderSettings['activeProvider'])
+                  }
+                  value={aiProviderSettings.activeProvider}
+                >
+                  <option value="local">Local first: Native, Ollama, Offline</option>
+                  <option value="ollama">Ollama only</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="nvidia">NVIDIA hosted</option>
+                </select>
+              </label>
+              <label className="runtime-field">
+                <span>OpenRouter API key</span>
+                <input
+                  onChange={(event) => updateAiProviderSetting('openRouterApiKey', event.target.value)}
+                  placeholder="sk-or-..."
+                  type="password"
+                  value={aiProviderSettings.openRouterApiKey}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>OpenRouter model</span>
+                <input
+                  onChange={(event) => updateAiProviderSetting('openRouterModel', event.target.value)}
+                  placeholder="openai/gpt-4o-mini"
+                  value={aiProviderSettings.openRouterModel}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>OpenRouter base URL</span>
+                <input
+                  onChange={(event) => updateAiProviderSetting('openRouterBaseUrl', event.target.value)}
+                  placeholder="https://openrouter.ai/api/v1"
+                  value={aiProviderSettings.openRouterBaseUrl}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>NVIDIA API key</span>
+                <input
+                  onChange={(event) => updateAiProviderSetting('nvidiaApiKey', event.target.value)}
+                  placeholder="nvapi-..."
+                  type="password"
+                  value={aiProviderSettings.nvidiaApiKey}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>NVIDIA model</span>
+                <input
+                  onChange={(event) => updateAiProviderSetting('nvidiaModel', event.target.value)}
+                  placeholder="meta/llama-3.1-8b-instruct"
+                  value={aiProviderSettings.nvidiaModel}
+                />
+              </label>
+              <label className="runtime-field">
+                <span>NVIDIA base URL</span>
+                <input
+                  onChange={(event) => updateAiProviderSetting('nvidiaBaseUrl', event.target.value)}
+                  placeholder="https://integrate.api.nvidia.com/v1"
+                  value={aiProviderSettings.nvidiaBaseUrl}
+                />
+              </label>
+            </div>
+            <p className="runtime-status" role="status">
+              Current provider: {formatProviderStatus(aiProviderSettings)}.
+            </p>
+          </section>
           <section className="runtime-card" aria-labelledby="runtime-title">
             <header className="runtime-header">
               <div>
@@ -1107,7 +1248,7 @@ function App() {
         </div>
         <section className="model-status">
           <span>AI model</span>
-          <strong>{ollamaStatus === 'online' ? 'Ollama online' : ollamaStatus === 'offline' ? 'Offline fallback' : 'Checking'}</strong>
+          <strong>{formatCurrentAiModelStatus(aiProviderSettings, ollamaStatus)}</strong>
           <button className="secondary-action" onClick={generateAiExercise} type="button">
             Generate AI Exercise
           </button>
@@ -1181,7 +1322,7 @@ function App() {
             className="chat-input"
             onSubmit={(event) => {
               event.preventDefault()
-              sendChatMessage()
+              void sendChatMessage()
             }}
           >
             <input
@@ -2014,13 +2155,64 @@ function formatLearnerStoreStatus(status: LearnerStoreStatus) {
   return 'Browser data store'
 }
 
+function formatProviderStatus(settings: AiProviderSettings) {
+  if (settings.activeProvider === 'openrouter') {
+    return isHostedProviderConfigured(settings) ? 'OpenRouter ready' : 'OpenRouter needs key'
+  }
+
+  if (settings.activeProvider === 'nvidia') {
+    return isHostedProviderConfigured(settings) ? 'NVIDIA hosted ready' : 'NVIDIA needs key'
+  }
+
+  if (settings.activeProvider === 'ollama') {
+    return 'Ollama selected'
+  }
+
+  return 'Local first selected'
+}
+
+function formatCurrentAiModelStatus(
+  settings: AiProviderSettings,
+  ollamaStatus: 'checking' | 'online' | 'offline',
+) {
+  if (settings.activeProvider === 'openrouter' || settings.activeProvider === 'nvidia') {
+    return formatProviderStatus(settings)
+  }
+
+  if (settings.activeProvider === 'ollama') {
+    return ollamaStatus === 'online' ? 'Ollama online' : ollamaStatus === 'offline' ? 'Ollama offline' : 'Checking'
+  }
+
+  return ollamaStatus === 'online' ? 'Local + Ollama' : ollamaStatus === 'offline' ? 'Local fallback' : 'Checking'
+}
+
+function getActiveHostedModel(settings: AiProviderSettings) {
+  if (settings.activeProvider === 'openrouter') {
+    return settings.openRouterModel
+  }
+
+  if (settings.activeProvider === 'nvidia') {
+    return settings.nvidiaModel
+  }
+
+  return ''
+}
+
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function formatGeneratedExerciseSource(source: 'native' | 'ollama' | 'fallback') {
+function formatGeneratedExerciseSource(source: 'native' | 'ollama' | 'openrouter' | 'nvidia' | 'fallback') {
   if (source === 'native') {
     return 'Native'
+  }
+
+  if (source === 'openrouter') {
+    return 'OpenRouter'
+  }
+
+  if (source === 'nvidia') {
+    return 'NVIDIA'
   }
 
   if (source === 'ollama') {

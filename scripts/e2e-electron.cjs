@@ -123,6 +123,13 @@ async function main() {
     await page.getByText(/Aya 8B Q4/i).waitFor()
     await page.getByText(/Whisper Small/i).waitFor()
     await page.getByText(/Piper Kannada Voice/i).waitFor()
+    await page.getByRole('heading', { name: /Choose Generation Provider/i }).waitFor()
+    await page.getByLabel(/Active AI provider/i).selectOption('openrouter')
+    await page.getByLabel(/OpenRouter API key/i).fill('sk-or-e2e-placeholder')
+    await page.getByLabel(/OpenRouter model/i).fill('openai/gpt-4o-mini')
+    await page.getByText('OpenRouter ready', { exact: true }).waitFor()
+    await page.getByLabel(/Active AI provider/i).selectOption('local')
+    await page.getByText('Local first selected', { exact: true }).waitFor()
     await page.getByRole('heading', { name: /On-device Runtime/i }).waitFor()
     await page.getByText(/0 of 3 runtime components ready/i).waitFor()
     await page.getByLabel(/Aya GGUF model path/i).fill(runtimePaths.llmModelPath)
@@ -166,10 +173,10 @@ async function main() {
 
     const ollama = await probeOllama()
     if (ollama.online) {
-      await page.getByText(/Ollama online/i).waitFor({ timeout: 3000 })
+      await page.getByText(/Local \+ Ollama/i).waitFor({ timeout: 3000 })
       console.log(`Ollama live smoke: online (${ollama.models.join(', ') || 'no models listed'})`)
     } else {
-      await page.getByText(/Offline fallback|Checking/i).waitFor({ timeout: 3000 })
+      await page.getByText(/Local fallback|Checking/i).waitFor({ timeout: 3000 })
       console.log('Ollama live smoke: unavailable, offline fallback visible')
     }
 
