@@ -1272,13 +1272,31 @@ function App() {
     synthesizeNativeSpeech({
       runtimeConfig,
       text: activeExercise.kannada,
-    }).then((result) => {
+    }).then(async (result) => {
       if (!cancelled) {
+        if (result.ok && result.audioUrl) {
+          const played = await playAudioUrl(result.audioUrl)
+          if (cancelled) {
+            return
+          }
+
+          setAudioStatus(
+            played
+              ? `Auto Piper audio playing: ${result.audioPath}`
+              : `Auto Piper audio ready: ${result.audioPath} (playback unavailable)`,
+          )
+          return
+        }
+
         setAudioStatus(
           result.ok
             ? `Auto Piper audio ready: ${result.audioPath}`
             : result.error ?? 'Auto reference audio unavailable.',
         )
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setAudioStatus('Auto reference audio unavailable.')
       }
     })
 
@@ -1987,6 +2005,17 @@ function App() {
 
     speechSynthesis.speak(utterance)
     return 'played'
+  }
+
+  async function playAudioUrl(audioUrl: string, playbackRate = 1): Promise<boolean> {
+    try {
+      const audio = new Audio(audioUrl)
+      audio.playbackRate = playbackRate
+      await audio.play()
+      return true
+    } catch {
+      return false
+    }
   }
 
   function getExerciseAudioLabel(exercise: LessonExercise): string {

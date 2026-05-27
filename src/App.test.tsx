@@ -2005,6 +2005,55 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Auto Web Speech reference: namaskara saar/i)).toBeInTheDocument()
   })
 
+  it('auto-plays lesson reference audio through Piper when the desktop bridge is configured', async () => {
+    const user = userEvent.setup()
+    const playReference = vi.fn().mockResolvedValue(undefined)
+    const AudioMock = vi.fn(function mockAudio(this: { play: typeof playReference; playbackRate?: number }) {
+      this.play = playReference
+    })
+    vi.stubGlobal('Audio', AudioMock)
+    const synthesizeNativeSpeech = vi.fn().mockResolvedValue({
+      ok: true,
+      audioPath: '/tmp/auto-lesson.wav',
+      audioUrl: 'file:///tmp/auto-lesson.wav',
+    })
+    vi.stubGlobal('kannadaOS', {
+      platform: 'darwin',
+      synthesizeNativeSpeech,
+    })
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":true,"autoPlayAudio":true}')
+    localStorage.setItem(
+      'kannadaos:local-runtime',
+      JSON.stringify({
+        llmModelPath: '/models/aya.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      }),
+    )
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    await waitFor(() => expect(synthesizeNativeSpeech).toHaveBeenCalledWith({
+      runtimeConfig: {
+        llmModelPath: '/models/aya.gguf',
+        whisperModelPath: '/models/whisper-small.bin',
+        piperVoicePath: '/models/voice.onnx',
+        llamaBinaryPath: '/bin/llama-cli',
+        whisperBinaryPath: '/bin/whisper-cli',
+        piperBinaryPath: '/bin/piper',
+      },
+      text: 'ನಮಸ್ಕಾರ ಸಾರ್',
+    }))
+    await waitFor(() => expect(AudioMock).toHaveBeenCalledWith('file:///tmp/auto-lesson.wav'))
+    expect(playReference).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText(/Auto Piper audio playing: \/tmp\/auto-lesson.wav/i)).toBeInTheDocument()
+  })
+
   it('uses 0.7x Web Speech rate for slow lesson audio fallback', async () => {
     const user = userEvent.setup()
     const speak = vi.fn()
