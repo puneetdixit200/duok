@@ -2639,7 +2639,26 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /First Day in Bangalore/i })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /Illustration for First Day in Bangalore: Bus stop/i })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /Illustration for Office Lunch: Tech park cafeteria/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Illustration for Office Lunch: Tech park cafeteria/i })).toHaveAttribute(
+      'src',
+      'story-office-lunch.svg',
+    )
+    expect(screen.getByRole('img', { name: /Illustration for The Auto Ride: Indiranagar to Majestic/i })).toHaveAttribute(
+      'src',
+      'story-auto-ride.svg',
+    )
+    expect(screen.getByRole('img', { name: /Illustration for Darshini Breakfast: Standing hotel/i })).toHaveAttribute(
+      'src',
+      'story-darshini-breakfast.svg',
+    )
+    expect(screen.getByRole('img', { name: /Illustration for The Kirana Run: Neighborhood store/i })).toHaveAttribute(
+      'src',
+      'story-kirana-run.svg',
+    )
+    expect(screen.getByRole('img', { name: /Illustration for PG Problems: PG owner conversation/i })).toHaveAttribute(
+      'src',
+      'story-pg-problems.svg',
+    )
     expect(screen.getAllByText(/5 min read/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/12 new words/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/Office Lunch/i).length).toBeGreaterThanOrEqual(1)

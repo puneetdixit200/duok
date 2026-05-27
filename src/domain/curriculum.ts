@@ -839,7 +839,7 @@ export const stories: Story[] = [
     ],
     'What does the coworker ask?',
     'Did you eat?',
-    { newWordCount: 16, readTimeMinutes: 7 },
+    { newWordCount: 16, readTimeMinutes: 7, imagePath: 'story-office-lunch.svg' },
   ),
   makeStory(
     'auto-ride-story',
@@ -853,7 +853,7 @@ export const stories: Story[] = [
     ],
     'Where does Rahul want to go?',
     'Majestic',
-    { newWordCount: 14, readTimeMinutes: 7 },
+    { newWordCount: 14, readTimeMinutes: 7, imagePath: 'story-auto-ride.svg' },
   ),
   makeStory(
     'darshini-breakfast',
@@ -867,7 +867,7 @@ export const stories: Story[] = [
     ],
     'What did Rahul order?',
     'Two idlis and coffee',
-    { newWordCount: 18, readTimeMinutes: 7 },
+    { newWordCount: 18, readTimeMinutes: 7, imagePath: 'story-darshini-breakfast.svg' },
   ),
   makeStory(
     'kirana-run',
@@ -881,7 +881,7 @@ export const stories: Story[] = [
     ],
     'What does Rahul decline?',
     'A carry bag',
-    { newWordCount: 15, readTimeMinutes: 7 },
+    { newWordCount: 15, readTimeMinutes: 7, imagePath: 'story-kirana-run.svg' },
   ),
   makeStory(
     'pg-problems',
@@ -895,7 +895,7 @@ export const stories: Story[] = [
     ],
     'What is the PG problem?',
     'Water is not coming',
-    { newWordCount: 20, readTimeMinutes: 8 },
+    { newWordCount: 20, readTimeMinutes: 8, imagePath: 'story-pg-problems.svg' },
   ),
 ]
 
@@ -1564,7 +1564,7 @@ function makeStory(
   sentenceRows: [string, string, string][],
   quizPrompt: string,
   quizAnswer: string,
-  metadata: Partial<Pick<Story, 'newWordCount' | 'readTimeMinutes'>> = {},
+  metadata: Partial<Pick<Story, 'newWordCount' | 'readTimeMinutes' | 'imagePath'>> = {},
 ): Story {
   return {
     id,
@@ -1574,7 +1574,7 @@ function makeStory(
     readTimeMinutes: metadata.readTimeMinutes ?? (difficulty === 'Advanced' ? 8 : difficulty === 'Intermediate' ? 7 : 5),
     newWordCount: metadata.newWordCount ?? sentenceRows.length * 4,
     locked: id !== 'first-day-bangalore',
-    imagePath: 'story-bus-stop.svg',
+    imagePath: metadata.imagePath ?? 'story-bus-stop.svg',
     sentences: sentenceRows.map(([kannada, transliteration, english], index) => ({
       id: `${id}-${index + 1}`,
       kannada,

@@ -299,49 +299,57 @@ describe('KannadaOS level 1 curriculum', () => {
 
   it('ships six complete progressively harder stories and unlocks them from story progress', () => {
     expect(stories).toHaveLength(6)
-    expect(stories.map(({ title, subtitle, difficulty, newWordCount }) => ({
+    expect(stories.map(({ title, subtitle, difficulty, newWordCount, imagePath }) => ({
       title,
       subtitle,
       difficulty,
       newWordCount,
+      imagePath,
     }))).toEqual([
       {
         title: 'First Day in Bangalore',
         subtitle: 'Scene: Bus stop',
         difficulty: 'Beginner',
         newWordCount: 12,
+        imagePath: 'story-bus-stop.svg',
       },
       {
         title: 'Office Lunch',
         subtitle: 'Scene: Tech park cafeteria',
         difficulty: 'Beginner',
         newWordCount: 16,
+        imagePath: 'story-office-lunch.svg',
       },
       {
         title: 'The Auto Ride',
         subtitle: 'Scene: Indiranagar to Majestic',
         difficulty: 'Intermediate',
         newWordCount: 14,
+        imagePath: 'story-auto-ride.svg',
       },
       {
         title: 'Darshini Breakfast',
         subtitle: 'Scene: Standing hotel',
         difficulty: 'Intermediate',
         newWordCount: 18,
+        imagePath: 'story-darshini-breakfast.svg',
       },
       {
         title: 'The Kirana Run',
         subtitle: 'Scene: Neighborhood store',
         difficulty: 'Intermediate',
         newWordCount: 15,
+        imagePath: 'story-kirana-run.svg',
       },
       {
         title: 'PG Problems',
         subtitle: 'Scene: PG owner conversation',
         difficulty: 'Advanced',
         newWordCount: 20,
+        imagePath: 'story-pg-problems.svg',
       },
     ])
+    expect(new Set(stories.map((story) => story.imagePath)).size).toBe(stories.length)
     expect(stories.every((story) => story.sentences.length >= 3)).toBe(true)
     expect(stories.every((story) => story.quiz.options.length >= 4)).toBe(true)
 
