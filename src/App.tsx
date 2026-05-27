@@ -1071,6 +1071,8 @@ function App() {
   const [mismatchedPair, setMismatchedPair] = useState<{ left: string; right: string } | null>(null)
   const [voiceCaptureSession, setVoiceCaptureSession] = useState<VoiceCaptureSession | null>(null)
   const [recordingTarget, setRecordingTarget] = useState<VoiceRecordingTarget | null>(null)
+  const [claimedQuestId, setClaimedQuestId] = useState<string | null>(null)
+  const [gemPulseKey, setGemPulseKey] = useState(0)
 
   const activeLesson =
     getLessonById(activeLessonId) ?? getNextAvailableLesson(coreCurriculumUnits, progress) ?? coreCurriculumUnits[0].lessons[0]
@@ -1816,7 +1818,13 @@ function App() {
   }
 
   function claimQuestReward(quest: DailyQuest) {
+    if (!quest.completed || quest.claimed) {
+      return
+    }
+
     playAppSound('gemEarn')
+    setClaimedQuestId(quest.id)
+    setGemPulseKey((current) => current + 1)
     setProgress((current) => claimDailyQuestReward(current, quest, new Date().toISOString()))
   }
 
@@ -3946,8 +3954,14 @@ function App() {
           </div>
           <div className="top-counters" aria-label="resources">
             <span>{formatStreakCounter(progress.streakDays)}</span>
-            <span>❤️ {progress.hearts}</span>
-            <span>💎 {progress.gems}</span>
+            <span aria-label="Hearts">❤️ {progress.hearts}</span>
+            <span
+              aria-label="Gems"
+              className={claimedQuestId ? 'resource-counter gem-counter rolling' : 'resource-counter gem-counter'}
+              key={`gems-${gemPulseKey}`}
+            >
+              💎 {progress.gems}
+            </span>
           </div>
         </header>
         <section className="streak-banner">
@@ -4012,21 +4026,55 @@ function App() {
           ))}
         </section>
         <section className="daily-quest-grid" aria-label="Daily quests">
-          {dailyQuests.map((quest) => (
-            <article className={quest.completed ? 'quest-card complete' : 'quest-card'} key={quest.id}>
-              <strong>{quest.title}</strong>
-              <p>{quest.description}</p>
-              <span>{quest.current}/{quest.target} - +{quest.rewardGems} gems</span>
-              <button
-                className="secondary-action"
-                disabled={!quest.completed || quest.claimed}
-                onClick={() => claimQuestReward(quest)}
-                type="button"
-              >
-                {quest.claimed ? 'Claimed' : 'Claim Reward'}
-              </button>
-            </article>
-          ))}
+          {dailyQuests.map((quest) => {
+            const progressPercent = Math.min(100, Math.round((quest.current / Math.max(1, quest.target)) * 100))
+            const questCardClass = [
+              'quest-card',
+              quest.completed ? 'complete' : '',
+              quest.claimed ? 'claimed' : '',
+              claimedQuestId === quest.id ? 'claiming' : '',
+            ].filter(Boolean).join(' ')
+            const questStatus = quest.claimed ? '🎉' : quest.completed ? '✅' : '⬜'
+            const claimLabel = quest.claimed ? 'Claimed ✅' : quest.completed ? `Claim ${quest.rewardGems} 💎` : 'In progress'
+
+            return (
+              <article className={questCardClass} key={quest.id}>
+                <div className="quest-header">
+                  <span className="quest-state" aria-hidden="true">{questStatus}</span>
+                  <strong>{quest.title}</strong>
+                </div>
+                <p>{quest.description}</p>
+                <div
+                  aria-label={`${quest.title} progress`}
+                  aria-valuemax={quest.target}
+                  aria-valuemin={0}
+                  aria-valuenow={quest.current}
+                  className="quest-progress"
+                  role="progressbar"
+                >
+                  <span style={{ width: `${progressPercent}%` }} />
+                </div>
+                <span>{quest.current}/{quest.target} - +{quest.rewardGems} gems</span>
+                <button
+                  className={quest.completed && !quest.claimed ? 'secondary-action quest-claim-action' : 'secondary-action'}
+                  disabled={!quest.completed || quest.claimed}
+                  onClick={() => claimQuestReward(quest)}
+                  type="button"
+                >
+                  {claimLabel}
+                </button>
+                {claimedQuestId === quest.id && (
+                  <div className="confetti-burst quest-confetti" aria-label={`Quest claim celebration: ${quest.title}`}>
+                    <span />
+                    <span />
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                )}
+              </article>
+            )
+          })}
         </section>
         <section className="quick-actions-card" aria-label="Quick actions">
           <div>

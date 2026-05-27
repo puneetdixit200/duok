@@ -103,6 +103,47 @@ describe('KannadaOS desktop app', () => {
     expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"dailyGoalXp":5')
   })
 
+  it('shows spec daily quest states and claim celebration', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:learner-profile', JSON.stringify({
+      motivation: 'moved-to-bangalore',
+      startingLevel: 'zero',
+      dailyGoalXp: 10,
+      onboardedAt: '2026-05-27T08:00:00.000Z',
+    }))
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      dailyXp: 10,
+      gems: 120,
+      completedExerciseIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+      todayActivityIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+    }))
+
+    render(<App />)
+
+    const quests = screen.getByLabelText(/Daily quests/i)
+    const xpQuestCard = within(quests).getByText('Earn 10 XP').closest('article')
+    const activityQuestCard = within(quests).getByText('Complete 3 activities').closest('article')
+    const heartsQuestCard = within(quests).getByText('Keep every heart').closest('article')
+    expect(xpQuestCard).toBeInTheDocument()
+    expect(activityQuestCard).toBeInTheDocument()
+    expect(heartsQuestCard).toBeInTheDocument()
+
+    expect(within(xpQuestCard!).getByText('✅')).toBeInTheDocument()
+    expect(within(xpQuestCard!).getByRole('progressbar', { name: /Earn 10 XP progress/i })).toHaveAttribute('aria-valuenow', '10')
+    expect(within(xpQuestCard!).getByRole('button', { name: /Claim 10/i })).toBeEnabled()
+    expect(within(activityQuestCard!).getByRole('button', { name: /Claim 15/i })).toBeEnabled()
+    expect(within(heartsQuestCard!).getByText('⬜')).toBeInTheDocument()
+    expect(within(heartsQuestCard!).getByRole('button', { name: /In progress/i })).toBeDisabled()
+
+    await user.click(within(xpQuestCard!).getByRole('button', { name: /Claim 10/i }))
+
+    expect(within(xpQuestCard!).getByRole('button', { name: /Claimed/i })).toBeDisabled()
+    expect(within(xpQuestCard!).getByLabelText(/Quest claim celebration: Earn 10 XP/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Gems/)).toHaveTextContent('💎 130')
+  })
+
   it('shows home quick actions for practice, stories, and chat', async () => {
     const user = userEvent.setup()
     render(<App />)

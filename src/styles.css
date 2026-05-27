@@ -1978,8 +1978,87 @@ h2 {
   background: #202037;
 }
 
+.quest-card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  overflow: hidden;
+}
+
 .quest-card.complete {
   border-color: #6ee7b7;
+}
+
+.quest-card.claimed {
+  opacity: 0.72;
+}
+
+.quest-card.claiming {
+  box-shadow: 0 0 0 3px rgba(88, 204, 2, 0.18);
+}
+
+.quest-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quest-state {
+  display: inline-grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid #3d3d5c;
+  border-radius: 999px;
+  background: #11111d;
+  color: #9b9ab0;
+  font-size: 14px;
+}
+
+.quest-card.complete .quest-state {
+  border-color: #58cc02;
+  background: rgba(88, 204, 2, 0.18);
+  color: #58cc02;
+}
+
+.quest-card.claimed .quest-state {
+  border-color: #ffc800;
+  background: rgba(255, 200, 0, 0.18);
+  color: #ffc800;
+}
+
+.quest-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #30304d;
+}
+
+.quest-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #58cc02, #ffc800);
+  transition: width 240ms ease-out;
+}
+
+.quest-card.claimed .quest-progress span {
+  background: #5c7a87;
+}
+
+.quest-claim-action {
+  animation: pulseGlow 1200ms ease-in-out infinite;
+}
+
+.quest-confetti {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  pointer-events: none;
+}
+
+.quest-confetti span {
+  animation-iteration-count: 1;
 }
 
 .level-map.expanded {
@@ -2187,6 +2266,34 @@ h2 {
   }
 }
 
+@keyframes gemBounce {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  45% {
+    transform: translateY(-6px) scale(1.08);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes numberRoll {
+  0% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.45);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
+
 @keyframes pulseGlow {
   0%,
   100% {
@@ -2244,6 +2351,12 @@ h2 {
   background: #202037;
   color: #c9c7d6;
   font-size: 13px;
+}
+
+.gem-counter.rolling {
+  animation:
+    gemBounce 520ms ease-out,
+    numberRoll 520ms ease-out;
 }
 
 @media (max-width: 900px) {
