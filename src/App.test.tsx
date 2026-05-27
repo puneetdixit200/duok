@@ -175,9 +175,9 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getAllByText(/namaskara saar hegiddira/i).length).toBeGreaterThanOrEqual(1)
     const wordBank = screen.getByLabelText(/Word bank/i)
-    expect(within(wordBank).getByRole('button', { name: /ನಮಸ್ಕಾರ.*namaskara.*hello/i })).toBeInTheDocument()
-    expect(within(wordBank).getByRole('button', { name: /ಸಾರ್.*saar.*sir/i })).toBeInTheDocument()
-    expect(within(wordBank).getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ.*hegiddira.*how are you/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /hello.*ನಮಸ್ಕಾರ.*namaskara/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /sir.*ಸಾರ್.*saar/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /how are you.*ಹೇಗಿದ್ದೀರಾ.*hegiddira/i })).toBeInTheDocument()
 
     await user.click(within(wordBank).getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
     await user.click(within(wordBank).getByRole('button', { name: /ಸಾರ್/i }))
@@ -222,8 +222,8 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     const wordBank = screen.getByLabelText(/Word bank/i)
-    expect(within(wordBank).getByRole('button', { name: /ನಿಮ್ಮ.*nimma.*phrase: What is your name/i })).toBeInTheDocument()
-    expect(within(wordBank).getByRole('button', { name: /ಹೆಸರು.*hesaru.*phrase: What is your name/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /phrase: What is your name.*ನಿಮ್ಮ.*nimma/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /phrase: What is your name.*ಹೆಸರು.*hesaru/i })).toBeInTheDocument()
   })
 
   it('keeps listening answer text hidden until the learner checks', async () => {
@@ -415,6 +415,22 @@ describe('KannadaOS desktop app', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
+  })
+
+  it('puts English subtitles first on Kannada exercise choices', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByText('arrange')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^hello\s+ನಮಸ್ಕಾರ\s+namaskara/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^sir\s+ಸಾರ್\s+saar/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^how are you\s+ಹೇಗಿದ್ದೀರಾ\s+hegiddira/i })).toBeInTheDocument()
   })
 
   it('completes all six lesson exercise types and shows the completion screen', async () => {

@@ -342,12 +342,14 @@ function SubtitleLines({ text, context }: { text: string; context?: LessonExerci
     return null
   }
 
+  const hasEnglishSubtitle = hasDistinctEnglishSubtitle(subtitle)
+
   return (
     <span className="kannada-subtitles">
-      <small className="romanization">{subtitle.romanization}</small>
-      {subtitle.english && subtitle.english.toLowerCase() !== subtitle.romanization.toLowerCase() && (
+      {hasEnglishSubtitle && (
         <small className="english-subtitle">{subtitle.english}</small>
       )}
+      <small className="romanization">{subtitle.romanization}</small>
     </span>
   )
 }
@@ -357,10 +359,18 @@ function ChoiceText({ text, context }: { text: string; context?: LessonExercise 
     return text
   }
 
+  const subtitle = getKannadaSubtitle(text, context)
+  if (!subtitle) {
+    return <span lang="kn">{text}</span>
+  }
+
+  const hasEnglishSubtitle = hasDistinctEnglishSubtitle(subtitle)
+
   return (
-    <span className="choice-text">
+    <span className="choice-text" aria-label={formatReadableKannadaChoice(text, subtitle)}>
+      {hasEnglishSubtitle && <span className="english-subtitle choice-primary-english">{subtitle.english}</span>}
       <span lang="kn">{text}</span>
-      <SubtitleLines text={text} context={context} />
+      <small className="romanization">{subtitle.romanization}</small>
     </span>
   )
 }
@@ -392,6 +402,20 @@ function ReadableStatusText({ text, context }: { text: string; context?: LessonE
       <SubtitleLines text={text} context={context} />
     </>
   )
+}
+
+function hasDistinctEnglishSubtitle(subtitle: ReadableSubtitle): boolean {
+  return Boolean(subtitle.english && subtitle.english.toLowerCase() !== subtitle.romanization.toLowerCase())
+}
+
+function formatReadableKannadaChoice(text: string, subtitle: ReadableSubtitle): string {
+  return [
+    hasDistinctEnglishSubtitle(subtitle) ? subtitle.english : '',
+    text,
+    subtitle.romanization,
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {

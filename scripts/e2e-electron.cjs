@@ -358,14 +358,14 @@ async function completeLesson(page) {
   await page.getByRole('button', { name: /next exercise/i }).click()
 
   await page.getByText('arrange', { exact: true }).waitFor()
-  await page.getByRole('button', { name: /^ನಮಸ್ಕಾರ/ }).click()
-  await page.getByRole('button', { name: /^ಸಾರ್/ }).click()
-  await page.getByRole('button', { name: /^ಹೇಗಿದ್ದೀರಾ/ }).click()
+  await page.getByRole('button', { name: /ನಮಸ್ಕಾರ/ }).click()
+  await page.getByRole('button', { name: /ಸಾರ್/ }).click()
+  await page.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/ }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
   await page.getByText('fillBlank', { exact: true }).waitFor()
-  await page.getByRole('button', { name: /^ಹೋಗಬೇಕು/ }).click()
+  await page.getByRole('button', { name: /ಹೋಗಬೇಕು/ }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
@@ -390,13 +390,13 @@ async function completeLesson(page) {
   await page.getByRole('button', { name: /next exercise/i }).click()
 
   await page.getByText('matchPairs', { exact: true }).waitFor()
-  await page.getByRole('button', { name: /^ನಮಸ್ಕಾರ/ }).click()
+  await page.getByRole('button', { name: /ನಮಸ್ಕಾರ/ }).click()
   await page.getByRole('button', { name: 'Hello', exact: true }).click()
-  await page.getByRole('button', { name: /^ಧನ್ಯವಾದ/ }).click()
+  await page.getByRole('button', { name: /ಧನ್ಯವಾದ/ }).click()
   await page.getByRole('button', { name: 'Thank you', exact: true }).click()
-  await page.getByRole('button', { name: /^ಹೋಗು/ }).click()
+  await page.getByRole('button', { name: /ಹೋಗು/ }).click()
   await page.getByRole('button', { name: 'Go', exact: true }).click()
-  await page.getByRole('button', { name: /^ಬಾ/ }).click()
+  await page.getByRole('button', { name: /ಬಾ/ }).click()
   await page.getByRole('button', { name: 'Come', exact: true }).click()
   await page.getByRole('button', { name: /check/i }).click()
 

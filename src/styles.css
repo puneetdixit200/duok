@@ -638,6 +638,22 @@ h2 {
   font-size: 15px;
 }
 
+.choice-text > .choice-primary-english {
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.word-bank .choice-text > .choice-primary-english {
+  font-size: 19px;
+}
+
+.choice-text > [lang='kn'] {
+  color: #d9d7e8;
+  font-size: 17px;
+  font-weight: 800;
+}
+
 .feedback {
   display: flex;
   justify-content: space-between;
