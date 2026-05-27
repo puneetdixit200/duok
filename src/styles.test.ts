@@ -5,6 +5,28 @@ import { describe, expect, it } from 'vitest'
 const styles = readFileSync(join(process.cwd(), 'src/styles.css'), 'utf8')
 
 describe('KannadaOS frontend motion and accessibility styles', () => {
+  it('defines the frontend spec design-system palette and Kannada font stack', () => {
+    [
+      '--color-primary: #58CC02',
+      '--color-primary-dark: #46A302',
+      '--color-accent: #FF9600',
+      '--color-accent-gold: #FFC800',
+      '--color-error: #FF4B4B',
+      '--color-background: #131F24',
+      '--color-surface: #1B2B33',
+      '--color-surface-light: #233A44',
+      '--text-primary: #FFFFFF',
+      '--text-secondary: #A0B4BD',
+      '--text-muted: #5C7A87',
+      '--color-border: #2D4A55',
+    ].forEach((token) => {
+      expect(styles).toContain(token)
+    })
+
+    expect(styles).toMatch(/font-family:\s*"Noto Sans Kannada",\s*"Noto Sans",\s*Inter/s)
+    expect(styles).not.toContain('#7c3aed')
+  })
+
   it('implements the frontend spec animation keyframes and reduced-motion fallback', () => {
     [
       'correctPulse',
@@ -34,7 +56,7 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
   })
 
   it('keeps visible focus indicators on interactive controls', () => {
-    expect(styles).toMatch(/:focus-visible\s*{[^}]*outline:\s*3px solid #ffbc8a/s)
+    expect(styles).toMatch(/:focus-visible\s*{[^}]*outline:\s*3px solid var\(--color-accent-gold\)/s)
     expect(styles).toMatch(/:focus-visible\s*{[^}]*outline-offset:\s*3px/s)
   })
 })
