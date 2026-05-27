@@ -59,4 +59,10 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/:focus-visible\s*{[^}]*outline:\s*3px solid var\(--color-accent-gold\)/s)
     expect(styles).toMatch(/:focus-visible\s*{[^}]*outline-offset:\s*3px/s)
   })
+
+  it('uses scalable text sizing without viewport-based font scaling', () => {
+    expect(styles).not.toMatch(/font-size:\s*[^;]*(?:px|vw)/)
+    expect(styles).toMatch(/\.phrase-card strong\s*{[^}]*font-size:\s*2\.5rem/s)
+    expect(styles).toMatch(/\.story-sentence-english\s*{[^}]*font-size:\s*1\.875rem/s)
+  })
 })

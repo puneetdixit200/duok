@@ -87,7 +87,7 @@ button:disabled {
   border-radius: 16px;
   background: linear-gradient(135deg, var(--color-accent), var(--color-primary-dark));
   color: white;
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 800;
 }
 
@@ -97,7 +97,7 @@ button:disabled {
   gap: 6px;
   margin: 0 0 8px;
   color: var(--color-accent-gold);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -120,7 +120,7 @@ h2 {
 .lead {
   max-width: 56ch;
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .level-grid {
@@ -234,7 +234,7 @@ h2 {
   display: block;
   margin: 0;
   color: var(--text-primary);
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .brand-lockup p,
@@ -270,7 +270,7 @@ h2 {
   display: inline-grid;
   place-items: center;
   width: 28px;
-  font-size: 19px;
+  font-size: 1.1875rem;
   line-height: 1;
 }
 
@@ -286,7 +286,7 @@ h2 {
   min-width: 24px;
   height: 24px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 900;
   line-height: 1;
 }
@@ -323,13 +323,13 @@ h2 {
 
 .model-status span {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .model-status p {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .ai-expansion-queue {
@@ -347,7 +347,7 @@ h2 {
   margin: 0;
   padding-left: 16px;
   color: #d7f5e2;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.35;
 }
 
@@ -392,7 +392,7 @@ h2 {
 }
 
 .streak-banner strong {
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .streak-banner p {
@@ -452,7 +452,7 @@ h2 {
 }
 
 .continue-card span {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 900;
 }
 
@@ -534,7 +534,7 @@ h2 {
   border-radius: 50%;
   border: 2px solid var(--color-border);
   background: var(--color-surface-light);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 900;
 }
 
@@ -598,7 +598,7 @@ h2 {
 }
 
 .phrase-card strong {
-  font-size: clamp(30px, 5vw, 48px);
+  font-size: 2.5rem;
 }
 
 .phrase-card span {
@@ -619,19 +619,19 @@ h2 {
 
 .readable-phrase-english {
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.2;
 }
 
 .readable-phrase [lang='kn'] {
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 800;
 }
 
 .readable-phrase .romanization,
 .readable-phrase-context {
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .kannada-subtitles {
@@ -658,7 +658,7 @@ h2 {
 }
 
 .choice-text > span:first-child {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 900;
 }
 
@@ -695,18 +695,18 @@ h2 {
 
 .word-guide-english {
   color: var(--text-primary);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.2;
 }
 
 .word-guide-item [lang='kn'] {
   color: var(--text-secondary);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 800;
 }
 
 .word-guide-item .romanization {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .placed-word-row {
@@ -733,11 +733,11 @@ h2 {
 }
 
 .placed-word-chip .choice-primary-english {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .placed-word-chip [lang='kn'] {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .match-grid {
@@ -780,7 +780,7 @@ h2 {
 }
 
 .match-check {
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .word-bank .answer-option {
@@ -796,7 +796,7 @@ h2 {
 
 .answer-option .romanization,
 .answer-option .english-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .answer-option .english-subtitle {
@@ -805,22 +805,22 @@ h2 {
 
 .word-bank .romanization,
 .word-bank .english-subtitle {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .choice-text > .choice-primary-english {
   color: var(--text-primary);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.2;
 }
 
 .word-bank .choice-text > .choice-primary-english {
-  font-size: 19px;
+  font-size: 1.1875rem;
 }
 
 .choice-text > [lang='kn'] {
   color: var(--text-secondary);
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 800;
 }
 
@@ -985,7 +985,7 @@ h2 {
 .model-category {
   display: block;
   margin-bottom: 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -1039,7 +1039,7 @@ h2 {
 
 .runtime-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .runtime-path-grid,
@@ -1059,7 +1059,7 @@ h2 {
 
 .runtime-field span {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 900;
 }
 
@@ -1119,7 +1119,7 @@ h2 {
   justify-content: center;
   gap: 10px;
   color: var(--color-accent-gold);
-  font-size: 42px;
+  font-size: 2.625rem;
 }
 
 .xp-card {
@@ -1127,7 +1127,7 @@ h2 {
 }
 
 .xp-card strong {
-  font-size: 34px;
+  font-size: 2.125rem;
 }
 
 .completion-stats {
@@ -1171,7 +1171,7 @@ h2 {
 .selector-chip small,
 .suggestion-row small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .selector-chip.active {
@@ -1285,7 +1285,7 @@ h2 {
 }
 
 .review-card strong {
-  font-size: clamp(28px, 4vw, 42px);
+  font-size: 2.25rem;
 }
 
 .review-session-options {
@@ -1300,7 +1300,7 @@ h2 {
 
 .review-complete-card strong {
   color: #6ee7b7;
-  font-size: 32px;
+  font-size: 2rem;
 }
 
 .pronunciation-lab {
@@ -1338,7 +1338,7 @@ h2 {
 .pronunciation-target strong {
   display: block;
   color: white;
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .pronunciation-target small,
@@ -1358,7 +1358,7 @@ h2 {
 
 .transcript-field span {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 900;
 }
 
@@ -1382,7 +1382,7 @@ h2 {
 
 .pronunciation-result strong {
   color: #6ee7b7;
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .pronunciation-result p,
@@ -1425,19 +1425,19 @@ h2 {
 
 .flashcard span {
   color: var(--text-secondary);
-  font-size: clamp(24px, 4vw, 42px);
+  font-size: 2rem;
   font-weight: 900;
 }
 
 .flashcard .flashcard-primary-english {
   color: var(--text-primary);
-  font-size: clamp(26px, 4vw, 42px);
+  font-size: 2.125rem;
   font-weight: 900;
 }
 
 .flashcard strong {
   color: var(--color-accent-gold);
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .review-rating-row {
@@ -1482,7 +1482,7 @@ h2 {
 }
 
 .blr-hero h3 {
-  font-size: 32px;
+  font-size: 2rem;
 }
 
 .scenario-grid {
@@ -1645,7 +1645,7 @@ h2 {
   width: fit-content;
   border-radius: 999px;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 900;
 }
 
@@ -1673,7 +1673,7 @@ h2 {
 
 .story-meta span {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
@@ -1698,13 +1698,13 @@ h2 {
 
 .story-sentence-english {
   color: white;
-  font-size: clamp(24px, 3vw, 34px);
+  font-size: 1.875rem;
   line-height: 1.15;
 }
 
 .story-sentence-kannada {
   color: var(--text-secondary);
-  font-size: clamp(20px, 2.5vw, 28px);
+  font-size: 1.5rem;
   font-weight: 800;
 }
 
@@ -1726,18 +1726,18 @@ h2 {
 
 .word-token-english {
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.2;
 }
 
 .word-token [lang='kn'] {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .word-token small {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .word-popover {
@@ -1753,7 +1753,7 @@ h2 {
 .word-popover strong {
   display: block;
   color: white;
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .word-popover span,
@@ -1764,7 +1764,7 @@ h2 {
 .word-popover p {
   margin: 0;
   color: var(--color-accent-gold);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 900;
 }
 
@@ -1785,7 +1785,7 @@ h2 {
 }
 
 .stat-card strong {
-  font-size: 30px;
+  font-size: 1.875rem;
 }
 
 .stat-card span {
@@ -1942,7 +1942,7 @@ h2 {
   padding: 12px;
   background: var(--color-background);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -1999,7 +1999,7 @@ h2 {
   display: grid;
   gap: 2px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.3;
 }
 
@@ -2046,7 +2046,7 @@ h2 {
   border-radius: 999px;
   background: var(--color-background);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .quest-card.complete .quest-state {
@@ -2384,7 +2384,7 @@ h2 {
   padding: 8px 12px;
   background: var(--color-surface-light);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .gem-counter.rolling {
