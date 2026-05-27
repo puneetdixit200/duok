@@ -44,6 +44,12 @@ export interface ExerciseResult {
   now: string
 }
 
+export interface PracticeActivityResult {
+  activityId: string
+  xp: number
+  now: string
+}
+
 export type WeakSkillPriority = 'low' | 'medium' | 'high'
 
 export interface WeakSkillSummary {
@@ -90,6 +96,7 @@ export interface DailyQuest {
 
 const maxHearts = 5
 const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
+const practiceHeartRefillThreshold = 3
 
 export function createInitialProgress(): ProgressState {
   return {
@@ -382,6 +389,35 @@ export function rateReviewItem(
         leitnerBox,
       },
     },
+  }
+}
+
+export function recordPracticeActivity(state: ProgressState, result: PracticeActivityResult): ProgressState {
+  const practiceDate = result.now.slice(0, 10)
+  const isSamePracticeDate = state.lastPracticeDate === practiceDate
+  const baseDailyXp = isSamePracticeDate ? state.dailyXp : 0
+  const baseTodayActivityIds = isSamePracticeDate ? state.todayActivityIds : []
+  const alreadyCompletedToday = baseTodayActivityIds.includes(result.activityId)
+  const todayActivityIds = alreadyCompletedToday ? baseTodayActivityIds : [...baseTodayActivityIds, result.activityId]
+  const shouldRestoreHeart =
+    !alreadyCompletedToday &&
+    state.hearts < maxHearts &&
+    Math.floor(baseTodayActivityIds.length / practiceHeartRefillThreshold) <
+      Math.floor(todayActivityIds.length / practiceHeartRefillThreshold)
+  const hearts = shouldRestoreHeart ? Math.min(maxHearts, state.hearts + 1) : state.hearts
+
+  return {
+    ...state,
+    xp: state.xp + result.xp,
+    dailyXp: baseDailyXp + result.xp,
+    hearts,
+    lastHeartLostAt: hearts >= maxHearts ? null : state.lastHeartLostAt,
+    streakDays: isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1),
+    lastPracticeDate: practiceDate,
+    completedExerciseIds: state.completedExerciseIds.includes(result.activityId)
+      ? state.completedExerciseIds
+      : [...state.completedExerciseIds, result.activityId],
+    todayActivityIds,
   }
 }
 

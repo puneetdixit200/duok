@@ -14,6 +14,7 @@ import {
   hydrateProgress,
   rateReviewItem,
   recordChatMessageSent,
+  recordPracticeActivity,
   refillHeartsWithGems,
   serializeProgress,
   toggleScenarioChecklistItem,
@@ -367,5 +368,36 @@ describe('learner progress', () => {
     const protectedStreak = buyStreakFreeze(refilled)
     expect(protectedStreak.streakFreezes).toBe(1)
     expect(protectedStreak.gems).toBe(25)
+  })
+
+  it('restores a heart when three new practice activities are completed', () => {
+    const progress = {
+      ...createInitialProgress(),
+      hearts: 1,
+      lastHeartLostAt: '2026-05-27T06:00:00.000Z',
+      lastPracticeDate: '2026-05-27',
+      todayActivityIds: ['review-dhanyavada', 'review-hogbeku'],
+      completedExerciseIds: ['review-dhanyavada', 'review-hogbeku'],
+    }
+
+    const restored = recordPracticeActivity(progress, {
+      activityId: 'review-namaskara-saar',
+      xp: 1,
+      now: '2026-05-27T07:00:00.000Z',
+    })
+
+    expect(restored.hearts).toBe(2)
+    expect(restored.lastHeartLostAt).toBe('2026-05-27T06:00:00.000Z')
+    expect(restored.dailyXp).toBe(1)
+    expect(restored.todayActivityIds).toEqual(['review-dhanyavada', 'review-hogbeku', 'review-namaskara-saar'])
+
+    const duplicate = recordPracticeActivity(restored, {
+      activityId: 'review-namaskara-saar',
+      xp: 1,
+      now: '2026-05-27T07:05:00.000Z',
+    })
+
+    expect(duplicate.hearts).toBe(2)
+    expect(duplicate.todayActivityIds).toEqual(restored.todayActivityIds)
   })
 })

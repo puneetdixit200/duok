@@ -1006,6 +1006,63 @@ describe('KannadaOS desktop app', () => {
     })
   })
 
+  it('restores one heart after three correct review practice answers', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      hearts: 1,
+      lastHeartLostAt: '2026-05-27T06:00:00.000Z',
+      reviewQueue: {
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+        dhanyavada: {
+          vocabularyId: 'dhanyavada',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+        'namaskara-saar': {
+          vocabularyId: 'namaskara-saar',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+      },
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    await user.click(screen.getByRole('button', { name: /Start Review/i }))
+
+    for (const answer of ['Thank you', 'need to go', 'Hello sir']) {
+      const reviewSession = screen.getByRole('region', { name: /Review Session/i })
+      await user.click(within(reviewSession).getByRole('button', { name: new RegExp(answer, 'i') }))
+      await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+      expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
+      await user.click(within(reviewSession).getByRole('button', { name: /Next Review|Finish Review/i }))
+    }
+
+    expect(screen.getByRole('heading', { name: /Review Complete/i })).toBeInTheDocument()
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem('kannadaos:progress') ?? '{}')
+      expect(stored.xp).toBe(3)
+      expect(stored.dailyXp).toBe(3)
+      expect(stored.hearts).toBe(2)
+      expect(stored.lastHeartLostAt).toBe('2026-05-27T06:00:00.000Z')
+      expect(stored.todayActivityIds).toEqual(['review-dhanyavada', 'review-hogbeku', 'review-namaskara-saar'])
+    })
+  })
+
   it('scores pronunciation practice and persists the latest attempt', async () => {
     const user = userEvent.setup()
     localStorage.setItem('kannadaos:onboarded', 'true')

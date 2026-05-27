@@ -30,6 +30,7 @@ import {
   getWeakSkillSummaries,
   hydrateProgress,
   rateReviewItem,
+  recordPracticeActivity,
   recordChatMessageSent,
   refillHeartsWithGems,
   serializeProgress,
@@ -1524,23 +1525,11 @@ function App() {
         return ratedProgress
       }
 
-      const practiceDate = now.slice(0, 10)
-      const isSamePracticeDate = current.lastPracticeDate === practiceDate
-      const baseTodayActivityIds = isSamePracticeDate ? current.todayActivityIds : []
-
-      return {
-        ...ratedProgress,
-        xp: ratedProgress.xp + 1,
-        dailyXp: (isSamePracticeDate ? ratedProgress.dailyXp : 0) + 1,
-        streakDays: isSamePracticeDate ? ratedProgress.streakDays : Math.max(1, ratedProgress.streakDays + 1),
-        lastPracticeDate: practiceDate,
-        completedExerciseIds: ratedProgress.completedExerciseIds.includes(reviewExerciseId)
-          ? ratedProgress.completedExerciseIds
-          : [...ratedProgress.completedExerciseIds, reviewExerciseId],
-        todayActivityIds: baseTodayActivityIds.includes(reviewExerciseId)
-          ? baseTodayActivityIds
-          : [...baseTodayActivityIds, reviewExerciseId],
-      }
+      return recordPracticeActivity(ratedProgress, {
+        activityId: reviewExerciseId,
+        xp: 1,
+        now,
+      })
     })
   }
 
