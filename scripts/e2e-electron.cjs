@@ -387,7 +387,7 @@ async function completeLesson(page) {
   }
   await page.waitForTimeout(1200)
   await page.getByRole('button', { name: /stop recording/i }).click()
-  await page.getByText(/Score: 100%/i).waitFor()
+  await page.getByText(/Score: 100 \/ 100/i).waitFor()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 

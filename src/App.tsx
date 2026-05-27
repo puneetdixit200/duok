@@ -1048,8 +1048,7 @@ function App() {
   const [lessonWrongCount, setLessonWrongCount] = useState(0)
   const [placedWords, setPlacedWords] = useState<string[]>([])
   const [audioStatus, setAudioStatus] = useState('')
-  const [speakingScore, setSpeakingScore] = useState<number | null>(null)
-  const [speakingTip, setSpeakingTip] = useState('')
+  const [speakingResult, setSpeakingResult] = useState<PronunciationScoreResult | null>(null)
   const [selectedMatch, setSelectedMatch] = useState<{ left?: string; right?: string }>({})
   const [matchedPairs, setMatchedPairs] = useState<string[]>([])
   const [mismatchedPair, setMismatchedPair] = useState<{ left: string; right: string } | null>(null)
@@ -1287,8 +1286,7 @@ function App() {
     setAlmostTypingDistance(null)
     setPlacedWords([])
     setAudioStatus('')
-    setSpeakingScore(null)
-    setSpeakingTip('')
+    setSpeakingResult(null)
     setSelectedMatch({})
     setMatchedPairs([])
     setMismatchedPair(null)
@@ -1511,8 +1509,7 @@ function App() {
           transcript,
           targetParts: getPronunciationParts(exercise.kannada ?? exercise.answer),
         })
-        setSpeakingScore(result.score)
-        setSpeakingTip(result.tip)
+        setSpeakingResult(result)
 
         if (result.score >= 70) {
           setSelectedAnswer(exercise.answer)
@@ -4079,10 +4076,14 @@ function App() {
             >
               {recordingTarget === 'lesson' ? 'Stop Recording' : 'Record phrase'}
             </button>
-            {speakingScore !== null && (
-              <div className="score-card" role="status">
-                <strong>Score: {speakingScore}%</strong>
-                <span>Tip: {speakingTip || 'Extend the aa sound in saar.'}</span>
+            {speakingResult && (
+              <div className="score-card" role="status" aria-label="Speaking score result">
+                <strong>Score: {speakingResult.score} / 100</strong>
+                <span>Level: {formatPronunciationLevel(speakingResult.level)}</span>
+                <span>
+                  Problem: {speakingResult.problemParts.length ? speakingResult.problemParts.join(', ') : 'None'}
+                </span>
+                <span>Tip: {speakingResult.tip}</span>
               </div>
             )}
             {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
@@ -4681,6 +4682,10 @@ function getActiveHostedModel(settings: AiProviderSettings) {
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function formatPronunciationLevel(level: PronunciationScoreResult['level']) {
+  return level.split('-').map(titleCase).join(' ')
 }
 
 function formatGeneratedExerciseSource(source: 'native' | 'ollama' | 'openrouter' | 'nvidia' | 'fallback') {
