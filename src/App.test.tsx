@@ -879,7 +879,8 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     const navigation = screen.getByLabelText(/Primary navigation/i)
-    expect(within(navigation).getAllByRole('button').slice(0, 7).map((button) => button.getAttribute('aria-label'))).toEqual([
+    const navButtons = within(navigation).getAllByRole('button').slice(0, 7)
+    expect(navButtons.map((button) => button.getAttribute('aria-label'))).toEqual([
       'Dashboard',
       'Learn',
       'Practice',
@@ -887,6 +888,15 @@ describe('KannadaOS desktop app', () => {
       'Chat',
       'BLR',
       'Me',
+    ])
+    expect(navButtons.map((button) => button.getAttribute('aria-keyshortcuts'))).toEqual([
+      'Meta+1 Control+1',
+      'Meta+2 Control+2',
+      'Meta+3 Control+3',
+      'Meta+4 Control+4',
+      'Meta+5 Control+5',
+      'Meta+6 Control+6',
+      'Meta+7 Control+7',
     ])
 
     fireEvent.keyDown(window, { key: '1', metaKey: true })
@@ -943,12 +953,26 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
+    expect(screen.getByRole('button', { name: /close lesson/i })).toHaveAttribute('aria-keyshortcuts', 'Escape')
+    expect(screen.getByRole('button', { name: /^Listen$/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Space Meta+R Control+R',
+    )
+    expect(screen.getByRole('button', { name: /^Check$/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Enter Meta+Enter Control+Enter',
+    )
+
     fireEvent.keyDown(window, { key: ' ' })
     expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: '1' })
     fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
     expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /next exercise/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Enter Meta+Enter Control+Enter',
+    )
 
     fireEvent.keyDown(window, { key: 'Enter' })
     expect(screen.getByText('arrange')).toBeInTheDocument()
@@ -958,6 +982,55 @@ describe('KannadaOS desktop app', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
+  })
+
+  it('supports command replay and check shortcuts on practice, stories, and Bangalore dialogue', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    expect(screen.getByRole('button', { name: /^Play Reference$/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Meta+R Control+R',
+    )
+    expect(screen.getByRole('button', { name: /score pronunciation/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Enter Meta+Enter Control+Enter',
+    )
+    fireEvent.keyDown(window, { key: 'r', metaKey: true })
+    expect(screen.getByText(/Reference audio: namaskara saar/i)).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(/Transcribed speech/i), 'ನಮಸ್ಕಾರ ಸಾರ್')
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
+    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score 100/i)
+
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+    await user.click(screen.getByRole('button', { name: /Read First Day in Bangalore/i }))
+    expect(screen.getByRole('button', { name: /play sentence audio/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Meta+R Control+R',
+    )
+    fireEvent.keyDown(window, { key: 'r', metaKey: true })
+    expect(screen.getByText(/Playing story audio: raahul bengalurige banda/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /blr/i }))
+    await user.click(screen.getByRole('button', { name: /start auto ride/i }))
+    expect(screen.getByRole('button', { name: /play majestic-ge hogbeku/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Meta+R Control+R',
+    )
+    fireEvent.keyDown(window, { key: 'r', metaKey: true })
+    expect(screen.getByText(/Playing scenario audio: Majestic-ge hogbeku/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: /I need to go to Majestic/i }))
+    expect(screen.getByRole('button', { name: /check dialogue/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Enter Meta+Enter Control+Enter',
+    )
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
+    expect(screen.getByText(/Good reply for Auto Ride/i)).toBeInTheDocument()
   })
 
   it('supports Cmd+M microphone shortcuts for chat and pronunciation practice', async () => {
@@ -2034,11 +2107,19 @@ describe('KannadaOS desktop app', () => {
     expect(within(reviewCard as HTMLElement).getByText(/need to go/i)).toBeInTheDocument()
 
     await user.click(within(reviewSession).getByRole('button', { name: /need to go/i }))
-    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+    expect(within(reviewSession).getByRole('button', { name: /Check Review/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Enter Meta+Enter Control+Enter',
+    )
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
 
     expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
     expect(within(reviewSession).getByText(/\+1 XP/i)).toBeInTheDocument()
-    await user.click(within(reviewSession).getByRole('button', { name: /Finish Review/i }))
+    expect(within(reviewSession).getByRole('button', { name: /Finish Review/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Enter Meta+Enter Control+Enter',
+    )
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
 
     expect(screen.getByRole('heading', { name: /Review Complete/i })).toBeInTheDocument()
     expect(screen.getByText(/\+1 XP/i)).toBeInTheDocument()

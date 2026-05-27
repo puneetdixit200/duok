@@ -217,6 +217,10 @@ const tabShortcutByKey: Record<string, Tab> = {
   '6': 'blr',
   '7': 'me',
 }
+const checkAnswerShortcuts = 'Enter Meta+Enter Control+Enter'
+const replayAudioShortcuts = 'Meta+R Control+R'
+const lessonReplayAudioShortcuts = `Space ${replayAudioShortcuts}`
+const microphoneShortcuts = 'Meta+M Control+M'
 const navigationItems: Array<{ id: Tab; icon: string; label: string }> = [
   { id: 'home', icon: '🏠', label: 'Dashboard' },
   { id: 'learn', icon: '📚', label: 'Learn' },
@@ -1422,6 +1426,8 @@ function App() {
     tutorPersonas.find((persona) => persona.id === selectedTutorPersonaId) ?? defaultTutorPersona
   const activePronunciationPhrase =
     pronunciationPhrases.find((phrase) => phrase.id === pronunciationPhraseId) ?? pronunciationPhrases[0]
+  const activeReviewPhrase = getPhraseByVocabularyId(reviewSessionIds[reviewIndex] ?? '')
+  const activeReviewExercise = activeReviewPhrase ? buildReviewMiniExercise(activeReviewPhrase, reviewIndex) : null
   const latestPronunciationAttempt = pronunciationHistory[0]
   const reminderStatus = reminderDeliveryStatus || getReminderStatusText(reminder)
   const completedInCurrentLesson = Math.min(
@@ -1900,22 +1906,13 @@ function App() {
           return
         }
 
-        if (event.key.toLowerCase() === 'r' && screen === 'lesson' && activeExercise) {
+        if (event.key.toLowerCase() === 'r' && replayActiveAudioShortcut()) {
           event.preventDefault()
-          void playExerciseReference(activeExercise)
           return
         }
 
-        if (event.key === 'Enter' && screen === 'lesson' && activeExercise) {
+        if (event.key === 'Enter' && checkActiveShortcut()) {
           event.preventDefault()
-          if (feedback === 'correct' || feedback === 'wrong') {
-            goToNextExercise()
-            return
-          }
-
-          if (!feedback && selectedAnswer) {
-            checkAnswer(activeExercise)
-          }
           return
         }
       }
@@ -1974,21 +1971,7 @@ function App() {
 
       if (event.key === 'Enter') {
         event.preventDefault()
-        if (feedback === 'correct' || feedback === 'wrong') {
-          goToNextExercise()
-          return
-        }
-
-        if (!feedback && activeExercise.type === 'speaking') {
-          if (speakingResult?.score && speakingResult.score >= 70) {
-            continueSpeakingExercise(activeExercise)
-          }
-          return
-        }
-
-        if (!feedback && selectedAnswer) {
-          checkAnswer(activeExercise)
-        }
+        checkActiveShortcut()
       }
     }
 
@@ -2000,17 +1983,118 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeBangaloreScenarioId,
+    activeBangaloreScenario,
     activeExercise,
+    activeReviewExercise,
+    activeStorySentence,
     feedback,
+    pronunciationPhraseId,
+    pronunciationTranscript,
     recordingTarget,
+    reviewFeedback,
+    reviewIndex,
+    reviewSelectedAnswer,
+    reviewSessionIds,
+    scenarioDialogueAnswer,
     screen,
     selectedAnswer,
+    selectedStoryAnswer,
     selectedStoryWord,
     speakingResult,
+    storyMode,
     tab,
     tipsUnitId,
     voiceCaptureSession,
   ])
+
+  function replayActiveAudioShortcut(): boolean {
+    if (screen === 'lesson' && activeExercise) {
+      void playExerciseReference(activeExercise)
+      return true
+    }
+
+    if (screen !== 'app') {
+      return false
+    }
+
+    if (tab === 'practice') {
+      void playPronunciationReference()
+      return true
+    }
+
+    if (tab === 'stories' && storyMode === 'reader' && activeStorySentence) {
+      void playStorySentenceAudio(activeStorySentence)
+      return true
+    }
+
+    if (tab === 'blr' && activeBangaloreScenario) {
+      const firstPhrase = activeBangaloreScenario.usefulPhrases[0]
+      if (firstPhrase) {
+        void playScenarioPhraseAudio(firstPhrase)
+        return true
+      }
+    }
+
+    return false
+  }
+
+  function checkActiveShortcut(): boolean {
+    if (screen === 'lesson' && activeExercise) {
+      if (feedback === 'correct' || feedback === 'wrong') {
+        goToNextExercise()
+        return true
+      }
+
+      if (!feedback && activeExercise.type === 'speaking') {
+        if (speakingResult?.score && speakingResult.score >= 70) {
+          continueSpeakingExercise(activeExercise)
+        }
+        return true
+      }
+
+      if (!feedback && selectedAnswer) {
+        checkAnswer(activeExercise)
+      }
+      return true
+    }
+
+    if (screen !== 'app') {
+      return false
+    }
+
+    if (tab === 'practice') {
+      if (reviewSessionIds.length > 0) {
+        if (reviewFeedback) {
+          goToNextReview()
+          return true
+        }
+
+        if (activeReviewExercise && reviewSelectedAnswer) {
+          checkReviewAnswer(activeReviewExercise)
+        }
+        return true
+      }
+
+      scorePronunciationPractice()
+      return true
+    }
+
+    if (tab === 'stories' && storyMode === 'quiz') {
+      if (selectedStoryAnswer) {
+        checkStoryAnswer()
+      }
+      return true
+    }
+
+    if (tab === 'blr' && activeBangaloreScenario) {
+      if (scenarioDialogueAnswer) {
+        checkScenarioDialogue(activeBangaloreScenario)
+      }
+      return true
+    }
+
+    return false
+  }
 
   function selectExerciseOptionByIndex(exercise: LessonExercise, optionIndex: number) {
     if (feedback || optionIndex < 0 || optionIndex >= exercise.options.length) {
@@ -2244,7 +2328,7 @@ function App() {
     setAudioStatus('')
   }
 
-  async function playScenarioPhraseAudio(phrase: Phrase) {
+  async function playScenarioPhraseAudio(phrase: ReadablePhraseParts) {
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
       if (playKannadaWithWebSpeech(phrase.kannada) === 'played') {
@@ -3143,7 +3227,13 @@ function App() {
     return (
       <main className="app-shell lesson-shell">
         <header className="lesson-topbar">
-          <button className="icon-button" onClick={() => setScreen('app')} type="button" aria-label="Close lesson">
+          <button
+            aria-keyshortcuts="Escape"
+            className="icon-button"
+            onClick={() => setScreen('app')}
+            type="button"
+            aria-label="Close lesson"
+          >
             x
           </button>
           <div
@@ -3182,6 +3272,7 @@ function App() {
           {renderExerciseContent(activeExercise)}
           {activeExercise.type !== 'speaking' && (
             <button
+              aria-keyshortcuts={checkAnswerShortcuts}
               className="primary-action"
               disabled={!selectedAnswer}
               onClick={() => checkAnswer(activeExercise)}
@@ -3233,12 +3324,12 @@ function App() {
             </div>
           )}
           {feedback === 'correct' && (
-            <button className="secondary-action" onClick={goToNextExercise} type="button">
+            <button aria-keyshortcuts={checkAnswerShortcuts} className="secondary-action" onClick={goToNextExercise} type="button">
               Continue → Next Exercise
             </button>
           )}
           {feedback === 'wrong' && (
-            <button className="secondary-action" onClick={goToNextExercise} type="button">
+            <button aria-keyshortcuts={checkAnswerShortcuts} className="secondary-action" onClick={goToNextExercise} type="button">
               Got it → This question will return.
             </button>
           )}
@@ -3507,7 +3598,7 @@ function App() {
             </div>
           </div>
           <nav className="nav-stack">
-            {navigationItems.map(({ id, icon, label }) => {
+            {navigationItems.map(({ id, icon, label }, index) => {
               const showStreakBadge = id === 'home' && progress.streakDays > 0
               const showReviewBadge = id === 'practice' && navDueReviewCount > 0
               const navLabel = [
@@ -3519,6 +3610,7 @@ function App() {
               return (
                 <button
                   aria-label={navLabel}
+                  aria-keyshortcuts={`Meta+${index + 1} Control+${index + 1}`}
                   className={tab === id ? 'nav-button active' : 'nav-button'}
                   key={id}
                   onClick={() => setTab(id)}
@@ -3771,8 +3863,6 @@ function App() {
         .filter((phrase): phrase is Phrase => Boolean(phrase))
       const card = dueReviewPhrases[0] ?? survivalPhrases.find((phrase) => phrase.id === 'hogbeku')!
       const cardReview = progress.reviewQueue[card.id]
-      const activeReviewPhrase = getPhraseByVocabularyId(reviewSessionIds[reviewIndex] ?? '')
-      const activeReviewExercise = activeReviewPhrase ? buildReviewMiniExercise(activeReviewPhrase, reviewIndex) : null
       const reviewComplete = reviewSessionIds.length > 0 && reviewIndex >= reviewSessionIds.length
       return (
         <section className="panel" aria-labelledby="practice-title">
@@ -3876,6 +3966,7 @@ function App() {
                     </div>
                   )}
                   <button
+                    aria-keyshortcuts={checkAnswerShortcuts}
                     className="primary-action"
                     disabled={!reviewSelectedAnswer || reviewFeedback !== null}
                     onClick={() => checkReviewAnswer(activeReviewExercise)}
@@ -3894,7 +3985,7 @@ function App() {
                     </div>
                   )}
                   {reviewFeedback && (
-                    <button className="secondary-action" onClick={goToNextReview} type="button">
+                    <button aria-keyshortcuts={checkAnswerShortcuts} className="secondary-action" onClick={goToNextReview} type="button">
                       {reviewIndex + 1 >= reviewSessionIds.length ? 'Finish Review' : 'Next Review'}
                     </button>
                   )}
@@ -4061,14 +4152,19 @@ function App() {
               </div>
             </article>
             <div className="pronunciation-controls">
-              <button className="secondary-action" onClick={() => void playPronunciationReference()} type="button">
+              <button
+                aria-keyshortcuts={replayAudioShortcuts}
+                className="secondary-action"
+                onClick={() => void playPronunciationReference()}
+                type="button"
+              >
                 Play Reference
               </button>
               <button className="secondary-action" onClick={() => void playPronunciationReference(0.7)} type="button">
                 Play Slow
               </button>
               <button
-                aria-keyshortcuts="Meta+M Control+M"
+                aria-keyshortcuts={microphoneShortcuts}
                 className="secondary-action"
                 onClick={recordPronunciationAudio}
                 type="button"
@@ -4093,7 +4189,7 @@ function App() {
                   value={pronunciationTranscript}
                 />
               </label>
-              <button className="primary-action" onClick={scorePronunciationPractice} type="button">
+              <button aria-keyshortcuts={checkAnswerShortcuts} className="primary-action" onClick={scorePronunciationPractice} type="button">
                 Score Pronunciation
               </button>
             </div>
@@ -4184,7 +4280,12 @@ function App() {
                     </button>
                   ))}
                 </div>
-                <button className="mini-button" onClick={() => void playStorySentenceAudio(activeStorySentence)} type="button">
+                <button
+                  aria-keyshortcuts={replayAudioShortcuts}
+                  className="mini-button"
+                  onClick={() => void playStorySentenceAudio(activeStorySentence)}
+                  type="button"
+                >
                   Play sentence audio
                 </button>
               </article>
@@ -4268,6 +4369,7 @@ function App() {
                 ))}
               </div>
               <button
+                aria-keyshortcuts={checkAnswerShortcuts}
                 className="primary-action"
                 disabled={!selectedStoryAnswer}
                 onClick={checkStoryAnswer}
@@ -4440,7 +4542,12 @@ function App() {
                     <div className="scenario-phrase-row" key={phrase.id}>
                       <EnglishFirstKannadaText phrase={phrase} />
                       <div className="scenario-action-row">
-                        <button className="mini-button" onClick={() => void playScenarioPhraseAudio(phrase)} type="button">
+                        <button
+                          aria-keyshortcuts={phrase.id === scenario.usefulPhrases[0]?.id ? replayAudioShortcuts : undefined}
+                          className="mini-button"
+                          onClick={() => void playScenarioPhraseAudio(phrase)}
+                          type="button"
+                        >
                           Play {phrase.transliteration}
                         </button>
                         <button className="mini-button" onClick={() => practiceScenarioPhrase(phrase)} type="button">
@@ -4474,6 +4581,7 @@ function App() {
                   ))}
                 </fieldset>
                 <button
+                  aria-keyshortcuts={checkAnswerShortcuts}
                   className="secondary-action"
                   disabled={!scenarioDialogueAnswer}
                   onClick={() => checkScenarioDialogue(scenario)}
@@ -5000,6 +5108,7 @@ function App() {
         <>
           <div className="listening-card">
             <button
+              aria-keyshortcuts={lessonReplayAudioShortcuts}
               className="speaker-button"
               onClick={() => void playExerciseReference(exercise)}
               type="button"
@@ -5048,6 +5157,7 @@ function App() {
               ))}
             </div>
             <button
+              aria-keyshortcuts={lessonReplayAudioShortcuts}
               className="mini-button"
               onClick={() => void playExerciseReference(exercise)}
               type="button"
@@ -5062,7 +5172,7 @@ function App() {
               Play slow audio
             </button>
             <button
-              aria-keyshortcuts="Meta+M Control+M"
+              aria-keyshortcuts={microphoneShortcuts}
               className={recordingTarget === 'lesson' ? 'speaker-button recording' : 'speaker-button'}
               onClick={() => recordPhrase(exercise)}
               type="button"
@@ -5090,6 +5200,7 @@ function App() {
                     Try Again
                   </button>
                   <button
+                    aria-keyshortcuts={checkAnswerShortcuts}
                     className="primary-action"
                     disabled={speakingResult.score < 70 || Boolean(feedback)}
                     onClick={() => continueSpeakingExercise(exercise)}
@@ -5121,7 +5232,7 @@ function App() {
               context={exercise}
             />
             <SubtitleLines text={scriptTransliterationExercise ? exercise.kannada : exercise.answer} context={exercise} />
-            <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
+            <button aria-keyshortcuts={lessonReplayAudioShortcuts} className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
             </button>
           </div>
@@ -5179,7 +5290,7 @@ function App() {
             <small>Reply to the line</small>
             <KannadaStrong text={exercise.kannada} context={exercise} />
             <SubtitleLines text={exercise.kannada} context={exercise} />
-            <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
+            <button aria-keyshortcuts={lessonReplayAudioShortcuts} className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
             </button>
           </div>
@@ -5245,7 +5356,12 @@ function App() {
           <KannadaStrong text={exercise.kannada} context={exercise} />
           <SubtitleLines text={exercise.kannada} context={exercise} />
           {exercise.english && <small>{exercise.english}</small>}
-          <button type="button" className="mini-button" onClick={() => void playExerciseReference(exercise)}>
+          <button
+            aria-keyshortcuts={lessonReplayAudioShortcuts}
+            type="button"
+            className="mini-button"
+            onClick={() => void playExerciseReference(exercise)}
+          >
             Listen
           </button>
         </div>
