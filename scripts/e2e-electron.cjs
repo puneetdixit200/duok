@@ -372,7 +372,7 @@ async function completeLesson(page) {
   await page.getByRole('button', { name: /next exercise/i }).click()
 
   await page.getByText('listening', { exact: true }).waitFor()
-  await page.getByRole('button', { name: /play reference audio/i }).click()
+  await page.getByRole('button', { name: /play again/i }).click()
   await page.getByText(/Piper audio ready|Playing reference audio|Auto reference audio|Auto Piper audio ready/i).waitFor()
   await page.getByRole('button', { name: /ticket eshtu/i }).click()
   await page.getByRole('button', { name: /check/i }).click()

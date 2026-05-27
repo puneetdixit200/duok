@@ -4018,14 +4018,14 @@ function App() {
               onClick={() => void playExerciseReference(exercise)}
               type="button"
             >
-              Play reference audio
+              Play Again
             </button>
             <button
               className="mini-button"
               onClick={() => void playExerciseReference(exercise, 0.7)}
               type="button"
             >
-              Play slow audio
+              Slow
             </button>
             {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
           </div>
