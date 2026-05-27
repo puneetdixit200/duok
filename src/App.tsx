@@ -399,6 +399,28 @@ function ListeningChoiceText({ text, context, revealed }: { text: string; contex
   )
 }
 
+function EnglishWordGuide({ words, context }: { words: string[]; context?: LessonExercise }) {
+  const guideEntries = words
+    .map((word) => ({ word, subtitle: getKannadaSubtitle(word, context) }))
+    .filter((entry): entry is { word: string; subtitle: ReadableSubtitle } => entry.subtitle !== null)
+
+  if (!guideEntries.length) {
+    return null
+  }
+
+  return (
+    <section className="word-guide" aria-label="English word guide">
+      {guideEntries.map(({ word, subtitle }, index) => (
+        <article className="word-guide-item" key={`${word}-${index}`} aria-label={formatReadableKannadaChoice(word, subtitle)}>
+          <strong className="word-guide-english">{subtitle.english || 'Kannada word'}</strong>
+          <span lang="kn">{word}</span>
+          <small className="romanization">{formatRomanizationSubtitle(subtitle.romanization)}</small>
+        </article>
+      ))}
+    </section>
+  )
+}
+
 function ReadableStatusText({ text, context }: { text: string; context?: LessonExercise }) {
   return (
     <>
@@ -3762,6 +3784,38 @@ function App() {
             </article>
           ))}
         </section>
+        <section className="quick-actions-card" aria-label="Quick actions">
+          <div>
+            <p className="eyebrow">quick actions</p>
+            <h3>Jump back in</h3>
+          </div>
+          <div className="quick-action-grid">
+            <button
+              aria-label="Open review drills"
+              className="secondary-action"
+              onClick={() => setTab('practice')}
+              type="button"
+            >
+              Practice
+            </button>
+            <button
+              aria-label="Open reader mode"
+              className="secondary-action"
+              onClick={() => setTab('stories')}
+              type="button"
+            >
+              Stories
+            </button>
+            <button
+              aria-label="Open tutor messages"
+              className="secondary-action"
+              onClick={() => setTab('chat')}
+              type="button"
+            >
+              Chat
+            </button>
+          </div>
+        </section>
         <section className="level-map expanded" aria-label="Curriculum map">
           {allCurriculumUnits.map((unit, mapUnitIndex) => (
             <article
@@ -3814,6 +3868,7 @@ function App() {
               </>
             )}
           </div>
+          <EnglishWordGuide words={exercise.options} context={exercise} />
           <div className="word-bank" aria-label="Word bank">
             {exercise.options.map((word) => (
               <button

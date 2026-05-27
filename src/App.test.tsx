@@ -71,6 +71,29 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /learn/i })).toBeInTheDocument()
   })
 
+  it('shows home quick actions for practice, stories, and chat', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+
+    const quickActions = screen.getByRole('region', { name: /Quick actions/i })
+    expect(quickActions).toHaveTextContent('Practice')
+    expect(quickActions).toHaveTextContent('Stories')
+    expect(quickActions).toHaveTextContent('Chat')
+
+    await user.click(within(quickActions).getByRole('button', { name: /Open review drills/i }))
+    expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '1', metaKey: true })
+    await user.click(within(screen.getByRole('region', { name: /Quick actions/i })).getByRole('button', { name: /Open reader mode/i }))
+    expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '1', metaKey: true })
+    await user.click(within(screen.getByRole('region', { name: /Quick actions/i })).getByRole('button', { name: /Open tutor messages/i }))
+    expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+  })
+
   it('opens the Learn tab with curriculum units and grammar tips', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -321,6 +344,25 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/hogbeku/i)).toBeInTheDocument()
     const fillOptions = screen.getByRole('button', { name: /ಹೋಗಬೇಕು.*hogbeku/i })
     expect(fillOptions).toBeInTheDocument()
+  })
+
+  it('shows an English-first word guide for Kannada arrange choices', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    const wordGuide = screen.getByRole('region', { name: /English word guide/i })
+    expect(within(wordGuide).getByText(/^hello$/i)).toBeInTheDocument()
+    expect(within(wordGuide).getByText(/^sir$/i)).toBeInTheDocument()
+    expect(within(wordGuide).getByText(/^how are you$/i)).toBeInTheDocument()
+    expect(within(wordGuide).getByText(/^I am fine$/i)).toBeInTheDocument()
+    expect(within(wordGuide).getByText(/ನಮಸ್ಕಾರ/i)).toBeInTheDocument()
+    expect(within(wordGuide).getByText(/Say: namaskara/i)).toBeInTheDocument()
   })
 
   it('shows English subtitles on non-lesson Kannada study surfaces', async () => {
