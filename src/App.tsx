@@ -290,6 +290,13 @@ const kannadaWordGlossary: Record<string, ReadableSubtitle> = {
   'ಜಾಸ್ತಿ': { romanization: 'jaasti', english: 'too much' },
   'ಕಡಿಮೆ': { romanization: 'kadime', english: 'less' },
   'ಮಾಡಿ': { romanization: 'maadi', english: 'please do' },
+  'ಎಡ': { romanization: 'eda', english: 'left' },
+  'ಎಡಕ್ಕೆ': { romanization: 'edakke', english: 'to the left' },
+  'ಬಲ': { romanization: 'bala', english: 'right' },
+  'ಬಲಕ್ಕೆ': { romanization: 'balakke', english: 'to the right' },
+  'ನೇರ': { romanization: 'nera', english: 'straight' },
+  'ನೇರವಾಗಿ': { romanization: 'neravagi', english: 'straight' },
+  'ಇಂದಿರಾನಗರದಿಂದ': { romanization: 'indiranagaradinda', english: 'from Indiranagar' },
 }
 
 const independentVowels: Record<string, string> = {
@@ -812,6 +819,18 @@ function buildKnownKannadaSubtitles(): Map<string, ReadableSubtitle> {
 
         if (containsKannada(exercise.answer)) {
           addKnownKannadaSubtitle(subtitleMap, exercise.answer, exerciseSubtitle)
+        }
+
+        if (exercise.type === 'matchPairs') {
+          for (const pair of exercise.answer.split(';')) {
+            const [kannada, english] = pair.split('=').map((part) => part.trim())
+            if (kannada && english && containsKannada(kannada) && !containsKannada(english)) {
+              addKnownKannadaSubtitle(subtitleMap, kannada, {
+                romanization: romanizeKannadaWords(kannada),
+                english: exercise.skillTag === 'script' ? `Sounds like ${english}` : english,
+              })
+            }
+          }
         }
       }
     }

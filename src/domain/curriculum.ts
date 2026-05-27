@@ -419,9 +419,14 @@ const unitSeeds: UnitSeed[] = [
         examples: ['ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು', 'ಇಂದಿರಾನಗರಕ್ಕೆ ಹೋಗಬೇಕು'],
       },
       {
-        title: 'Imperatives',
-        body: 'Commands often end with polite forms like ಮಾಡಿ or ಕೊಡಿ.',
-        examples: ['ಇಲ್ಲಿ ನಿಲ್ಲಿಸಿ', 'ಮೀಟರ್ ಹಾಕಿ'],
+        title: '-inda means from',
+        body: 'Add -ಇಂದ to places when you mean "from" a place.',
+        examples: ['ಇಂದಿರಾನಗರದಿಂದ', 'ಕೋರಮಂಗಲದಿಂದ'],
+      },
+      {
+        title: 'Direction words',
+        body: 'ಎಡ means left, ಬಲ means right, and ನೇರ means straight.',
+        examples: ['ಎಡಕ್ಕೆ ಹೋಗಿ', 'ಬಲಕ್ಕೆ ಹೋಗಿ', 'ನೇರವಾಗಿ ಹೋಗಿ'],
       },
     ],
     lessons: [
@@ -434,11 +439,13 @@ const unitSeeds: UnitSeed[] = [
         ['koramangala-ticket', 'ಕೋರಮಂಗಲಕ್ಕೆ ಟಿಕೆಟ್', 'Ticket to Koramangala', 'BMTC phrase.'],
         ['ticket-eshtu', 'ಟಿಕೆಟ್ ಎಷ್ಟು?', 'How much is the ticket?', 'Fare question.'],
         ['change-beku', 'ಚಿಲ್ಲರೆ ಬೇಕು', 'I need change', 'Cash on bus.'],
+        ['indiranagaradinda', 'ಇಂದಿರಾನಗರದಿಂದ', 'from Indiranagar', 'Use -ದಿಂದ to say from Indiranagar.'],
       ]),
       transportLesson('Directions', 'Ask where to go', [
         ['ellige-hogbeku', 'ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?', 'Where should I go?', 'When lost.'],
         ['edakke-hogi', 'ಎಡಕ್ಕೆ ಹೋಗಿ', 'Go left', 'Direction phrase.'],
         ['balakke-hogi', 'ಬಲಕ್ಕೆ ಹೋಗಿ', 'Go right', 'Direction phrase.'],
+        ['neravagi-hogi', 'ನೇರವಾಗಿ ಹೋಗಿ', 'Go straight', 'Direction phrase.'],
       ]),
       transportLesson('At the Metro', 'Use metro stations', [
         ['metro-station-elli', 'ಮೆಟ್ರೋ ಸ್ಟೇಷನ್ ಎಲ್ಲಿ?', 'Where is the metro station?', 'Ask for station.'],

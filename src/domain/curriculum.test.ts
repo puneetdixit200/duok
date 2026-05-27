@@ -225,6 +225,30 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(bargainingPairs.answer).toContain('ಕಡಿಮೆ ಮಾಡಿ=Please reduce it')
   })
 
+  it('teaches the Unit 3 from-place suffix and direction words named in the frontend spec', () => {
+    const unitThree = coreCurriculumUnits[2]
+    const busPhrases = unitThree.lessons.find((lesson) => lesson.title === 'Bus Phrases')!
+    const directions = unitThree.lessons.find((lesson) => lesson.title === 'Directions')!
+    const busPairs = busPhrases.exercises.find((exercise) => exercise.type === 'matchPairs')!
+    const directionPairs = directions.exercises.find((exercise) => exercise.type === 'matchPairs')!
+
+    expect(unitThree.tips.map((tip) => tip.title)).toEqual([
+      '-ge means to',
+      '-inda means from',
+      'Direction words',
+    ])
+    expect(unitThree.tips.flatMap((tip) => tip.examples)).toEqual(expect.arrayContaining([
+      'ಇಂದಿರಾನಗರದಿಂದ',
+      'ಎಡಕ್ಕೆ ಹೋಗಿ',
+      'ಬಲಕ್ಕೆ ಹೋಗಿ',
+      'ನೇರವಾಗಿ ಹೋಗಿ',
+    ]))
+    expect(busPairs.answer).toContain('ಇಂದಿರಾನಗರದಿಂದ=from Indiranagar')
+    expect(directionPairs.answer).toContain('ಎಡಕ್ಕೆ ಹೋಗಿ=Go left')
+    expect(directionPairs.answer).toContain('ಬಲಕ್ಕೆ ಹೋಗಿ=Go right')
+    expect(directionPairs.answer).toContain('ನೇರವಾಗಿ ಹೋಗಿ=Go straight')
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 

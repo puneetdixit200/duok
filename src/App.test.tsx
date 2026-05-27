@@ -443,6 +443,25 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /^English: Please reduce it\s+ಕಡಿಮೆ ಮಾಡಿ\s+Say: kadime maadi/i })).toBeInTheDocument()
   })
 
+  it('shows English subtitles for Unit 3 from-place and direction tips', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    const transportUnit = screen.getByText(/Unit 3: Transport & Directions/i).closest('article')
+    expect(transportUnit).not.toBeNull()
+    await user.click(within(transportUnit!).getByRole('button', { name: /^Tips$/i }))
+
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Transport & Directions/i })
+    expect(within(tipsDialog).getByText(/^English: from Indiranagar$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^Say: indiranagaradinda$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: Go left$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: Go right$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: Go straight$/i)).toBeInTheDocument()
+  })
+
   it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),
