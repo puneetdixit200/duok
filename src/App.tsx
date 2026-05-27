@@ -77,7 +77,7 @@ import {
   type ConversationStore,
 } from './services/conversationLog'
 import { applyLearnerStorage, collectLearnerStorage } from './services/learnerStore'
-import type { GeneratedExercise, LessonExercise, Phrase, Scenario, Story, StorySentence, StoryWord, TutorPersona } from './types'
+import type { CurriculumUnit, GeneratedExercise, LessonExercise, Phrase, Scenario, Story, StorySentence, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
 type Tab = 'home' | 'learn' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
@@ -3353,6 +3353,7 @@ function App() {
             {allCurriculumUnits.map((unit, mapUnitIndex) => {
               const unlockedUnit = unlockedUnitIds.has(unit.id)
               const unitNumber = unit.optional ? 0 : coreCurriculumUnits.findIndex((coreUnit) => coreUnit.id === unit.id) + 1
+              const unitProgress = getUnitCompletionSummary(unit, progress)
               return (
                 <article
                   className={unlockedUnit ? 'map-node unit-node current' : 'map-node unit-node locked'}
@@ -3365,16 +3366,30 @@ function App() {
                   )}
                   <strong>Unit {unitNumber}: {unit.title}</strong>
                   <small>{unit.description}</small>
+                  <div className="unit-progress-summary">
+                    <div
+                      aria-label={`Unit ${unitNumber}: ${unit.title} progress`}
+                      aria-valuemax={unitProgress.totalLessons}
+                      aria-valuemin={0}
+                      aria-valuenow={unitProgress.completedLessons}
+                      className="unit-progress-track"
+                      role="progressbar"
+                    >
+                      <span style={{ width: `${unitProgress.percent}%` }} />
+                    </div>
+                    <small>{unitProgress.completedLessons}/{unitProgress.totalLessons} lessons</small>
+                  </div>
                   <button className="secondary-action compact-action" onClick={() => setTipsUnitId(unit.id)} type="button">
                     Tips
                   </button>
                   <div className="lesson-dot-row">
                     {unit.lessons.map((lesson, unitLessonIndex) => {
                       const lessonProgress = getLessonProgressSummary(progress, lesson.id)
+                      const crownRating = formatCrownRating(lessonProgress.masteryLevel)
                       const unlocked = unit.optional || isLessonUnlocked(lesson.id, progress)
                       return (
                         <button
-                          aria-label={`Learn unit ${mapUnitIndex + 1} lesson ${unitLessonIndex + 1}: ${lesson.title}, ${lessonProgress.masteryLevel} crowns`}
+                          aria-label={`Learn unit ${mapUnitIndex + 1} lesson ${unitLessonIndex + 1}: ${lesson.title}, ${lessonProgress.masteryLevel} crowns, ${crownRating}`}
                           className={lessonProgress.completed ? 'lesson-dot done' : unlocked ? 'lesson-dot current' : 'lesson-dot locked'}
                           disabled={!unlocked}
                           key={lesson.id}
@@ -4995,6 +5010,18 @@ function formatLessonDuration(durationMs: number): string {
 function formatCrownRating(masteryLevel: number): string {
   const filled = Math.max(0, Math.min(5, Math.round(masteryLevel)))
   return `${'★'.repeat(filled)}${'☆'.repeat(5 - filled)}`
+}
+
+function getUnitCompletionSummary(unit: CurriculumUnit, progress: ProgressState) {
+  const totalLessons = unit.lessons.length
+  const completedLessons = unit.lessons.filter((lesson) => getLessonProgressSummary(progress, lesson.id).completed).length
+  const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+
+  return {
+    completedLessons,
+    totalLessons,
+    percent,
+  }
 }
 
 function getCompletedStoryCount(progress: ProgressState): number {

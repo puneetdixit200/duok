@@ -231,6 +231,30 @@ describe('KannadaOS desktop app', () => {
     expect(within(tipsDialog).getAllByText(/^Universal polite greeting$/i).length).toBeGreaterThanOrEqual(1)
   })
 
+  it('shows unit lesson progress and crown ratings in the Learn tab', async () => {
+    const user = userEvent.setup()
+    const firstThreeLessons = coreCurriculumUnits[0].lessons.slice(0, 3)
+    const progress = firstThreeLessons.reduce(
+      (state, lesson, index) => completeLessonProgress(state, lesson.id, `2026-05-27T10:0${index}:00.000Z`),
+      createInitialProgress(),
+    )
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    const greetingsUnit = screen.getByText(/Unit 1: Greetings & Basics/i).closest('article')
+    expect(greetingsUnit).not.toBeNull()
+    expect(within(greetingsUnit!).getByText('3/5 lessons')).toBeInTheDocument()
+    expect(within(greetingsUnit!).getByRole('progressbar', { name: /Unit 1: Greetings & Basics progress/i })).toHaveAttribute(
+      'aria-valuenow',
+      '3',
+    )
+    expect(within(greetingsUnit!).getByRole('button', { name: /Hello & Thanks, 1 crowns, ★☆☆☆☆/i })).toBeInTheDocument()
+    expect(within(greetingsUnit!).getByRole('button', { name: /Small Talk, 0 crowns, ☆☆☆☆☆/i })).toBeInTheDocument()
+  })
+
   it('runs Kannada Script Academy letter and transliteration drills', async () => {
     const user = userEvent.setup()
     render(<App />)
