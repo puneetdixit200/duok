@@ -20,6 +20,7 @@ export interface Phrase {
 export interface LessonExercise {
   id: string
   type: ExerciseType
+  direction?: 'knToEn' | 'enToKn'
   prompt: string
   kannada: string
   transliteration?: string

@@ -117,7 +117,21 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(exercises).toHaveLength(256)
     expect(exercises.some((exercise) => exercise.type === 'typeKannada')).toBe(true)
     expect(exercises.some((exercise) => exercise.type === 'dialogue')).toBe(true)
+    expect(exercises.some((exercise) => exercise.type === 'translate' && exercise.direction === 'enToKn')).toBe(true)
     expect(new Set(exercises.map((exercise) => exercise.id)).size).toBe(exercises.length)
+  })
+
+  it('includes English-to-Kannada reverse translate drills from the frontend spec', () => {
+    const reverseExercise = coreCurriculumUnits[0].lessons[1].exercises[0]
+
+    expect(reverseExercise).toEqual(expect.objectContaining({
+      type: 'translate',
+      direction: 'enToKn',
+      prompt: 'Translate to Kannada:',
+      english: 'How are you?',
+      answer: 'ಹೇಗಿದ್ದೀರಾ?',
+      options: expect.arrayContaining(['ಹೇಗಿದ್ದೀರಾ?', 'ಚೆನ್ನಾಗಿದ್ದೇನೆ', 'ನೀವು ಹೇಗಿದ್ದೀರಾ?']),
+    }))
   })
 
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {

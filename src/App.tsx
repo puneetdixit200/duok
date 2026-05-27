@@ -597,6 +597,10 @@ function isScriptTransliterationExercise(exercise: LessonExercise): boolean {
   return exercise.type === 'typeKannada' && exercise.skillTag === 'script' && !containsKannada(exercise.answer)
 }
 
+function isReverseTranslateExercise(exercise: LessonExercise): boolean {
+  return exercise.type === 'translate' && exercise.direction === 'enToKn'
+}
+
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
   if (!containsKannada(text)) {
     return null
@@ -4427,6 +4431,19 @@ function App() {
   }
 
   function renderExerciseContent(exercise: LessonExercise) {
+    if (isReverseTranslateExercise(exercise)) {
+      return (
+        <>
+          <div className="phrase-card reverse-translate-card">
+            <small>Choose the Kannada phrase for:</small>
+            <strong className="review-english-prompt">{exercise.english ?? exercise.answer}</strong>
+          </div>
+          {renderOptions(exercise)}
+          {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
+        </>
+      )
+    }
+
     if (exercise.type === 'arrange') {
       return (
         <>

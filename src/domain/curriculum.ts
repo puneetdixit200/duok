@@ -1149,9 +1149,13 @@ function buildExercisesForLesson(
   const matchPairs = phrases.map((phrase) => `${phrase.kannada}=${phrase.english}`).join(';')
   const idPrefix = `${lessonId}-exercise`
   const reviewLesson = /\bReview$/.test(lessonSeed.title)
+  const translateExercise =
+    lessonNumber % 2 === 0 || reviewLesson
+      ? reverseTranslateExercise(idPrefix, first, [first, second, third], lessonSeed.title)
+      : exercise(idPrefix, 1, 'translate', `Translate for ${lessonSeed.title}:`, first, first.english, typeChoices, 2)
 
   const exercises = [
-    exercise(idPrefix, 1, 'translate', `Translate for ${lessonSeed.title}:`, first, first.english, typeChoices, 2),
+    translateExercise,
     {
       ...exercise(idPrefix, 2, 'arrange', 'Arrange the Kannada sentence:', first, first.kannada, arrangedWords, 3),
       english: first.english,
@@ -1195,6 +1199,20 @@ function buildExercisesForLesson(
   ]
 
   return reviewLesson ? exercises : exercises.slice(0, 6)
+}
+
+function reverseTranslateExercise(
+  idPrefix: string,
+  phrase: Phrase,
+  phrases: Phrase[],
+  lessonTitle: string,
+): LessonExercise {
+  return {
+    ...exercise(idPrefix, 1, 'translate', 'Translate to Kannada:', phrase, phrase.kannada, makeReverseTranslateOptions(phrase, phrases), 2),
+    direction: 'enToKn',
+    english: phrase.english,
+    explanation: `${phrase.kannada} means "${phrase.english}" in ${lessonTitle}.`,
+  }
 }
 
 function exercise(
@@ -1278,6 +1296,14 @@ function makeLesson(
 
 function makeTypeOptions(answer: string): string[] {
   return [answer, 'Please speak slowly', 'I need help', 'How much is it?']
+}
+
+function makeReverseTranslateOptions(answer: Phrase, phrases: Phrase[]): string[] {
+  return Array.from(new Set([
+    answer.kannada,
+    ...phrases.filter((phrase) => phrase.id !== answer.id).map((phrase) => phrase.kannada),
+    'ಧನ್ಯವಾದ',
+  ])).slice(0, 4)
 }
 
 function buildScriptUnit(): CurriculumUnit {

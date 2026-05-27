@@ -901,6 +901,34 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\s+Say: hegiddira/i })).toBeInTheDocument()
   })
 
+  it('renders the reverse translate variant from English to Kannada', async () => {
+    const user = userEvent.setup()
+    const firstLesson = coreCurriculumUnits[0].lessons[0]
+    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /How Are You/i }))
+
+    expect(screen.getByRole('heading', { name: /Translate to Kannada/i })).toBeInTheDocument()
+    expect(screen.getByText('Choose the Kannada phrase for:')).toBeInTheDocument()
+    expect(screen.getByText('How are you?')).toBeInTheDocument()
+
+    const correctOption = screen.getByRole('button', {
+      name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira$/i,
+    })
+    expect(correctOption).toBeInTheDocument()
+
+    await user.click(correctOption)
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(screen.getByRole('status', { name: /Correct feedback/i })).toHaveTextContent('+2 XP')
+    expect(screen.getByText(/ಹೇಗಿದ್ದೀರಾ\? = How are you\?/i)).toBeInTheDocument()
+  })
+
   it('opens one-crown lessons with reduced-option crown replay drills', async () => {
     const user = userEvent.setup()
     const firstLesson = coreCurriculumUnits[0].lessons[0]
@@ -1117,7 +1145,8 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /Back to Home/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Continue Learning/i }))
-    expect(screen.getByRole('heading', { name: /Translate for How Are You/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Translate to Kannada/i })).toBeInTheDocument()
+    expect(screen.getByText('How are you?')).toBeInTheDocument()
   }, 30_000)
 
   it('shows matched and wrong visual states in match-pair exercises', async () => {
