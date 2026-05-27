@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   bangaloreScenarios,
   coreCurriculumUnits,
@@ -1239,6 +1239,7 @@ function App() {
   const [progress, setProgress] = useState<ProgressState>(() =>
     hydrateProgress(localStorage.getItem(progressKey), new Date().toISOString()),
   )
+  const previousStreakDaysRef = useRef(progress.streakDays)
   const [reminder, setReminder] = useState<ReminderPreference>(() =>
     hydrateReminder(localStorage.getItem(reminderKey)),
   )
@@ -1362,6 +1363,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem(progressKey, serializeProgress(progress))
   }, [progress])
+
+  useEffect(() => {
+    if (progress.streakDays > previousStreakDaysRef.current) {
+      playSoundEffect('streak', soundPreferences.soundEffects)
+    }
+
+    previousStreakDaysRef.current = progress.streakDays
+  }, [progress.streakDays, soundPreferences.soundEffects])
 
   useEffect(() => {
     localStorage.setItem(learnerProfileKey, JSON.stringify(learnerProfile))
@@ -1846,11 +1855,13 @@ function App() {
     }
 
     if (exercise.type === 'typeKannada') {
+      playAppSound('tap')
       setTypedAnswer(option)
       setSelectedAnswer(transliterateLatinToKannada(option))
       return
     }
 
+    playAppSound('tap')
     setSelectedAnswer(option)
   }
 
@@ -1870,12 +1881,14 @@ function App() {
       return
     }
 
+    playAppSound('tap')
     const nextWords = [...placedWords, word]
     setPlacedWords(nextWords)
     setSelectedAnswer(nextWords.join(' '))
   }
 
   function removeArrangeWord(wordIndex: number) {
+    playAppSound('tap')
     const nextWords = placedWords.filter((_word, index) => index !== wordIndex)
     setPlacedWords(nextWords)
     setSelectedAnswer(nextWords.join(' '))
@@ -1917,6 +1930,7 @@ function App() {
   }
 
   function handleMatchSelection(value: string, side: 'left' | 'right', exercise: LessonExercise) {
+    playAppSound('tap')
     const nextSelection = { ...selectedMatch, [side]: value }
     const pairs = parseMatchPairs(exercise.answer)
 
@@ -3592,7 +3606,10 @@ function App() {
                           className={reviewSelectedAnswer === option ? 'answer-option selected' : 'answer-option'}
                           disabled={reviewFeedback !== null}
                           key={option}
-                          onClick={() => setReviewSelectedAnswer(option)}
+                          onClick={() => {
+                            playAppSound('tap')
+                            setReviewSelectedAnswer(option)
+                          }}
                           type="button"
                         >
                           <ChoiceText text={option} />
@@ -3940,7 +3957,10 @@ function App() {
                   <button
                     className={selectedStoryAnswer === option ? 'answer-option selected' : 'answer-option'}
                     key={option}
-                    onClick={() => setSelectedStoryAnswer(option)}
+                    onClick={() => {
+                      playAppSound('tap')
+                      setSelectedStoryAnswer(option)
+                    }}
                     type="button"
                   >
                     {option}
@@ -4695,7 +4715,10 @@ function App() {
               <button
                 className={selectedAnswer === option ? 'answer-option selected' : 'answer-option'}
                 key={option}
-                onClick={() => setSelectedAnswer(option)}
+                onClick={() => {
+                  playAppSound('tap')
+                  setSelectedAnswer(option)
+                }}
                 type="button"
               >
                 <ListeningChoiceText text={option} context={exercise} revealed={feedback !== null} />
@@ -4820,6 +4843,7 @@ function App() {
                 <button
                   key={option}
                   onClick={() => {
+                    playAppSound('tap')
                     setTypedAnswer(option)
                     setSelectedAnswer(scriptTransliterationExercise ? option : transliterateLatinToKannada(option))
                     if (feedback === 'almost') {
@@ -4929,7 +4953,10 @@ function App() {
           <button
             className={selectedAnswer === option ? 'answer-option selected' : 'answer-option'}
             key={option}
-            onClick={() => setSelectedAnswer(option)}
+            onClick={() => {
+              playAppSound('tap')
+              setSelectedAnswer(option)
+            }}
             type="button"
           >
             <ChoiceText text={option} context={exercise} />

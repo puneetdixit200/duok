@@ -469,8 +469,10 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    expect(AudioMock).toHaveBeenCalledWith('./sounds/tap.wav')
     await user.click(screen.getByRole('button', { name: /check/i }))
     expect(AudioMock).toHaveBeenCalledWith('./sounds/correct.wav')
+    await waitFor(() => expect(AudioMock).toHaveBeenCalledWith('./sounds/streak.wav'))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
