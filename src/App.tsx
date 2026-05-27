@@ -1754,17 +1754,43 @@ function App() {
         }
       }
 
+      if (event.key === 'Escape') {
+        if (tipsUnitId) {
+          event.preventDefault()
+          setTipsUnitId(null)
+          return
+        }
+
+        if (selectedStoryWord) {
+          event.preventDefault()
+          setSelectedStoryWord(null)
+          return
+        }
+
+        if (screen === 'models') {
+          event.preventDefault()
+          setScreen('app')
+          return
+        }
+
+        if (screen === 'app' && tab === 'blr' && activeBangaloreScenarioId) {
+          event.preventDefault()
+          setActiveBangaloreScenarioId(null)
+          return
+        }
+
+        if (screen === 'lesson') {
+          event.preventDefault()
+          setScreen('app')
+          return
+        }
+      }
+
       if (isEditableShortcutTarget(event.target)) {
         return
       }
 
       if (screen !== 'lesson' || !activeExercise) {
-        return
-      }
-
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        setScreen('app')
         return
       }
 
@@ -1806,7 +1832,7 @@ function App() {
     }
   // The shortcut handler intentionally uses the latest render's lesson actions.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeExercise, feedback, screen, selectedAnswer, tab])
+  }, [activeBangaloreScenarioId, activeExercise, feedback, screen, selectedAnswer, selectedStoryWord, tab, tipsUnitId])
 
   function selectExerciseOptionByIndex(exercise: LessonExercise, optionIndex: number) {
     if (feedback || optionIndex < 0 || optionIndex >= exercise.options.length) {
@@ -3859,8 +3885,16 @@ function App() {
             {isStoryAudioStatus(audioStatus) && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
             {selectedStoryWord && (
               <aside className="word-popover" role="dialog" aria-label={formatReadableStoryWord(selectedStoryWord)}>
-                <div>
+                <div className="word-popover-header">
                   <strong>{formatEnglishSubtitle(selectedStoryWord.english)}</strong>
+                  <button
+                    aria-label="Close word details"
+                    className="icon-button"
+                    onClick={() => setSelectedStoryWord(null)}
+                    type="button"
+                  >
+                    x
+                  </button>
                   <span className="kannada-subtitles">
                     <KannadaText
                       text={selectedStoryWord.text}

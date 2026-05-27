@@ -863,6 +863,31 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Rahul/i })).toBeInTheDocument()
   })
 
+  it('closes app-level dialogs and detail panels with Escape', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    fireEvent.keyDown(window, { key: '2', metaKey: true })
+    await user.click(screen.getAllByRole('button', { name: /^Tips$/i })[0])
+    expect(screen.getByRole('dialog', { name: /Tips: Kannada Script/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: /Tips: Kannada Script/i })).not.toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '4', metaKey: true })
+    await user.click(screen.getByRole('button', { name: /Read First Day in Bangalore/i }))
+    await user.click(screen.getByRole('button', { name: /English: came.*ಬಂದ.*Say: banda/i }))
+    expect(screen.getByRole('dialog', { name: /English: came/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: /English: came/i })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /English: came.*ಬಂದ.*Say: banda/i }))
+    await user.click(screen.getByRole('button', { name: /Close word details/i }))
+    expect(screen.queryByRole('dialog', { name: /English: came/i })).not.toBeInTheDocument()
+  })
+
   it('supports lesson keyboard bindings for select, check, replay, continue, and escape', async () => {
     const user = userEvent.setup()
     render(<App />)
