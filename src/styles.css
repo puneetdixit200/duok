@@ -1958,11 +1958,27 @@ h2 {
   font-weight: 800;
 }
 
+.profile-settings {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.profile-settings-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.profile-settings-header h3,
+.profile-settings-header p {
+  margin: 0;
+}
+
 .reminder-card {
   display: grid;
   grid-template-columns: minmax(220px, 0.8fr) 1fr;
   gap: 18px;
-  margin-top: 18px;
   padding: 18px;
   border: 1px solid var(--color-border);
   border-left: 5px solid #10b981;
@@ -1988,6 +2004,11 @@ h2 {
   display: grid;
   grid-template-columns: repeat(3, minmax(96px, 1fr));
   gap: 10px;
+}
+
+.reminder-actions.single-action {
+  grid-template-columns: minmax(160px, 260px);
+  justify-content: end;
 }
 
 .selector-chip.compact {

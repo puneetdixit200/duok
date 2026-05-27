@@ -4724,108 +4724,126 @@ function App() {
               </article>
             ))}
           </div>
-          <section className="reminder-card" aria-labelledby="daily-reminder-title">
-            <div>
-              <span className="model-category">notifications</span>
-              <h3 id="daily-reminder-title">Daily Reminder</h3>
-              <p>
-                {reminder.enabled ? `Reminder On - ${reminder.time}` : 'Reminder Off'}
-              </p>
-              <small>
-                {reminder.permission === 'granted'
-                  ? 'Alerts allowed'
-                  : reminder.permission === 'denied'
-                    ? 'Alerts blocked'
-                    : 'Alerts waiting for permission'}
-              </small>
-            </div>
-            <div className="reminder-actions">
-              <button className="secondary-action" onClick={toggleDailyReminder} type="button">
-                {reminder.enabled ? 'Disable Daily Reminder' : 'Enable Daily Reminder'}
-              </button>
-              {['7:30 PM', '8:30 PM', '9:30 PM'].map((time) => (
-                <button
-                  className={reminder.time === time ? 'selector-chip compact active' : 'selector-chip compact'}
-                  key={time}
-                  onClick={() => setReminderTime(time)}
-                  type="button"
-                >
-                  {time}
+          <section className="profile-settings" aria-labelledby="profile-settings-title">
+            <header className="profile-settings-header">
+              <div>
+                <p className="eyebrow">settings</p>
+                <h3 id="profile-settings-title">Settings</h3>
+              </div>
+            </header>
+            <section className="reminder-card" aria-labelledby="daily-reminder-title">
+              <div>
+                <span className="model-category">notifications</span>
+                <h3 id="daily-reminder-title">Daily Reminders</h3>
+                <p>
+                  {reminder.enabled ? `Reminder On - ${reminder.time}` : 'Reminder Off'}
+                </p>
+                <small>
+                  {reminder.permission === 'granted'
+                    ? 'Alerts allowed'
+                    : reminder.permission === 'denied'
+                      ? 'Alerts blocked'
+                      : 'Alerts waiting for permission'}
+                </small>
+              </div>
+              <div className="reminder-actions">
+                <button className="secondary-action" onClick={toggleDailyReminder} type="button">
+                  {reminder.enabled ? 'Disable Daily Reminder' : 'Enable Daily Reminder'}
                 </button>
-              ))}
-              <button className="secondary-action" onClick={() => void allowReminderAlerts()} type="button">
-                Allow Reminder Alerts
-              </button>
-            </div>
-            {reminderStatus && (
-              <p className="voice-status" role="status">
-                {reminderStatus}
-              </p>
-            )}
-          </section>
-          <section className="reminder-card" aria-labelledby="daily-goal-title">
-            <div>
-              <span className="model-category">daily goal</span>
-              <h3 id="daily-goal-title">Daily XP Goal</h3>
-              <p>{learnerProfile.dailyGoalXp} XP per day</p>
-              <small>Dashboard quests and the XP ring use this target.</small>
-            </div>
-            <div className="reminder-actions">
-              {dailyGoalOptions.map((goal) => (
-                <button
-                  className={learnerProfile.dailyGoalXp === goal ? 'selector-chip compact active' : 'selector-chip compact'}
-                  key={goal}
-                  onClick={() => setDailyGoal(goal)}
-                  type="button"
-                >
-                  {goal} XP
+                {['7:30 PM', '8:30 PM', '9:30 PM'].map((time) => (
+                  <button
+                    className={reminder.time === time ? 'selector-chip compact active' : 'selector-chip compact'}
+                    key={time}
+                    onClick={() => setReminderTime(time)}
+                    type="button"
+                  >
+                    {time}
+                  </button>
+                ))}
+                <button className="secondary-action" onClick={() => void allowReminderAlerts()} type="button">
+                  Allow Reminder Alerts
                 </button>
-              ))}
-            </div>
-          </section>
-          <section className="reminder-card" aria-labelledby="sound-settings-title">
-            <div>
-              <span className="model-category">sound</span>
-              <h3 id="sound-settings-title">Sound Preferences</h3>
-              <p>{soundPreferences.autoPlayAudio ? 'Auto-play On' : 'Auto-play Off'}</p>
-              <small>{soundPreferences.soundEffects ? 'Sound effects on' : 'Sound effects off'}</small>
-            </div>
-            <div className="reminder-actions">
-              <button className="secondary-action" onClick={() => toggleSoundPreference('autoPlayAudio')} type="button">
-                {soundPreferences.autoPlayAudio ? 'Disable Auto-play' : 'Enable Auto-play'}
+              </div>
+              {reminderStatus && (
+                <p className="voice-status" role="status">
+                  {reminderStatus}
+                </p>
+              )}
+            </section>
+            <section className="reminder-card" aria-labelledby="daily-goal-title">
+              <div>
+                <span className="model-category">daily goal</span>
+                <h3 id="daily-goal-title">Daily XP Goal</h3>
+                <p>{learnerProfile.dailyGoalXp} XP per day</p>
+                <small>Dashboard quests and the XP ring use this target.</small>
+              </div>
+              <div className="reminder-actions">
+                {dailyGoalOptions.map((goal) => (
+                  <button
+                    className={learnerProfile.dailyGoalXp === goal ? 'selector-chip compact active' : 'selector-chip compact'}
+                    key={goal}
+                    onClick={() => setDailyGoal(goal)}
+                    type="button"
+                  >
+                    {goal} XP
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className="reminder-card" aria-labelledby="sound-effects-title">
+              <div>
+                <span className="model-category">sound</span>
+                <h3 id="sound-effects-title">Sound Effects</h3>
+                <p>{soundPreferences.soundEffects ? 'Sound Effects On' : 'Sound Effects Off'}</p>
+                <small>Correct, wrong, gem, streak, tap, flip, and completion sounds.</small>
+              </div>
+              <div className="reminder-actions single-action">
+                <button className="secondary-action" onClick={() => toggleSoundPreference('soundEffects')} type="button">
+                  {soundPreferences.soundEffects ? 'Disable Sound Effects' : 'Enable Sound Effects'}
+                </button>
+              </div>
+            </section>
+            <section className="reminder-card" aria-labelledby="auto-play-audio-title">
+              <div>
+                <span className="model-category">audio</span>
+                <h3 id="auto-play-audio-title">Auto-play Audio</h3>
+                <p>{soundPreferences.autoPlayAudio ? 'Auto-play Audio On' : 'Auto-play Audio Off'}</p>
+                <small>Automatically plays Kannada exercise audio when a lesson item opens.</small>
+              </div>
+              <div className="reminder-actions single-action">
+                <button className="secondary-action" onClick={() => toggleSoundPreference('autoPlayAudio')} type="button">
+                  {soundPreferences.autoPlayAudio ? 'Disable Auto-play' : 'Enable Auto-play'}
+                </button>
+              </div>
+            </section>
+            <section className="reminder-card" aria-labelledby="learner-store-title">
+              <div>
+                <span className="model-category">storage</span>
+                <h3 id="learner-store-title">Desktop Storage</h3>
+                <p>{formatDesktopStorageState(learnerStoreStatus, Boolean(window.kannadaOS?.saveLearnerData))}</p>
+                <small>
+                  {formatLearnerStoreStatus(learnerStoreStatus)} - {window.kannadaOS?.saveLearnerData ? 'Electron repository' : 'Browser storage fallback'}
+                </small>
+              </div>
+            </section>
+            <div className="settings-list">
+              <button className="secondary-action" onClick={() => setScreen('models')} type="button">
+                Manage AI Models
               </button>
-              <button className="secondary-action" onClick={() => toggleSoundPreference('soundEffects')} type="button">
-                {soundPreferences.soundEffects ? 'Disable Sound Effects' : 'Enable Sound Effects'}
+              <button className="secondary-action" onClick={exportLearnerData} type="button">
+                Export Data
+              </button>
+              <button className="secondary-action" disabled={progress.hearts >= 5 || progress.gems < 50} onClick={refillHearts} type="button">
+                Refill Hearts - 50 gems
+              </button>
+              <button className="secondary-action" disabled={progress.gems < 100} onClick={purchaseStreakFreeze} type="button">
+                Buy Streak Freeze - 100 gems
+              </button>
+              <button className="secondary-action danger-action" onClick={resetAllProgress} type="button">
+                Reset All Progress
               </button>
             </div>
           </section>
-          <section className="reminder-card" aria-labelledby="learner-store-title">
-            <div>
-              <span className="model-category">storage</span>
-              <h3 id="learner-store-title">Offline Data Store</h3>
-              <p>{formatLearnerStoreStatus(learnerStoreStatus)}</p>
-              <small>
-                {window.kannadaOS?.saveLearnerData ? 'Electron repository' : 'Browser storage fallback'}
-              </small>
-            </div>
-          </section>
-          <div className="settings-list">
-            <button className="secondary-action" onClick={() => setScreen('models')} type="button">
-              Manage AI Models
-            </button>
-            <button className="secondary-action" onClick={exportLearnerData} type="button">
-              Export Data
-            </button>
-            <button className="secondary-action" disabled={progress.hearts >= 5 || progress.gems < 50} onClick={refillHearts} type="button">
-              Refill Hearts - 50 gems
-            </button>
-            <button className="secondary-action" disabled={progress.gems < 100} onClick={purchaseStreakFreeze} type="button">
-              Buy Streak Freeze - 100 gems
-            </button>
-            <button className="secondary-action danger-action" onClick={resetAllProgress} type="button">
-              Reset All Progress
-            </button>
-          </div>
           <section className="reset-card" aria-label="Gem economy">
             <strong>{progress.streakFreezes} streak {progress.streakFreezes === 1 ? 'freeze' : 'freezes'} banked</strong>
             <small>Practice restores memory; gems can refill hearts or protect a missed day.</small>
@@ -5865,6 +5883,22 @@ function formatLearnerStoreStatus(status: LearnerStoreStatus) {
   }
 
   return 'Browser data store'
+}
+
+function formatDesktopStorageState(status: LearnerStoreStatus, hasDesktopStore: boolean) {
+  if (!hasDesktopStore) {
+    return 'Browser fallback'
+  }
+
+  if (status === 'synced') {
+    return 'Synced ✅'
+  }
+
+  if (status === 'error') {
+    return 'Needs attention'
+  }
+
+  return status === 'saving' ? 'Saving...' : 'Syncing...'
 }
 
 function formatProviderStatus(settings: AiProviderSettings) {

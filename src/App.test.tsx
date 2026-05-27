@@ -1658,6 +1658,8 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByLabelText('42 XP')).toBeInTheDocument()
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Desktop Storage/i })).toBeInTheDocument()
+    await screen.findByText(/Synced ✅/i)
     await screen.findByText(/Desktop data synced/i)
 
     expect(loadLearnerData).toHaveBeenCalledTimes(1)
@@ -1900,6 +1902,25 @@ describe('KannadaOS desktop app', () => {
     expect(within(achievements).getByText(/1 unit mastered/i)).toBeInTheDocument()
     expect(within(achievements).getByText('Perfect Lesson')).toBeInTheDocument()
     expect(within(achievements).getByText(/1 perfect lesson/i)).toBeInTheDocument()
+  })
+
+  it('renders the frontend spec profile settings rows', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
+
+    const settings = screen.getByRole('region', { name: /^Settings$/i })
+    expect(within(settings).getByRole('heading', { name: /^Daily Reminders$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('heading', { name: /^Daily XP Goal$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('heading', { name: /^Sound Effects$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('heading', { name: /^Auto-play Audio$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('heading', { name: /^Desktop Storage$/i })).toBeInTheDocument()
+    expect(within(settings).getByText(/Browser fallback/i)).toBeInTheDocument()
+    expect(within(settings).getByRole('button', { name: /^Manage AI Models$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('button', { name: /^Export Data$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('button', { name: /^Reset All Progress$/i })).toBeInTheDocument()
   })
 
   it('resets learner progress without removing AI provider settings', async () => {
