@@ -356,6 +356,36 @@ h2 {
   gap: 3px;
 }
 
+.generated-exercise-summary {
+  display: grid;
+  gap: 5px;
+  justify-items: start;
+  text-align: left;
+}
+
+.generated-exercise-summary > strong {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.generated-exercise-summary .choice-text {
+  justify-items: start;
+}
+
+.generated-answer {
+  display: grid;
+  gap: 3px;
+  border-left: 3px solid var(--color-accent-gold);
+  padding-left: 8px;
+}
+
+.generated-answer > span:first-child {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
 .workspace {
   padding: 28px;
 }

@@ -83,6 +83,7 @@ type Screen = 'onboarding' | 'app' | 'lesson' | 'models'
 type OnboardingStep = 'welcome' | 'motivation' | 'level' | 'goal'
 type StoryMode = 'list' | 'reader' | 'quiz' | 'complete'
 type VoiceRecordingTarget = 'chat' | 'pronunciation' | 'lesson'
+type GeneratedExerciseSource = 'native' | 'ollama' | 'openrouter' | 'nvidia' | 'fallback'
 
 interface ChatMessage {
   id: string
@@ -545,6 +546,83 @@ function ReadableExampleText({ example }: { example: string }) {
   )
 }
 
+function GeneratedExerciseSummary({
+  exercise,
+  source,
+}: {
+  exercise: GeneratedExercise
+  source?: GeneratedExerciseSource | null
+}) {
+  const context = getGeneratedExerciseReadableContext(exercise)
+  const answerHasReadableKannada =
+    containsKannada(exercise.answer) &&
+    normalizeKannadaText(exercise.answer) !== normalizeKannadaText(exercise.kannada)
+
+  return (
+    <span className="generated-exercise-summary">
+      <strong>{source ? `${formatGeneratedExerciseSource(source)}: ${exercise.prompt}` : exercise.prompt}</strong>
+      <ChoiceText text={exercise.kannada} context={context} />
+      {answerHasReadableKannada && (
+        <span className="generated-answer">
+          <span>Answer</span>
+          <ChoiceText text={exercise.answer} context={context} />
+        </span>
+      )}
+    </span>
+  )
+}
+
+function getGeneratedExerciseReadableContext(exercise: GeneratedExercise): LessonExercise {
+  return {
+    id: 'generated-readable-context',
+    type: exercise.type,
+    prompt: exercise.prompt,
+    kannada: exercise.kannada,
+    transliteration: getGeneratedExerciseTransliteration(exercise),
+    english: getGeneratedExerciseEnglish(exercise),
+    answer: exercise.answer,
+    options: exercise.options,
+    explanation: exercise.explanation ?? 'Generated Kannada practice exercise.',
+    skillTag: 'generated',
+    xp: 0,
+    vocabularyIds: [],
+  }
+}
+
+function getGeneratedExerciseEnglish(exercise: GeneratedExercise): string | undefined {
+  const explicitEnglish = exercise.english?.trim()
+  if (explicitEnglish) {
+    return explicitEnglish
+  }
+
+  if (exercise.answer && !containsKannada(exercise.answer)) {
+    return exercise.answer
+  }
+
+  const explanationEnglish = inferEnglishFromExplanation(exercise.explanation)
+  if (explanationEnglish) {
+    return explanationEnglish
+  }
+
+  return getKannadaSubtitle(exercise.kannada)?.english || undefined
+}
+
+function getGeneratedExerciseTransliteration(exercise: GeneratedExercise): string | undefined {
+  const explicitTransliteration = exercise.transliteration?.trim()
+  if (explicitTransliteration) {
+    return explicitTransliteration
+  }
+
+  return getKannadaSubtitle(exercise.kannada)?.romanization || undefined
+}
+
+function inferEnglishFromExplanation(explanation?: string): string | undefined {
+  const match = explanation?.match(/\bmeans\s+(?:"([^"]+)"|([^.!]+))/i)
+  const english = (match?.[1] ?? match?.[2] ?? '').trim()
+
+  return english && !containsKannada(english) ? english : undefined
+}
+
 function hasEnglishSubtitleText(subtitle: ReadableSubtitle): boolean {
   return Boolean(subtitle.english)
 }
@@ -605,6 +683,10 @@ function isReverseTranslateExercise(exercise: LessonExercise): boolean {
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
   if (!containsKannada(text)) {
     return null
+  }
+
+  if (context && (text === context.kannada || text === context.answer)) {
+    return getKannadaOnlySubtitle(text, context)
   }
 
   const segments = extractKannadaSegments(text)
@@ -1184,6 +1266,8 @@ function App() {
   const [reviewCorrectCount, setReviewCorrectCount] = useState(0)
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [generatedExercise, setGeneratedExercise] = useState('')
+  const [latestGeneratedExercise, setLatestGeneratedExercise] = useState<GeneratedExercise | null>(null)
+  const [latestGeneratedExerciseSource, setLatestGeneratedExerciseSource] = useState<GeneratedExerciseSource | null>(null)
   const [aiExpansionDeck, setAiExpansionDeck] = useState<GeneratedExercise[]>(() =>
     hydrateAiExpansionDeck(localStorage.getItem(aiExpansionKey)),
   )
@@ -1818,9 +1902,9 @@ function App() {
           ? await generateExerciseWithOllama({ weakArea })
           : await generateExerciseWithLocalPreference(weakArea)
 
-    setGeneratedExercise(
-      `${formatGeneratedExerciseSource(result.source)}: ${result.exercise.prompt} ${result.exercise.kannada}`,
-    )
+    setGeneratedExercise(formatGeneratedExerciseStatus(result.source, result.exercise))
+    setLatestGeneratedExercise(result.exercise)
+    setLatestGeneratedExerciseSource(result.source)
     setAiExpansionDeck((current) => [result.exercise, ...current].slice(0, 8))
   }
 
@@ -3151,6 +3235,9 @@ function App() {
             Manage Models
           </button>
           {generatedExercise && <p><ReadableStatusText text={generatedExercise} /></p>}
+          {latestGeneratedExercise && (
+            <GeneratedExerciseSummary exercise={latestGeneratedExercise} source={latestGeneratedExerciseSource} />
+          )}
           {aiExpansionDeck.length > 0 && (
             <div className="ai-expansion-queue" aria-label="AI curriculum expansion">
               <strong>AI Expansion Queue</strong>
@@ -3160,8 +3247,7 @@ function App() {
               <ul>
                 {aiExpansionDeck.slice(0, 3).map((exercise, index) => (
                   <li key={`${exercise.prompt}-${index}`}>
-                    <span>{exercise.prompt}</span>
-                    <ChoiceText text={exercise.kannada} />
+                    <GeneratedExerciseSummary exercise={exercise} />
                   </li>
                 ))}
               </ul>
@@ -3581,6 +3667,9 @@ function App() {
                   <p role="status">
                     <ReadableStatusText text={generatedExercise} />
                   </p>
+                )}
+                {latestGeneratedExercise && (
+                  <GeneratedExerciseSummary exercise={latestGeneratedExercise} source={latestGeneratedExerciseSource} />
                 )}
                 {aiExpansionDeck.length > 0 && (
                   <small>
@@ -4469,7 +4558,7 @@ function App() {
                 <div className="placed-word-row" role="region" aria-label="Placed words">
                   {placedWords.map((word, index) => (
                     <button
-                      aria-label={`Remove ${word} from answer`}
+                      aria-label={`Remove ${getReadableKannadaAriaLabel(word, exercise)} from answer`}
                       className="placed-word-chip"
                       key={`${word}-${index}`}
                       onClick={() => removeArrangeWord(index)}
@@ -5035,6 +5124,8 @@ function isGeneratedExercise(exercise: Partial<GeneratedExercise>): exercise is 
     typeof exercise.type === 'string' &&
     typeof exercise.prompt === 'string' &&
     typeof exercise.kannada === 'string' &&
+    (exercise.transliteration === undefined || typeof exercise.transliteration === 'string') &&
+    (exercise.english === undefined || typeof exercise.english === 'string') &&
     typeof exercise.answer === 'string' &&
     Array.isArray(exercise.options) &&
     exercise.options.every((option) => typeof option === 'string') &&
@@ -5244,7 +5335,7 @@ function formatPronunciationLevel(level: PronunciationScoreResult['level']) {
   return level.split('-').map(titleCase).join(' ')
 }
 
-function formatGeneratedExerciseSource(source: 'native' | 'ollama' | 'openrouter' | 'nvidia' | 'fallback') {
+function formatGeneratedExerciseSource(source: GeneratedExerciseSource) {
   if (source === 'native') {
     return 'Native'
   }
@@ -5262,6 +5353,10 @@ function formatGeneratedExerciseSource(source: 'native' | 'ollama' | 'openrouter
   }
 
   return 'Offline'
+}
+
+function formatGeneratedExerciseStatus(source: GeneratedExerciseSource, exercise: GeneratedExercise) {
+  return `${formatGeneratedExerciseSource(source)}: ${exercise.prompt}`
 }
 
 export default App

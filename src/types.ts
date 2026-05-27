@@ -136,6 +136,8 @@ export interface GeneratedExercise {
   type: ExerciseType
   prompt: string
   kannada: string
+  transliteration?: string
+  english?: string
   answer: string
   options: string[]
   explanation?: string

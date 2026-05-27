@@ -10,6 +10,8 @@ describe('Ollama exercise generation', () => {
           type: 'fillBlank',
           prompt: 'Fill in the blank',
           kannada: 'ನಾನು ___ ಹೋಗಬೇಕು',
+          transliteration: 'naanu manege hogbeku',
+          english: 'I need to go home',
           answer: 'ಮನೆಗೆ',
           options: ['ಮನೆಗೆ', 'ಧನ್ಯವಾದ', 'ನಮಸ್ಕಾರ', 'ಸಾರ್'],
           explanation: 'ಮನೆಗೆ means to home.',
@@ -25,6 +27,8 @@ describe('Ollama exercise generation', () => {
 
     expect(result.source).toBe('ollama')
     expect(result.exercise.answer).toBe('ಮನೆಗೆ')
+    expect(result.exercise.english).toBe('I need to go home')
+    expect(result.exercise.transliteration).toBe('naanu manege hogbeku')
     expect(result.exercise.options).toContain('ಮನೆಗೆ')
   })
 

@@ -599,10 +599,10 @@ describe('KannadaOS desktop app', () => {
     await user.click(within(wordBank).getByRole('button', { name: /hello.*ನಮಸ್ಕಾರ.*namaskara/i }))
 
     const answerArea = screen.getByRole('region', { name: /Placed words/i })
-    expect(within(answerArea).getByRole('button', { name: /Remove ನಮಸ್ಕಾರ from answer/i })).toBeInTheDocument()
+    expect(within(answerArea).getByRole('button', { name: /Remove English: hello.*ನಮಸ್ಕಾರ.*Say: namaskara.*from answer/i })).toBeInTheDocument()
     expect(within(wordBank).getByRole('button', { name: /hello.*ನಮಸ್ಕಾರ.*namaskara/i })).toBeDisabled()
 
-    await user.click(within(answerArea).getByRole('button', { name: /Remove ನಮಸ್ಕಾರ from answer/i }))
+    await user.click(within(answerArea).getByRole('button', { name: /Remove English: hello.*ನಮಸ್ಕಾರ.*Say: namaskara.*from answer/i }))
 
     expect(screen.getByText(/Tap words below/i)).toBeInTheDocument()
     expect(within(wordBank).getByRole('button', { name: /hello.*ನಮಸ್ಕಾರ.*namaskara/i })).toBeEnabled()
@@ -1532,7 +1532,9 @@ describe('KannadaOS desktop app', () => {
 
     await user.click(within(aiPracticeCard).getByRole('button', { name: /Generate Practice Exercise/i }))
 
-    expect(await within(aiPracticeCard).findByText(/Offline: Fill in the blank:/i)).toBeInTheDocument()
+    expect((await within(aiPracticeCard).findAllByText(/Offline: Fill in the blank:/i)).length).toBeGreaterThanOrEqual(1)
+    expect(within(aiPracticeCard).getByText('English: I need to go to school')).toBeInTheDocument()
+    expect(within(aiPracticeCard).getByText('Say: naanu shaalege ___')).toBeInTheDocument()
     expect(within(aiPracticeCard).getByText(/1 saved drill for curriculum review/i)).toBeInTheDocument()
     await waitFor(() => {
       expect(localStorage.getItem('kannadaos:ai-expansion')).toContain('Fill in the blank:')
@@ -2448,7 +2450,8 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByLabelText(/Back to app/i))
     await user.click(screen.getByRole('button', { name: /generate ai exercise/i }))
 
-    expect(await screen.findByText(/OpenRouter: Hosted greeting drill ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    expect((await screen.findAllByText(/OpenRouter: Hosted greeting drill/i)).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('English: Hello sir').length).toBeGreaterThanOrEqual(1)
     expect(fetchImpl).toHaveBeenCalledWith(
       'https://openrouter.ai/api/v1/chat/completions',
       expect.objectContaining({
@@ -2618,7 +2621,8 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /generate ai exercise/i }))
 
     expect(generateNativeExercise).toHaveBeenCalled()
-    expect(await screen.findByText(/Native: Native generated prompt ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+    expect((await screen.findAllByText(/Native: Native generated prompt/i)).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByLabelText(/AI curriculum expansion/i)).toHaveTextContent(/English: need to go/i)
     expect(screen.getByLabelText(/AI curriculum expansion/i)).toHaveTextContent(/1 saved drill/i)
     expect(localStorage.getItem('kannadaos:ai-expansion')).toContain('Native generated prompt')
   }, 30_000)

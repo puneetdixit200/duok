@@ -72,7 +72,8 @@ export function buildExercisePrompt(weakArea: string): string {
     'Return only valid JSON for a Kannada learning exercise.',
     'No markdown except a single JSON object if absolutely necessary.',
     `Target weak area: ${weakArea}.`,
-    'Schema: {"type":"translate|arrange|fillBlank|listening|speaking|matchPairs","prompt":"string","kannada":"string","answer":"string","options":["string"],"explanation":"string"}',
+    'Schema: {"type":"translate|arrange|fillBlank|listening|speaking|matchPairs","prompt":"string","kannada":"string","transliteration":"latin reading","english":"English meaning","answer":"string","options":["string"],"explanation":"string"}',
+    'Every Kannada string must have a readable English meaning and Latin transliteration.',
     'Use practical Bangalore Kannada and keep options short.',
   ].join('\n')
 }
@@ -91,7 +92,7 @@ export function parseGeneratedExerciseResponse(raw: string): GeneratedExercise {
     throw new Error('Ollama returned an invalid exercise shape')
   }
 
-  return {
+  const exercise: GeneratedExercise = {
     type: parsed.type,
     prompt: parsed.prompt,
     kannada: parsed.kannada,
@@ -99,6 +100,16 @@ export function parseGeneratedExerciseResponse(raw: string): GeneratedExercise {
     options: parsed.options,
     explanation: parsed.explanation ?? 'Practice this phrase in a real Bangalore context.',
   }
+
+  if (typeof parsed.transliteration === 'string') {
+    exercise.transliteration = parsed.transliteration
+  }
+
+  if (typeof parsed.english === 'string') {
+    exercise.english = parsed.english
+  }
+
+  return exercise
 }
 
 function extractJson(raw: string): string {
@@ -112,7 +123,7 @@ function repairJson(raw: string): string {
 
 export function fallbackExercise(weakArea: string): GeneratedExercise {
   const local = lessonExercises.find((exercise) => exercise.skillTag === weakArea) ?? lessonExercises[0]
-  return {
+  const exercise: GeneratedExercise = {
     type: local.type,
     prompt: local.prompt,
     kannada: local.kannada,
@@ -120,4 +131,14 @@ export function fallbackExercise(weakArea: string): GeneratedExercise {
     options: local.options,
     explanation: local.explanation,
   }
+
+  if (local.transliteration) {
+    exercise.transliteration = local.transliteration
+  }
+
+  if (local.english) {
+    exercise.english = local.english
+  }
+
+  return exercise
 }
