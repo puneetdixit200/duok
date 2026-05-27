@@ -1868,7 +1868,11 @@ function App() {
       if (hostedReply.source === aiProviderSettings.activeProvider) {
         tutorReply = {
           text: hostedReply.text,
-          subtext: `${providerLabel}: ${getActiveHostedModel(aiProviderSettings)}`,
+          subtext: formatTutorPhraseSupport(
+            selectedTutorPersona,
+            selectedScenario.usefulPhrases[0],
+            `${providerLabel}: ${getActiveHostedModel(aiProviderSettings)}.`,
+          ),
         }
         setVoiceStatus(`${providerLabel} tutor reply ready.`)
       } else {
@@ -3304,8 +3308,8 @@ function App() {
               <ReadableStatusText text={voiceStatus} />
             </p>
           )}
-          <div className="suggestion-row">
-            {selectedScenario.usefulPhrases.map((phrase) => (
+          <div className="suggestion-row" role="group" aria-label="Quick replies">
+            {getChatQuickReplies(selectedScenario).map((phrase) => (
               <button key={phrase.id} onClick={() => setChatInput(phrase.kannada)} type="button">
                 <EnglishFirstKannadaText phrase={phrase} />
               </button>
@@ -4808,30 +4812,64 @@ function buildTutorReply(input: string, scenario: Scenario, persona: TutorPerson
   const normalized = input.toLowerCase()
 
   if (scenario.id === 'auto-ride' && normalized.includes('majestic') && normalized.includes('hogbeku')) {
+    const phrase = getRequiredPhrase('majestic-ge-hogbeku')
     return {
-      text: 'Majestic-ge hogbeku is better.',
-      subtext: `${persona.name}: Add -ge for "to": ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು.`,
+      text: `${persona.name}: Add -ge for "to" before the destination.`,
+      subtext: formatTutorPhraseSupport(persona, phrase, 'Use this exact auto phrase.'),
     }
   }
 
   if (scenario.id === 'bmtc-bus') {
+    const phrase = getRequiredPhrase('ticket-eshtu')
     return {
       text: `${persona.name}: Good fare question for BMTC.`,
-      subtext: 'fare question: add the destination first - Koramangala-ge ticket eshtu?',
+      subtext: formatTutorPhraseSupport(persona, phrase, 'Put the destination first, then ask the fare.'),
     }
   }
 
   if (normalized.includes('beda') || input.includes('ಬೇಡ')) {
+    const phrase = getRequiredPhrase('beda')
     return {
       text: `${persona.name}: Good. ಬೇಡ is a clear way to say you do not want it.`,
-      subtext: persona.correctionStyle,
+      subtext: formatTutorPhraseSupport(persona, phrase, persona.correctionStyle),
     }
   }
 
+  const phrase = scenario.usefulPhrases[0]
   return {
     text: `${persona.name}: Try it in the ${scenario.title} roleplay.`,
-    subtext: scenario.usefulPhrases.map((phrase) => phrase.transliteration).join(' / '),
+    subtext: formatTutorPhraseSupport(persona, phrase, 'Suggested next phrase.'),
   }
+}
+
+function getChatQuickReplies(scenario: Scenario): Phrase[] {
+  const scenarioPhraseIds: Record<string, string[]> = {
+    'bmtc-bus': ['ticket-eshtu', 'nidhanavagi-heli', 'majestic-ge-hogbeku', 'dhanyavada'],
+    'auto-ride': ['majestic-ge-hogbeku', 'illi-nillisi', 'eshtu', 'swalpa-adjust-maadi'],
+    darshini: ['beku', 'dhanyavada', 'eshtu', 'beda'],
+    kirana: ['eshtu', 'beda', 'beku', 'dhanyavada'],
+    office: ['oota-aayta', 'chennagiddene', 'namaskara-saar', 'dhanyavada'],
+    'pg-owner': ['barutte', 'matte-heli', 'nidhanavagi-heli', 'dhanyavada'],
+  }
+  const phraseIds = scenarioPhraseIds[scenario.id] ?? scenario.usefulPhrases.map((phrase) => phrase.id)
+  const replies = [...scenario.usefulPhrases]
+
+  for (const phraseId of phraseIds) {
+    const phrase = survivalPhrases.find((item) => item.id === phraseId)
+    if (phrase && !replies.some((reply) => reply.id === phrase.id)) {
+      replies.push(phrase)
+    }
+  }
+
+  return replies.slice(0, 4)
+}
+
+function formatTutorPhraseSupport(persona: TutorPersona, phrase: Phrase, note: string): string {
+  return `${persona.name}: ${note} Kannada: ${phrase.kannada} | Say: ${phrase.transliteration} | English: ${phrase.english}`
+}
+
+function getRequiredPhrase(phraseId: string): Phrase {
+  return survivalPhrases.find((phrase) => phrase.id === phraseId) ?? survivalPhrases[0]
 }
 
 function hydrateLearnerProfile(serialized: string | null): LearnerProfile {

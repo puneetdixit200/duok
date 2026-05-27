@@ -1238,7 +1238,9 @@ describe('KannadaOS desktop app', () => {
     await user.type(screen.getByPlaceholderText(/type in kannada/i), 'Majestic hogbeku')
     await user.click(screen.getByRole('button', { name: /send/i }))
 
-    expect((await screen.findAllByText(/Majestic-ge hogbeku/i)).length).toBeGreaterThanOrEqual(1)
+    expect(await screen.findByText(/Add -ge for "to" before the destination/i)).toBeInTheDocument()
+    expect(screen.getByText(/Kannada: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/English: I need to go to Majestic/i).length).toBeGreaterThanOrEqual(1)
     expect(localStorage.getItem('kannadaos:progress')).toContain('"chatMessagesSent":1')
   })
 
@@ -1305,6 +1307,35 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getAllByText(/Majestic-ge hogbeku/i).length).toBeGreaterThanOrEqual(1)
   })
 
+  it('shows contextual quick replies and restores chat logs when switching scenarios', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+
+    const scenarioPicker = screen.getByLabelText(/Chat scenarios/i)
+    let quickReplies = screen.getByRole('group', { name: /Quick replies/i })
+    expect(within(quickReplies).getAllByRole('button')).toHaveLength(4)
+    expect(within(quickReplies).getByRole('button', { name: /English: I need to go to Majestic/i })).toBeInTheDocument()
+    expect(within(quickReplies).getByRole('button', { name: /English: Stop here/i })).toBeInTheDocument()
+
+    await user.type(screen.getByPlaceholderText(/type in kannada/i), 'Majestic hogbeku')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+    expect(await screen.findByText(/Add -ge for "to" before the destination/i)).toBeInTheDocument()
+
+    await user.click(within(scenarioPicker).getByRole('button', { name: /BMTC Bus/i }))
+    expect(screen.queryByText('Majestic hogbeku')).not.toBeInTheDocument()
+    quickReplies = screen.getByRole('group', { name: /Quick replies/i })
+    expect(within(quickReplies).getAllByRole('button')).toHaveLength(4)
+    expect(within(quickReplies).getByRole('button', { name: /English: How much is the ticket/i })).toBeInTheDocument()
+    expect(within(quickReplies).getByRole('button', { name: /English: Please speak slowly/i })).toBeInTheDocument()
+
+    await user.click(within(scenarioPicker).getByRole('button', { name: /Auto Ride/i }))
+    expect(screen.getByText('Majestic hogbeku')).toBeInTheDocument()
+    expect(screen.getByText(/Kannada: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+  })
+
   it('restores desktop learner data before syncing it back to the Electron store', async () => {
     const user = userEvent.setup()
     const loadLearnerData = vi.fn().mockResolvedValue({
@@ -1367,7 +1398,7 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByText(/Grammar Teacher: Good fare question/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ಟಿಕೆಟ್ ಎಷ್ಟು/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText(/add the destination first/i)).toBeInTheDocument()
+    expect(screen.getByText(/Put the destination first/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /record voice/i }))
     expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument()
@@ -1389,8 +1420,8 @@ describe('KannadaOS desktop app', () => {
 
     const reply = screen.getByText(/Good\. ಬೇಡ is a clear way/i).closest('article')
     expect(reply).not.toBeNull()
-    expect(within(reply!).getByText(/beda/i)).toBeInTheDocument()
-    expect(within(reply!).getByText('English: do not want')).toBeInTheDocument()
+    expect(within(reply!).getAllByText(/Say: beda/i).length).toBeGreaterThanOrEqual(1)
+    expect(within(reply!).getAllByText('English: do not want').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders practice flashcards, Bangalore scenarios, and profile stats', async () => {
