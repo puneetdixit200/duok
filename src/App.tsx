@@ -3569,9 +3569,22 @@ function App() {
                   <p>5 phrases with waveform scoring</p>
                 </article>
               )}
-              <article className="accent-card saffron">
+              <article className="accent-card saffron" aria-label="AI practice exercise">
                 <strong>AI Exercises</strong>
                 <p>Targets your weakest skill with Ollama or local fallback.</p>
+                <button className="secondary-action compact-action" onClick={generateAiExercise} type="button">
+                  Generate Practice Exercise
+                </button>
+                {generatedExercise && (
+                  <p role="status">
+                    <ReadableStatusText text={generatedExercise} />
+                  </p>
+                )}
+                {aiExpansionDeck.length > 0 && (
+                  <small>
+                    {aiExpansionDeck.length} saved {aiExpansionDeck.length === 1 ? 'drill' : 'drills'} for curriculum review
+                  </small>
+                )}
               </article>
             </div>
           </div>

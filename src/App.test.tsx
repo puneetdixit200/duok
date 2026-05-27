@@ -1490,6 +1490,25 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
   })
 
+  it('generates an AI practice exercise from the Practice tab', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    const aiPracticeCard = screen.getByLabelText(/AI practice exercise/i)
+    expect(within(aiPracticeCard).getByText(/Targets your weakest skill/i)).toBeInTheDocument()
+
+    await user.click(within(aiPracticeCard).getByRole('button', { name: /Generate Practice Exercise/i }))
+
+    expect(await within(aiPracticeCard).findByText(/Offline: Fill in the blank:/i)).toBeInTheDocument()
+    expect(within(aiPracticeCard).getByText(/1 saved drill for curriculum review/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(localStorage.getItem('kannadaos:ai-expansion')).toContain('Fill in the blank:')
+    })
+  })
+
   it('opens Bangalore scenario details with phrase controls and dialogue practice', async () => {
     const user = userEvent.setup()
     render(<App />)
