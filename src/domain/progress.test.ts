@@ -66,6 +66,28 @@ describe('learner progress', () => {
     expect(nextDay.completedExerciseIds).toEqual(['survival-translate-1', 'survival-arrange-1'])
   })
 
+  it('resets stale daily quest counters when persisted progress hydrates on a new date', () => {
+    const previousDay = {
+      ...createInitialProgress(),
+      dailyXp: 24,
+      lastPracticeDate: '2026-05-23',
+      todayActivityIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+      completedExerciseIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+    }
+
+    const hydrated = hydrateProgress(serializeProgress(previousDay), '2026-05-24T08:00:00.000Z')
+    const quests = getDailyQuests(hydrated, '2026-05-24T08:00:00.000Z', 10)
+
+    expect(hydrated.dailyXp).toBe(0)
+    expect(hydrated.todayActivityIds).toEqual([])
+    expect(hydrated.completedExerciseIds).toEqual(previousDay.completedExerciseIds)
+    expect(quests.map((quest) => [quest.title, quest.current, quest.completed])).toEqual([
+      ['Earn 10 XP', 0, false],
+      ['Complete 3 activities', 0, false],
+      ['Keep every heart', 0, false],
+    ])
+  })
+
   it('awards streak milestone gems once at 7 and 30 practice days', () => {
     let progress = {
       ...createInitialProgress(),

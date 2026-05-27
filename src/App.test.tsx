@@ -139,6 +139,7 @@ describe('KannadaOS desktop app', () => {
 
   it('shows spec daily quest states and claim celebration', async () => {
     const user = userEvent.setup()
+    const today = new Date().toISOString().slice(0, 10)
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:learner-profile', JSON.stringify({
       motivation: 'moved-to-bangalore',
@@ -150,6 +151,7 @@ describe('KannadaOS desktop app', () => {
       ...createInitialProgress(),
       dailyXp: 10,
       gems: 120,
+      lastPracticeDate: today,
       completedExerciseIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
       todayActivityIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
     }))
@@ -176,6 +178,28 @@ describe('KannadaOS desktop app', () => {
     expect(within(xpQuestCard!).getByRole('button', { name: /Claimed/i })).toBeDisabled()
     expect(within(xpQuestCard!).getByLabelText(/Quest claim celebration: Earn 10 XP/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Gems/)).toHaveTextContent('💎 130')
+  })
+
+  it('starts a fresh daily quest board when saved progress is from a previous local date', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-05-28T08:00:00.000Z'))
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      dailyXp: 20,
+      hearts: 5,
+      lastPracticeDate: '2026-05-27',
+      completedExerciseIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+      todayActivityIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+    }))
+
+    render(<App />)
+
+    const quests = screen.getByLabelText(/Daily quests/i)
+    expect(within(quests).getByRole('progressbar', { name: /Earn 10 XP progress/i })).toHaveAttribute('aria-valuenow', '0')
+    expect(within(quests).getByRole('progressbar', { name: /Complete 3 activities progress/i })).toHaveAttribute('aria-valuenow', '0')
+    expect(within(quests).getAllByRole('button', { name: /In progress/i })).toHaveLength(3)
+    expect(screen.getByText(/10 XP to hit today's goal/i)).toBeInTheDocument()
   })
 
   it('shows home quick actions for practice, stories, and chat', async () => {

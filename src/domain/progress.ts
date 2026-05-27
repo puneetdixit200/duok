@@ -591,9 +591,23 @@ export function hydrateProgress(serialized: string | null, now?: string): Progre
     hydrated.lessonProgress = hydrateLessonProgress(hydrated.lessonProgress)
     hydrated.unlockedStoryIds = hydrateStringList(hydrated.unlockedStoryIds)
     hydrated.achievementRewardIds = hydrateStringList(hydrated.achievementRewardIds)
-    return now ? regenerateHearts(hydrated, now) : hydrated
+    return now ? regenerateHearts(resetDailyCountersForDate(hydrated, now), now) : hydrated
   } catch {
     return createInitialProgress()
+  }
+}
+
+function resetDailyCountersForDate(state: ProgressState, now: string): ProgressState {
+  const dateKey = now.slice(0, 10)
+
+  if (state.lastPracticeDate === dateKey) {
+    return state
+  }
+
+  return {
+    ...state,
+    dailyXp: 0,
+    todayActivityIds: [],
   }
 }
 
