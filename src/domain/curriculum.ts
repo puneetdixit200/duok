@@ -1299,6 +1299,7 @@ function buildExercisesForLesson(
       ? reverseTranslateExercise(idPrefix, first, [first, second, third], lessonSeed.title)
       : exercise(idPrefix, 1, 'translate', `Translate for ${lessonSeed.title}:`, first, first.english, typeChoices, 2)
 
+  const dialogueExercise = buildDialogueExercise(idPrefix, 8, first, second, third, unitNumber, lessonNumber)
   const exercises = [
     translateExercise,
     {
@@ -1335,15 +1336,42 @@ function buildExercisesForLesson(
       second.transliteration,
       third.transliteration,
     ], 4),
-    exercise(idPrefix, 8, 'dialogue', 'Choose the best reply in this conversation:', second, second.kannada, [
-      second.kannada,
-      first.kannada,
-      third.kannada,
-      unitNumber > 4 || lessonNumber > 3 ? 'ನಂತರ ಹೇಳುತ್ತೇನೆ' : 'ನಮಸ್ಕಾರ',
-    ], 3),
+    dialogueExercise,
   ]
 
+  if (unitNumber === 1 && lessonNumber === 2) {
+    return [
+      translateExercise,
+      exercises[1],
+      exercises[2],
+      dialogueExercise,
+      exercises[4],
+      exercises[5],
+    ]
+  }
+
   return exercises.slice(0, 6)
+}
+
+function buildDialogueExercise(
+  idPrefix: string,
+  index: number,
+  promptPhrase: Phrase,
+  replyPhrase: Phrase,
+  distractorPhrase: Phrase,
+  unitNumber: number,
+  lessonNumber: number,
+): LessonExercise {
+  return {
+    ...exercise(idPrefix, index, 'dialogue', 'Choose the best reply in this conversation:', promptPhrase, replyPhrase.kannada, [
+      replyPhrase.kannada,
+      promptPhrase.kannada,
+      distractorPhrase.kannada,
+      unitNumber > 4 || lessonNumber > 3 ? 'ನಂತರ ಹೇಳುತ್ತೇನೆ' : 'ನಮಸ್ಕಾರ',
+    ], 3),
+    explanation: `${replyPhrase.kannada} is the best reply to ${promptPhrase.kannada}.`,
+    vocabularyIds: [promptPhrase.id, replyPhrase.id],
+  }
 }
 
 function buildReviewExercisesForLesson(

@@ -135,6 +135,36 @@ describe('KannadaOS level 1 curriculum', () => {
     }))
   })
 
+  it('puts the frontend spec dialogue exercise into the regular How Are You lesson', () => {
+    const howAreYou = coreCurriculumUnits[0].lessons[1]
+    const dialogueExercise = howAreYou.exercises[3]
+
+    expect(howAreYou.exercises.map((exercise) => exercise.type)).toEqual([
+      'translate',
+      'arrange',
+      'fillBlank',
+      'dialogue',
+      'speaking',
+      'matchPairs',
+    ])
+    expect(dialogueExercise).toEqual(expect.objectContaining({
+      type: 'dialogue',
+      kannada: 'ಹೇಗಿದ್ದೀರಾ?',
+      english: 'How are you?',
+      answer: 'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+      xp: 3,
+      vocabularyIds: [
+        'unit-1-greetings-lesson-2-phrase-1',
+        'unit-1-greetings-lesson-2-phrase-2',
+      ],
+    }))
+    expect(dialogueExercise.options).toEqual(expect.arrayContaining([
+      'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+      'ಹೇಗಿದ್ದೀರಾ?',
+      'ನೀವು ಹೇಗಿದ್ದೀರಾ?',
+    ]))
+  })
+
   it('mixes review lessons from earlier unit vocabulary instead of only review rows', () => {
     const unitOneReview = coreCurriculumUnits[0].lessons[4]
     const reviewVocabularyIds = new Set(unitOneReview.exercises.flatMap((exercise) => exercise.vocabularyIds))

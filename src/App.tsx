@@ -784,7 +784,7 @@ function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSub
     return null
   }
 
-  if (context && (text === context.kannada || text === context.answer)) {
+  if (context && (text === context.kannada || shouldUseExerciseAnswerSubtitle(text, context))) {
     return getKannadaOnlySubtitle(text, context)
   }
 
@@ -813,7 +813,7 @@ function getKannadaOnlySubtitle(text: string, context?: LessonExercise): Readabl
     return knownSubtitle
   }
 
-  if (context && (text === context.kannada || text === context.answer)) {
+  if (context && (text === context.kannada || shouldUseExerciseAnswerSubtitle(text, context))) {
     return {
       romanization: context.transliteration || romanizeKannadaWords(text),
       english: context.english || (containsKannada(context.answer) ? glossKannadaWords(text) : context.answer),
@@ -829,6 +829,10 @@ function getKannadaOnlySubtitle(text: string, context?: LessonExercise): Readabl
     romanization: romanizeKannadaWords(text),
     english: glossKannadaWords(text),
   }
+}
+
+function shouldUseExerciseAnswerSubtitle(text: string, context: LessonExercise): boolean {
+  return text === context.answer && (context.type !== 'dialogue' || normalizeKannadaText(context.answer) === normalizeKannadaText(context.kannada))
 }
 
 function buildKnownKannadaSubtitles(): Map<string, ReadableSubtitle> {

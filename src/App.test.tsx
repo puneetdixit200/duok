@@ -1364,6 +1364,44 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/ಹೇಗಿದ್ದೀರಾ\? = How are you\?/i)).toBeInTheDocument()
   })
 
+  it('runs the regular How Are You dialogue exercise from the frontend spec', async () => {
+    const user = userEvent.setup()
+    const firstLesson = coreCurriculumUnits[0].lessons[0]
+    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /How Are You/i }))
+
+    await user.click(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira$/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /^English: I am fine\s+ಚೆನ್ನಾಗಿದ್ದೇನೆ\s+Say: chennagiddene/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByText('dialogue')).toBeInTheDocument()
+    expect(screen.getByText(/Reply to the line/i)).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira$/i).length).toBeGreaterThanOrEqual(1)
+
+    const correctReply = screen.getByRole('button', {
+      name: /^English: I am fine\s+ಚೆನ್ನಾಗಿದ್ದೇನೆ\s+Say: chennagiddene$/i,
+    })
+    await user.click(correctReply)
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(screen.getByRole('status', { name: /Correct feedback/i })).toHaveTextContent('+3 XP')
+    expect(screen.getByText(/ಚೆನ್ನಾಗಿದ್ದೇನೆ is the best reply to ಹೇಗಿದ್ದೀರಾ\?/i)).toBeInTheDocument()
+  })
+
   it('opens one-crown lessons with reduced-option crown replay drills', async () => {
     const user = userEvent.setup()
     const firstLesson = coreCurriculumUnits[0].lessons[0]
