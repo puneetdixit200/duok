@@ -2450,6 +2450,59 @@ describe('KannadaOS desktop app', () => {
     })
   })
 
+  it('shows English subtitles for Kannada correct answers in review feedback', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      hearts: 1,
+      reviewQueue: {
+        dhanyavada: {
+          vocabularyId: 'dhanyavada',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+      },
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    await user.click(screen.getByRole('button', { name: /Start Review/i }))
+
+    let reviewSession = screen.getByRole('region', { name: /Review Session/i })
+    expect(within(reviewSession).getByText(/Choose the meaning/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /Thank you/i }))
+    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+    await user.click(within(reviewSession).getByRole('button', { name: /Next Review/i }))
+
+    reviewSession = screen.getByRole('region', { name: /Review Session/i })
+    expect(within(reviewSession).getByText(/Complete the Kannada phrase/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /^English: sir\s+ಸಾರ್\s+Say: saar/i }))
+    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+
+    const feedbackPanel = within(reviewSession).getByRole('status')
+    expect(within(feedbackPanel).getByText(/Correct answer: ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('English: need to go')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('Say: hogbeku')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText(/No hearts lost/i)).toBeInTheDocument()
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem('kannadaos:progress') ?? '{}')
+      expect(stored.hearts).toBe(1)
+      expect(stored.reviewQueue.hogbeku.leitnerBox).toBe(1)
+    })
+  })
+
   it('restores one heart after three correct review practice answers', async () => {
     const user = userEvent.setup()
     const lastHeartLostAt = new Date().toISOString()

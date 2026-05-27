@@ -4078,7 +4078,11 @@ function App() {
                       <span>
                         {reviewFeedback === 'correct'
                           ? '+1 XP'
-                          : `Correct answer: ${activeReviewExercise.answer}. No hearts lost. This word will return soon.`}
+                          : (
+                              <ReadableStatusText
+                                text={`Correct answer: ${activeReviewExercise.answer}. No hearts lost. This word will return soon.`}
+                              />
+                            )}
                       </span>
                     </div>
                   )}
