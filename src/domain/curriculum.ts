@@ -684,7 +684,12 @@ const allLessonPhraseMap = new Map<string, Phrase>(
 )
 
 export function getPhraseByVocabularyId(vocabularyId: string): Phrase | null {
-  return survivalPhrases.find((phrase) => phrase.id === vocabularyId) ?? allLessonPhraseMap.get(vocabularyId) ?? null
+  return (
+    survivalPhrases.find((phrase) => phrase.id === vocabularyId) ??
+    allLessonPhraseMap.get(vocabularyId) ??
+    storyVocabularyPhraseMap.get(vocabularyId) ??
+    null
+  )
 }
 
 const scenarioPhrase = (id: string) => survivalPhrases.find((phrase) => phrase.id === id) ?? allLessonPhraseMap.get(id)!
@@ -1659,13 +1664,17 @@ function makeStory(
     newWordCount: metadata.newWordCount ?? sentenceRows.length * 4,
     locked: id !== 'first-day-bangalore',
     imagePath: metadata.imagePath ?? 'story-bus-stop.svg',
-    sentences: sentenceRows.map(([kannada, transliteration, english], index) => ({
-      id: `${id}-${index + 1}`,
-      kannada,
-      transliteration,
-      english,
-      words: makeStoryWords(kannada, transliteration, english),
-    })),
+    sentences: sentenceRows.map(([kannada, transliteration, english], index) => {
+      const sentenceId = `${id}-${index + 1}`
+
+      return {
+        id: sentenceId,
+        kannada,
+        transliteration,
+        english,
+        words: makeStoryWords(id, sentenceId, kannada, transliteration, english),
+      }
+    }),
     quiz: {
       prompt: quizPrompt,
       answer: quizAnswer,
@@ -1681,7 +1690,13 @@ function makeStory(
   }
 }
 
-function makeStoryWords(kannada: string, transliteration: string, english: string): Story['sentences'][number]['words'] {
+function makeStoryWords(
+  storyId: string,
+  sentenceId: string,
+  kannada: string,
+  transliteration: string,
+  english: string,
+): Story['sentences'][number]['words'] {
   const transliterationWords = splitStoryWords(transliteration)
   const englishWords = splitStoryWords(english)
 
@@ -1689,12 +1704,17 @@ function makeStoryWords(kannada: string, transliteration: string, english: strin
     const gloss = storyWordGlosses[word]
 
     return {
+      vocabularyId: getStoryWordVocabularyId(storyId, sentenceId, index),
       text: word,
       transliteration: transliterationWords[index] ?? transliteration,
       english: gloss?.english ?? (englishWords.slice(index, index + 2).join(' ') || english),
       note: gloss?.note ?? 'Story word in context.',
     }
   })
+}
+
+export function getStoryWordVocabularyId(storyId: string, sentenceId: string, wordIndex: number): string {
+  return `story:${storyId}:${sentenceId}:word-${wordIndex + 1}`
 }
 
 function splitStoryWords(value: string): string[] {
@@ -1704,6 +1724,24 @@ function splitStoryWords(value: string): string[] {
     .split(/\s+/)
     .filter(Boolean)
 }
+
+const storyVocabularyPhraseMap = new Map<string, Phrase>(
+  stories.flatMap((story) =>
+    story.sentences.flatMap((sentence) =>
+      sentence.words.map((word) => [
+        word.vocabularyId,
+        {
+          id: word.vocabularyId,
+          kannada: word.text,
+          transliteration: word.transliteration,
+          english: word.english,
+          context: `${story.title}: ${sentence.english}`,
+          skillTag: 'story',
+        } satisfies Phrase,
+      ] as const),
+    ),
+  ),
+)
 
 let transliterationLookup: Map<string, string> | null = null
 

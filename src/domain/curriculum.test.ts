@@ -8,6 +8,7 @@ import {
   getLevelOneCurriculum,
   getLessonById,
   getNextAvailableLesson,
+  getPhraseByVocabularyId,
   getScriptCurriculumUnit,
   getStoryLockState,
   getUnlockedCurriculumUnits,
@@ -373,9 +374,17 @@ describe('KannadaOS level 1 curriculum', () => {
     )).toBe(true)
     expect(stories.every((story) =>
       story.sentences.every((sentence) =>
-        sentence.words.every((word) => word.english.length > 0 && word.note !== 'Story word in context.'),
+        sentence.words.every((word) => word.english.length > 0 && word.note !== 'Story word in context.' && word.vocabularyId.length > 0),
       ),
     )).toBe(true)
+    const firstStoryWord = stories[0].sentences[0].words.find((word) => word.text === 'ಬಂದ')
+    expect(getPhraseByVocabularyId(firstStoryWord?.vocabularyId ?? '')).toMatchObject({
+      kannada: 'ಬಂದ',
+      transliteration: 'banda',
+      english: 'came',
+      context: 'First Day in Bangalore: Rahul came to Bangalore.',
+      skillTag: 'story',
+    })
     expect(stories.find((story) => story.id === 'auto-ride-story')?.sentences[1].words).toContainEqual(
       expect.objectContaining({
         text: 'ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ',

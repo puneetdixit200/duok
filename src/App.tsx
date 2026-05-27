@@ -1314,6 +1314,7 @@ function App() {
   const [selectedStoryId, setSelectedStoryId] = useState(stories[0].id)
   const [storySentenceIndex, setStorySentenceIndex] = useState(0)
   const [selectedStoryWord, setSelectedStoryWord] = useState<StoryWord | null>(null)
+  const [storyVocabularyStatus, setStoryVocabularyStatus] = useState('')
   const [selectedStoryAnswer, setSelectedStoryAnswer] = useState('')
   const [storyFeedback, setStoryFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [tipsUnitId, setTipsUnitId] = useState<string | null>(null)
@@ -2777,6 +2778,7 @@ function App() {
     setSelectedStoryId(storyId)
     setStorySentenceIndex(0)
     setSelectedStoryWord(null)
+    setStoryVocabularyStatus('')
     setSelectedStoryAnswer('')
     setStoryFeedback(null)
     setStoryMode('reader')
@@ -2788,20 +2790,54 @@ function App() {
 
   function returnToStoryList() {
     setSelectedStoryWord(null)
+    setStoryVocabularyStatus('')
     setStorySentenceIndex(0)
     setStoryMode('list')
   }
 
   function goToNextStorySentence() {
     setSelectedStoryWord(null)
+    setStoryVocabularyStatus('')
     setStorySentenceIndex((current) => Math.min(current + 1, Math.max(0, activeStory.sentences.length - 1)))
   }
 
   function openStoryQuiz() {
     setSelectedStoryWord(null)
+    setStoryVocabularyStatus('')
     setSelectedStoryAnswer('')
     setStoryFeedback(null)
     setStoryMode('quiz')
+  }
+
+  function addSelectedStoryWordToVocabulary() {
+    if (!selectedStoryWord) {
+      return
+    }
+
+    const { vocabularyId, english } = selectedStoryWord
+    const alreadySaved = Boolean(progress.reviewQueue[vocabularyId])
+
+    if (!alreadySaved) {
+      const now = new Date().toISOString()
+
+      setProgress((current) => ({
+        ...current,
+        reviewQueue: {
+          ...current.reviewQueue,
+          [vocabularyId]: {
+            vocabularyId,
+            dueAt: now,
+            strength: 0.2,
+            attempts: 0,
+            leitnerBox: 1,
+          },
+        },
+      }))
+    }
+
+    setStoryVocabularyStatus(
+      alreadySaved ? `${english} is already in vocabulary review.` : `${english} added to vocabulary review.`,
+    )
   }
 
   function checkStoryAnswer() {
@@ -3978,8 +4014,11 @@ function App() {
                     <button
                       aria-label={formatReadableStoryWord(word)}
                       className="word-token"
-                      key={`${activeStorySentence.id}-${word.text}`}
-                      onClick={() => setSelectedStoryWord(word)}
+                      key={word.vocabularyId}
+                      onClick={() => {
+                        setSelectedStoryWord(word)
+                        setStoryVocabularyStatus('')
+                      }}
                       type="button"
                     >
                       <strong className="word-token-english">{formatEnglishSubtitle(word.english)}</strong>
@@ -4019,9 +4058,19 @@ function App() {
                 </div>
                 <p>{selectedStoryWord.english}</p>
                 <small>{selectedStoryWord.note}</small>
-                <button className="secondary-action" type="button">
-                  Add to Vocabulary
+                <button
+                  className="secondary-action"
+                  disabled={Boolean(progress.reviewQueue[selectedStoryWord.vocabularyId])}
+                  onClick={addSelectedStoryWordToVocabulary}
+                  type="button"
+                >
+                  {progress.reviewQueue[selectedStoryWord.vocabularyId] ? 'In Vocabulary' : 'Add to Vocabulary'}
                 </button>
+                {storyVocabularyStatus && (
+                  <div className="voice-status" role="status">
+                    <ReadableStatusText text={storyVocabularyStatus} />
+                  </div>
+                )}
               </aside>
             )}
             {isLastStorySentence ? (

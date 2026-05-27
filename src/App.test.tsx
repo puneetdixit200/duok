@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import { coreCurriculumUnits, getScriptCurriculumUnit } from './domain/curriculum'
+import { coreCurriculumUnits, getScriptCurriculumUnit, stories } from './domain/curriculum'
 import { completeLessonProgress, createInitialProgress, serializeProgress } from './domain/progress'
 
 const voiceCaptureMock = vi.hoisted(() => ({
@@ -2834,7 +2834,25 @@ describe('KannadaOS desktop app', () => {
     expect(wordDialog).toBeInTheDocument()
     expect(within(wordDialog).getByText(/banda/i)).toBeInTheDocument()
     expect(within(wordDialog).getAllByText(/came/i).length).toBeGreaterThanOrEqual(1)
-    expect(within(wordDialog).getByRole('button', { name: /add to vocabulary/i })).toBeInTheDocument()
+    await user.click(within(wordDialog).getByRole('button', { name: /add to vocabulary/i }))
+    await waitFor(() => expect(within(wordDialog).getByRole('status')).toHaveTextContent(/came added to vocabulary review/i))
+    expect(within(wordDialog).getByRole('button', { name: /in vocabulary/i })).toBeDisabled()
+
+    const storyWord = stories[0].sentences[0].words.find((word) => word.text === 'ಬಂದ')
+    await waitFor(() => {
+      const savedProgress = JSON.parse(localStorage.getItem('kannadaos:progress') ?? '{}')
+      expect(savedProgress.reviewQueue[storyWord?.vocabularyId ?? '']).toMatchObject({
+        vocabularyId: storyWord?.vocabularyId,
+        attempts: 0,
+        leitnerBox: 1,
+        strength: 0.2,
+      })
+    })
+
+    await user.click(screen.getByRole('button', { name: /^Practice/i }))
+    expect(screen.getByText(/1 word due today/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/came/i).length).toBeGreaterThanOrEqual(1)
+    await user.click(screen.getByRole('button', { name: /stories/i }))
 
     await user.click(screen.getByRole('button', { name: /next/i }))
     expect(screen.getByText('2/3')).toBeInTheDocument()

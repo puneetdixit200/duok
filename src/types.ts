@@ -98,6 +98,7 @@ export interface TutorPersona {
 }
 
 export interface StoryWord {
+  vocabularyId: string
   text: string
   transliteration: string
   english: string
