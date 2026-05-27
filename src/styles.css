@@ -1027,6 +1027,43 @@ h2 {
   gap: 18px;
 }
 
+.review-session {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid #3d3d5c;
+  border-radius: 14px;
+  background: #171728;
+}
+
+.review-session-progress {
+  height: 10px;
+}
+
+.review-card {
+  padding: 20px;
+}
+
+.review-card strong {
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.review-session-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.review-complete-card {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.review-complete-card strong {
+  color: #6ee7b7;
+  font-size: 32px;
+}
+
 .pronunciation-lab {
   display: grid;
   gap: 16px;

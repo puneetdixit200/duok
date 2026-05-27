@@ -678,6 +678,10 @@ const allLessonPhraseMap = new Map<string, Phrase>(
   ),
 )
 
+export function getPhraseByVocabularyId(vocabularyId: string): Phrase | null {
+  return survivalPhrases.find((phrase) => phrase.id === vocabularyId) ?? allLessonPhraseMap.get(vocabularyId) ?? null
+}
+
 const scenarioPhrase = (id: string) => survivalPhrases.find((phrase) => phrase.id === id) ?? allLessonPhraseMap.get(id)!
 
 export const bangaloreScenarios: Scenario[] = [

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -925,6 +925,61 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Greetings needs review/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByText(/Strength 20%/i).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('runs due review items as a heart-safe mini session', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      hearts: 1,
+      reviewQueue: {
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+        dhanyavada: {
+          vocabularyId: 'dhanyavada',
+          dueAt: '2099-05-20T09:00:00.000Z',
+          strength: 0.6,
+          attempts: 2,
+          leitnerBox: 3,
+        },
+      },
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    expect(screen.getByText(/1 word due today/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Start Review/i }))
+
+    const reviewSession = screen.getByRole('region', { name: /Review Session/i })
+    expect(within(reviewSession).getByText(/1 of 1/i)).toBeInTheDocument()
+    expect(within(reviewSession).getByText(/ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+
+    await user.click(within(reviewSession).getByRole('button', { name: /need to go/i }))
+    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+
+    expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
+    expect(within(reviewSession).getByText(/\+1 XP/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /Finish Review/i }))
+
+    expect(screen.getByRole('heading', { name: /Review Complete/i })).toBeInTheDocument()
+    expect(screen.getByText(/\+1 XP/i)).toBeInTheDocument()
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem('kannadaos:progress') ?? '{}')
+      expect(stored.xp).toBe(1)
+      expect(stored.dailyXp).toBe(1)
+      expect(stored.hearts).toBe(1)
+      expect(stored.reviewQueue.hogbeku.attempts).toBe(2)
+      expect(stored.reviewQueue.hogbeku.leitnerBox).toBeGreaterThan(1)
+    })
   })
 
   it('scores pronunciation practice and persists the latest attempt', async () => {

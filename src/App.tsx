@@ -3,6 +3,7 @@ import {
   bangaloreScenarios,
   coreCurriculumUnits,
   getNextAvailableLesson,
+  getPhraseByVocabularyId,
   getScriptCurriculumUnit,
   getStoryLockState,
   getLevelOneCurriculum,
@@ -540,6 +541,14 @@ function formatReadableExample(example: string): string {
   return `${example} (${subtitle.romanization}${english})`
 }
 
+function buildReviewOptions(phrase: Phrase): string[] {
+  const distractors = survivalPhrases
+    .map((item) => item.english)
+    .filter((english) => english !== phrase.english)
+
+  return [phrase.english, ...distractors].slice(0, 4)
+}
+
 function applyStartingLevelPlacement(
   progress: ProgressState,
   startingLevel: string,
@@ -707,6 +716,11 @@ function App() {
   ])
   const [voiceStatus, setVoiceStatus] = useState('')
   const [flashcardBack, setFlashcardBack] = useState(false)
+  const [reviewSessionIds, setReviewSessionIds] = useState<string[]>([])
+  const [reviewIndex, setReviewIndex] = useState(0)
+  const [reviewSelectedAnswer, setReviewSelectedAnswer] = useState('')
+  const [reviewFeedback, setReviewFeedback] = useState<'correct' | 'wrong' | null>(null)
+  const [reviewCorrectCount, setReviewCorrectCount] = useState(0)
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
   const [generatedExercise, setGeneratedExercise] = useState('')
   const [aiExpansionDeck, setAiExpansionDeck] = useState<GeneratedExercise[]>(() =>
@@ -1353,6 +1367,84 @@ function App() {
   function rateFlashcard(vocabularyId: string, rating: ReviewRating) {
     setProgress((current) => rateReviewItem(current, vocabularyId, rating, new Date().toISOString()))
     setFlashcardBack(false)
+  }
+
+  function startReviewSession(vocabularyIds: string[]) {
+    const reviewableIds = vocabularyIds.filter((vocabularyId) => getPhraseByVocabularyId(vocabularyId))
+
+    if (!reviewableIds.length) {
+      return
+    }
+
+    setReviewSessionIds(reviewableIds)
+    setReviewIndex(0)
+    setReviewSelectedAnswer('')
+    setReviewFeedback(null)
+    setReviewCorrectCount(0)
+  }
+
+  function checkReviewAnswer(phrase: Phrase) {
+    if (reviewFeedback || !reviewSelectedAnswer) {
+      return
+    }
+
+    const correct = reviewSelectedAnswer === phrase.english
+    const now = new Date().toISOString()
+    const reviewExerciseId = `review-${phrase.id}`
+    setReviewFeedback(correct ? 'correct' : 'wrong')
+
+    if (correct) {
+      setReviewCorrectCount((current) => current + 1)
+    }
+
+    setProgress((current) => {
+      const ratedProgress = rateReviewItem(current, phrase.id, correct ? 'easy' : 'hard', now)
+
+      if (!correct) {
+        return ratedProgress
+      }
+
+      const practiceDate = now.slice(0, 10)
+      const isSamePracticeDate = current.lastPracticeDate === practiceDate
+      const baseTodayActivityIds = isSamePracticeDate ? current.todayActivityIds : []
+
+      return {
+        ...ratedProgress,
+        xp: ratedProgress.xp + 1,
+        dailyXp: (isSamePracticeDate ? ratedProgress.dailyXp : 0) + 1,
+        streakDays: isSamePracticeDate ? ratedProgress.streakDays : Math.max(1, ratedProgress.streakDays + 1),
+        lastPracticeDate: practiceDate,
+        completedExerciseIds: ratedProgress.completedExerciseIds.includes(reviewExerciseId)
+          ? ratedProgress.completedExerciseIds
+          : [...ratedProgress.completedExerciseIds, reviewExerciseId],
+        todayActivityIds: baseTodayActivityIds.includes(reviewExerciseId)
+          ? baseTodayActivityIds
+          : [...baseTodayActivityIds, reviewExerciseId],
+      }
+    })
+  }
+
+  function goToNextReview() {
+    if (!reviewFeedback) {
+      return
+    }
+
+    if (reviewIndex + 1 >= reviewSessionIds.length) {
+      setReviewIndex(reviewSessionIds.length)
+    } else {
+      setReviewIndex((current) => current + 1)
+    }
+
+    setReviewSelectedAnswer('')
+    setReviewFeedback(null)
+  }
+
+  function resetReviewSession() {
+    setReviewSessionIds([])
+    setReviewIndex(0)
+    setReviewSelectedAnswer('')
+    setReviewFeedback(null)
+    setReviewCorrectCount(0)
   }
 
   function refillHearts() {
@@ -2419,10 +2511,13 @@ function App() {
       const weakSkillSummaries = getWeakSkillSummaries(progress)
       const adaptiveDifficulty = getAdaptiveDifficulty(progress, now)
       const dueReviewPhrases = dueReviewIds
-        .map((vocabularyId) => survivalPhrases.find((phrase) => phrase.id === vocabularyId))
-        .filter((phrase): phrase is (typeof survivalPhrases)[number] => Boolean(phrase))
+        .map((vocabularyId) => getPhraseByVocabularyId(vocabularyId))
+        .filter((phrase): phrase is Phrase => Boolean(phrase))
       const card = dueReviewPhrases[0] ?? survivalPhrases.find((phrase) => phrase.id === 'hogbeku')!
       const cardReview = progress.reviewQueue[card.id]
+      const activeReviewPhrase = getPhraseByVocabularyId(reviewSessionIds[reviewIndex] ?? '')
+      const reviewComplete = reviewSessionIds.length > 0 && reviewIndex >= reviewSessionIds.length
+      const reviewOptions = activeReviewPhrase ? buildReviewOptions(activeReviewPhrase) : []
       return (
         <section className="panel" aria-labelledby="practice-title">
           <header className="section-header">
@@ -2434,6 +2529,85 @@ function App() {
               {dueReviewIds.length} {dueReviewIds.length === 1 ? 'word' : 'words'} due today
             </span>
           </header>
+          {reviewSessionIds.length > 0 && (
+            <section className="review-session" aria-labelledby="review-session-title">
+              {reviewComplete ? (
+                <article className="review-complete-card">
+                  <p className="eyebrow">review complete</p>
+                  <h2 id="review-session-title">Review Complete</h2>
+                  <strong>+{reviewCorrectCount} XP</strong>
+                  <p>{reviewCorrectCount} of {reviewSessionIds.length} due {reviewSessionIds.length === 1 ? 'word' : 'words'} answered correctly.</p>
+                  <button className="secondary-action" onClick={resetReviewSession} type="button">
+                    Back to Practice
+                  </button>
+                </article>
+              ) : activeReviewPhrase ? (
+                <>
+                  <header className="runtime-header compact-header">
+                    <div>
+                      <p className="eyebrow">due reviews</p>
+                      <h2 id="review-session-title">Review Session</h2>
+                    </div>
+                    <span className="metric-pill">{reviewIndex + 1} of {reviewSessionIds.length}</span>
+                  </header>
+                  <div
+                    className="lesson-progress review-session-progress"
+                    aria-label={`Review progress: ${reviewIndex + 1} of ${reviewSessionIds.length} due words`}
+                  >
+                    <span style={{ width: `${Math.max(12, ((reviewIndex + 1) / reviewSessionIds.length) * 100)}%` }} />
+                  </div>
+                  <div className="phrase-card review-card">
+                    <small>Choose the meaning</small>
+                    <strong lang="kn">{activeReviewPhrase.kannada}</strong>
+                    <span className="kannada-subtitles">
+                      <small className="romanization">{activeReviewPhrase.transliteration}</small>
+                      <small className="english-subtitle">{activeReviewPhrase.context}</small>
+                    </span>
+                  </div>
+                  <div className="option-stack review-session-options" aria-label="Review answers">
+                    {reviewOptions.map((option) => (
+                      <button
+                        className={reviewSelectedAnswer === option ? 'answer-option selected' : 'answer-option'}
+                        disabled={reviewFeedback !== null}
+                        key={option}
+                        onClick={() => setReviewSelectedAnswer(option)}
+                        type="button"
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    className="primary-action"
+                    disabled={!reviewSelectedAnswer || reviewFeedback !== null}
+                    onClick={() => checkReviewAnswer(activeReviewPhrase)}
+                    type="button"
+                  >
+                    Check Review
+                  </button>
+                  {reviewFeedback && (
+                    <div className={reviewFeedback === 'correct' ? 'feedback correct' : 'feedback wrong'} role="status">
+                      <strong>{reviewFeedback === 'correct' ? 'Correct' : 'Try again'}</strong>
+                      <span>{reviewFeedback === 'correct' ? '+1 XP' : 'No hearts lost. This word will return soon.'}</span>
+                    </div>
+                  )}
+                  {reviewFeedback && (
+                    <button className="secondary-action" onClick={goToNextReview} type="button">
+                      {reviewIndex + 1 >= reviewSessionIds.length ? 'Finish Review' : 'Next Review'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <article className="review-complete-card">
+                  <h2 id="review-session-title">Review unavailable</h2>
+                  <p>This due word is no longer in the local curriculum.</p>
+                  <button className="secondary-action" onClick={resetReviewSession} type="button">
+                    Back to Practice
+                  </button>
+                </article>
+              )}
+            </section>
+          )}
           <div className="review-layout">
             <div className="flashcard-stack">
               <button className="flashcard" onClick={() => setFlashcardBack((value) => !value)} type="button">
@@ -2466,6 +2640,14 @@ function App() {
               <article className="accent-card rose">
                 <strong>Due Review Queue</strong>
                 <p>{formatDueReviewSummary(dueReviewIds, progress)}</p>
+                <button
+                  className="secondary-action compact-action"
+                  disabled={!dueReviewPhrases.length}
+                  onClick={() => startReviewSession(dueReviewIds)}
+                  type="button"
+                >
+                  Start Review
+                </button>
               </article>
               {weakSkillSummaries.length > 0 ? (
                 weakSkillSummaries.map((skill) => (
