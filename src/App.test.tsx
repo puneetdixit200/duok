@@ -1072,6 +1072,37 @@ describe('KannadaOS desktop app', () => {
     expect(localStorage.getItem('kannadaos:progress')).toContain('"bmtc-bus":["Ask the fare"]')
   })
 
+  it('awards 10 XP once when a Bangalore scenario checklist is completed', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /blr/i }))
+    await user.click(screen.getByRole('button', { name: /start auto ride/i }))
+
+    for (const item of ['Say destination', 'Ask fare', 'Confirm meter', 'Ask to stop']) {
+      await user.click(screen.getByRole('checkbox', { name: item }))
+    }
+
+    expect(screen.getByRole('status')).toHaveTextContent(/Scenario checklist complete: \+10 XP earned/i)
+    await waitFor(() => {
+      const savedProgress = JSON.parse(localStorage.getItem('kannadaos:progress') ?? '{}')
+      expect(savedProgress.xp).toBe(10)
+      expect(savedProgress.dailyXp).toBe(10)
+      expect(savedProgress.completedExerciseIds).toContain('scenario-auto-ride-checklist')
+    })
+
+    await user.click(screen.getByRole('checkbox', { name: /Ask to stop/i }))
+    await user.click(screen.getByRole('checkbox', { name: /Ask to stop/i }))
+
+    await waitFor(() => {
+      const savedProgress = JSON.parse(localStorage.getItem('kannadaos:progress') ?? '{}')
+      expect(savedProgress.xp).toBe(10)
+      expect(savedProgress.dailyXp).toBe(10)
+      expect(savedProgress.completedExerciseIds.filter((id: string) => id === 'scenario-auto-ride-checklist')).toHaveLength(1)
+    })
+  })
+
   it('persists chat history across app reloads', async () => {
     const user = userEvent.setup()
     localStorage.setItem('kannadaos:onboarded', 'true')

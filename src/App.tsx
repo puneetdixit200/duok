@@ -28,6 +28,7 @@ import {
   getDailyQuests,
   getLessonProgressSummary,
   getDueReviewItems,
+  getScenarioChecklistActivityId,
   getWeakSkillSummaries,
   hydrateProgress,
   rateReviewItem,
@@ -1684,8 +1685,8 @@ function App() {
     setVoiceStatus('')
   }
 
-  function toggleScenarioChecklist(scenarioId: string, item: string) {
-    setProgress((current) => toggleScenarioChecklistItem(current, scenarioId, item))
+  function toggleScenarioChecklist(scenario: Scenario, item: string) {
+    setProgress((current) => toggleScenarioChecklistItem(current, scenario.id, item, scenario.checklist, new Date().toISOString()))
   }
 
   function openBangaloreScenario(scenarioId: string) {
@@ -3582,7 +3583,7 @@ function App() {
                         <label>
                           <input
                             checked={checked}
-                            onChange={() => toggleScenarioChecklist(scenario.id, item)}
+                            onChange={() => toggleScenarioChecklist(scenario, item)}
                             type="checkbox"
                           />
                           <span>{item}</span>
@@ -3591,6 +3592,11 @@ function App() {
                     )
                   })}
                 </ul>
+                {progress.completedExerciseIds.includes(getScenarioChecklistActivityId(scenario.id)) && (
+                  <p className="scenario-complete-status" role="status">
+                    Scenario checklist complete: +10 XP earned
+                  </p>
+                )}
               </article>
               <article className="scenario-detail-card">
                 <h3>Useful Phrases</h3>

@@ -98,6 +98,7 @@ export interface DailyQuest {
 const maxHearts = 5
 const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
 const practiceHeartRefillThreshold = 3
+export const bangaloreScenarioChecklistXp = 10
 export const bonusStoryUnlockCost = 75
 
 export function createInitialProgress(): ProgressState {
@@ -435,19 +436,55 @@ export function toggleScenarioChecklistItem(
   state: ProgressState,
   scenarioId: string,
   item: string,
+  scenarioItems: string[] = [],
+  now = '2026-05-27T00:00:00.000Z',
 ): ProgressState {
   const completedItems = state.scenarioChecklist[scenarioId] ?? []
   const nextItems = completedItems.includes(item)
     ? completedItems.filter((completedItem) => completedItem !== item)
     : [...completedItems, item]
+  const activityId = getScenarioChecklistActivityId(scenarioId)
+  const wasComplete = isScenarioChecklistComplete(completedItems, scenarioItems)
+  const isComplete = isScenarioChecklistComplete(nextItems, scenarioItems)
+  const shouldAwardXp =
+    isComplete &&
+    !wasComplete &&
+    !state.completedExerciseIds.includes(activityId)
+
+  if (!shouldAwardXp) {
+    return {
+      ...state,
+      scenarioChecklist: {
+        ...state.scenarioChecklist,
+        [scenarioId]: nextItems,
+      },
+    }
+  }
+
+  const practiceDate = now.slice(0, 10)
+  const isSamePracticeDate = state.lastPracticeDate === practiceDate
+  const baseDailyXp = isSamePracticeDate ? state.dailyXp : 0
+  const baseTodayActivityIds = isSamePracticeDate ? state.todayActivityIds : []
 
   return {
     ...state,
+    xp: state.xp + bangaloreScenarioChecklistXp,
+    dailyXp: baseDailyXp + bangaloreScenarioChecklistXp,
+    streakDays: isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1),
+    lastPracticeDate: practiceDate,
+    completedExerciseIds: [...state.completedExerciseIds, activityId],
+    todayActivityIds: baseTodayActivityIds.includes(activityId)
+      ? baseTodayActivityIds
+      : [...baseTodayActivityIds, activityId],
     scenarioChecklist: {
       ...state.scenarioChecklist,
       [scenarioId]: nextItems,
     },
   }
+}
+
+export function getScenarioChecklistActivityId(scenarioId: string): string {
+  return `scenario-${scenarioId}-checklist`
 }
 
 export function getWeakSkillSummaries(state: ProgressState, limit = 3): WeakSkillSummary[] {
@@ -669,6 +706,10 @@ function addDays(isoDate: string, days: number): string {
 
 function hydrateStringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+function isScenarioChecklistComplete(completedItems: string[], scenarioItems: string[]): boolean {
+  return scenarioItems.length > 0 && scenarioItems.every((item) => completedItems.includes(item))
 }
 
 function getLeitnerIntervalDays(box: number): number {
