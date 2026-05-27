@@ -856,7 +856,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: '1' })
-    fireEvent.keyDown(window, { key: 'Enter' })
+    fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
     expect(screen.getByText(/Correct/i)).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: 'Enter' })
@@ -1398,6 +1398,7 @@ describe('KannadaOS desktop app', () => {
 
     await user.click(screen.getByRole('button', { name: /blr/i }))
     expect(screen.getByText(/Slang of the Day/i)).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /BMTC Bus beginner scenario icon/i })).toBeInTheDocument()
     expect(screen.getAllByText(/Auto Ride/i).length).toBeGreaterThanOrEqual(1)
     await user.click(screen.getByRole('button', { name: /start bmtc bus/i }))
     expect(screen.getByText(/Ask the fare/i)).toBeInTheDocument()
@@ -1422,6 +1423,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /start auto ride/i }))
 
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Auto Ride beginner scenario icon/i })).toBeInTheDocument()
     expect(screen.getByText(/Situation: You are negotiating an auto from Indiranagar to Majestic/i)).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: /Confirm meter/i })).toBeInTheDocument()
     expect(screen.queryByText(/Driver: ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು/i)).not.toBeInTheDocument()
@@ -2427,6 +2429,8 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /First Day in Bangalore/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Illustration for First Day in Bangalore: Bus stop/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Illustration for Office Lunch: Tech park cafeteria/i })).toBeInTheDocument()
     expect(screen.getAllByText(/5 min read/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/12 new words/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/Office Lunch/i).length).toBeGreaterThanOrEqual(1)

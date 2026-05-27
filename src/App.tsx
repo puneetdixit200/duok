@@ -74,7 +74,7 @@ import {
   type ConversationStore,
 } from './services/conversationLog'
 import { applyLearnerStorage, collectLearnerStorage } from './services/learnerStore'
-import type { GeneratedExercise, LessonExercise, Phrase, Scenario, StorySentence, StoryWord, TutorPersona } from './types'
+import type { GeneratedExercise, LessonExercise, Phrase, Scenario, Story, StorySentence, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
 type Tab = 'home' | 'learn' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
@@ -564,6 +564,14 @@ function formatReadableStoryWord(word: StoryWord): string {
     romanization: word.transliteration,
     english: word.english,
   })
+}
+
+function getStoryImageAlt(story: Story): string {
+  return `Illustration for ${story.title}: ${story.subtitle.replace(/^Scene:\s*/i, '')}`
+}
+
+function getScenarioIconLabel(scenario: Scenario): string {
+  return `${scenario.title} ${scenario.difficulty.toLowerCase()} scenario icon`
 }
 
 function isFlashcardAudioStatus(status: string): boolean {
@@ -1527,6 +1535,19 @@ function App() {
         if (event.key.toLowerCase() === 'r' && screen === 'lesson' && activeExercise) {
           event.preventDefault()
           void playExerciseReference(activeExercise)
+          return
+        }
+
+        if (event.key === 'Enter' && screen === 'lesson' && activeExercise) {
+          event.preventDefault()
+          if (feedback === 'correct' || feedback === 'wrong') {
+            goToNextExercise()
+            return
+          }
+
+          if (!feedback && selectedAnswer) {
+            checkAnswer(activeExercise)
+          }
           return
         }
       }
@@ -3662,7 +3683,7 @@ function App() {
               const lockState = getStoryLockState(story, progress)
               return (
                 <article className={lockState.locked ? 'story-card locked' : 'story-card'} key={story.id}>
-                  <img src={story.imagePath} alt="" />
+                  <img src={story.imagePath} alt={getStoryImageAlt(story)} />
                   <div className="story-card-body">
                     <span className={`difficulty-badge ${story.difficulty.toLowerCase()}`}>{story.difficulty}</span>
                     <h3>{story.title}</h3>
@@ -3733,7 +3754,9 @@ function App() {
             <header className="section-header">
               <div>
                 <p className="eyebrow">Bangalore Mode</p>
-                <h2 id="blr-title">{scenario.icon} {scenario.title}</h2>
+                <h2 id="blr-title">
+                  <span role="img" aria-label={getScenarioIconLabel(scenario)}>{scenario.icon}</span> {scenario.title}
+                </h2>
               </div>
               <button className="secondary-action compact-action" onClick={() => setActiveBangaloreScenarioId(null)} type="button">
                 Back
@@ -3851,7 +3874,7 @@ function App() {
               const checkedCount = (progress.scenarioChecklist[scenario.id] ?? []).length
               return (
                 <article className="scenario-card" key={scenario.id}>
-                  <span>{scenario.icon}</span>
+                  <span role="img" aria-label={getScenarioIconLabel(scenario)}>{scenario.icon}</span>
                   <strong>{scenario.title}</strong>
                   <small>{scenario.difficulty}</small>
                   <p>{scenario.situation}</p>
