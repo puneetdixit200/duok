@@ -378,10 +378,14 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
+    expect(screen.getByRole('button', { name: /^Listen first$/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /play reference audio/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Check$/i })).not.toBeInTheDocument()
+
     await user.click(screen.getByRole('button', { name: /record phrase/i }))
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
     expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /^Continue/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
@@ -633,7 +637,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /record phrase/i }))
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
     expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /^Continue/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     const matchGrid = screen.getByLabelText(/Match pairs/i)
@@ -901,13 +905,13 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     expect(screen.getByText('speaking')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /play reference audio/i }))
+    await user.click(screen.getByRole('button', { name: /^Listen first$/i }))
     expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /record phrase/i }))
     expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
     expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /^Continue/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     expect(screen.getByText('matchPairs')).toBeInTheDocument()
@@ -961,7 +965,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /record phrase/i }))
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
     expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /^Continue/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     const matchGrid = screen.getByLabelText(/Match pairs/i)
@@ -1023,7 +1027,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /record phrase/i }))
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
     expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /^Continue/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))

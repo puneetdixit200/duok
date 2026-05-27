@@ -1437,6 +1437,13 @@ function App() {
           return
         }
 
+        if (!feedback && activeExercise.type === 'speaking') {
+          if (speakingResult?.score && speakingResult.score >= 70) {
+            continueSpeakingExercise(activeExercise)
+          }
+          return
+        }
+
         if (!feedback && selectedAnswer) {
           checkAnswer(activeExercise)
         }
@@ -2466,14 +2473,16 @@ function App() {
           </p>
           <h1 id="lesson-title">{activeExercise.prompt}</h1>
           {renderExerciseContent(activeExercise)}
-          <button
-            className="primary-action"
-            disabled={!selectedAnswer}
-            onClick={() => checkAnswer(activeExercise)}
-            type="button"
-          >
-            Check
-          </button>
+          {activeExercise.type !== 'speaking' && (
+            <button
+              className="primary-action"
+              disabled={!selectedAnswer}
+              onClick={() => checkAnswer(activeExercise)}
+              type="button"
+            >
+              Check
+            </button>
+          )}
           {feedback && (
             <div
               className={
@@ -4074,7 +4083,7 @@ function App() {
               onClick={() => void playExerciseReference(exercise)}
               type="button"
             >
-              Play reference audio
+              Listen first
             </button>
             <button
               className="mini-button"
