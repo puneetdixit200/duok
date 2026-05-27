@@ -18,6 +18,7 @@ import {
 } from './domain/curriculum'
 import {
   applyExerciseResult,
+  bonusStoryUnlockCost,
   buyStreakFreeze,
   claimDailyQuestReward,
   completeLessonProgress,
@@ -35,6 +36,7 @@ import {
   refillHeartsWithGems,
   serializeProgress,
   toggleScenarioChecklistItem,
+  unlockStoryWithGems,
   type DailyQuest,
   type ProgressState,
   type ReviewRating,
@@ -2286,6 +2288,10 @@ function App() {
     setStoryMode('reader')
   }
 
+  function unlockStoryEarly(storyId: string) {
+    setProgress((current) => unlockStoryWithGems(current, storyId))
+  }
+
   function returnToStoryList() {
     setSelectedStoryWord(null)
     setStorySentenceIndex(0)
@@ -3495,7 +3501,19 @@ function App() {
                       <span>{story.newWordCount} new words</span>
                     </div>
                     {lockState.locked ? (
-                      <span className="locked-label">{lockState.reason}</span>
+                      <>
+                        <span className="locked-label">{lockState.reason}</span>
+                        <button
+                          className="secondary-action"
+                          disabled={progress.gems < bonusStoryUnlockCost}
+                          onClick={() => unlockStoryEarly(story.id)}
+                          type="button"
+                        >
+                          {progress.gems >= bonusStoryUnlockCost
+                            ? `Unlock ${story.title} early - ${bonusStoryUnlockCost} gems`
+                            : `Need ${bonusStoryUnlockCost} gems to unlock early`}
+                        </button>
+                      </>
                     ) : (
                       <button
                         className="secondary-action"

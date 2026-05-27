@@ -25,6 +25,7 @@ export interface ProgressState {
   completedExerciseIds: string[]
   todayActivityIds: string[]
   completedStoryIds: string[]
+  unlockedStoryIds: string[]
   weakAreas: Record<string, number>
   reviewQueue: Record<string, ReviewItem>
   lessonProgress: Record<string, LessonProgress>
@@ -97,6 +98,7 @@ export interface DailyQuest {
 const maxHearts = 5
 const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
 const practiceHeartRefillThreshold = 3
+export const bonusStoryUnlockCost = 75
 
 export function createInitialProgress(): ProgressState {
   return {
@@ -110,6 +112,7 @@ export function createInitialProgress(): ProgressState {
     completedExerciseIds: [],
     todayActivityIds: [],
     completedStoryIds: [],
+    unlockedStoryIds: [],
     weakAreas: {},
     reviewQueue: {},
     lessonProgress: {},
@@ -503,6 +506,7 @@ export function hydrateProgress(serialized: string | null, now?: string): Progre
     const hydrated = { ...createInitialProgress(), ...JSON.parse(serialized) } as ProgressState
     hydrated.reviewQueue = hydrateReviewQueue(hydrated.reviewQueue)
     hydrated.lessonProgress = hydrateLessonProgress(hydrated.lessonProgress)
+    hydrated.unlockedStoryIds = hydrateStringList(hydrated.unlockedStoryIds)
     return now ? regenerateHearts(hydrated, now) : hydrated
   } catch {
     return createInitialProgress()
@@ -635,10 +639,36 @@ export function buyStreakFreeze(state: ProgressState, cost = 100): ProgressState
   }
 }
 
+export function unlockStoryWithGems(
+  state: ProgressState,
+  storyId: string,
+  cost = bonusStoryUnlockCost,
+): ProgressState {
+  if (
+    !storyId ||
+    state.gems < cost ||
+    state.unlockedStoryIds.includes(storyId) ||
+    state.completedStoryIds.includes(storyId) ||
+    state.completedExerciseIds.includes(`story-${storyId}`)
+  ) {
+    return state
+  }
+
+  return {
+    ...state,
+    gems: state.gems - cost,
+    unlockedStoryIds: [...state.unlockedStoryIds, storyId],
+  }
+}
+
 function addDays(isoDate: string, days: number): string {
   const date = new Date(isoDate)
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString()
+}
+
+function hydrateStringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
 function getLeitnerIntervalDays(box: number): number {

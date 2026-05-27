@@ -997,7 +997,10 @@ export function getStoryLockState(story: Story, progress: ProgressState): { lock
   }
 
   const previousStory = stories[storyIndex - 1]
-  const unlocked = progress.completedExerciseIds.includes(`story-${previousStory.id}`)
+  const unlocked =
+    progress.completedExerciseIds.includes(`story-${previousStory.id}`) ||
+    progress.completedStoryIds.includes(previousStory.id) ||
+    (progress.unlockedStoryIds ?? []).includes(story.id)
   return {
     locked: !unlocked,
     reason: unlocked ? 'Ready' : `Complete ${previousStory.title} first`,

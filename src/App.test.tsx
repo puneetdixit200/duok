@@ -2218,6 +2218,35 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Total: 5 XP/i)).toBeInTheDocument()
   })
 
+  it('lets learners spend gems to unlock a locked story early', async () => {
+    const user = userEvent.setup()
+    const { unmount } = render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+
+    const officeLunchCard = screen.getByRole('heading', { name: /Office Lunch/i }).closest('article')
+    expect(officeLunchCard).not.toBeNull()
+    expect(within(officeLunchCard!).getByText(/Complete First Day in Bangalore first/i)).toBeInTheDocument()
+
+    await user.click(within(officeLunchCard!).getByRole('button', { name: /Unlock Office Lunch early - 75 gems/i }))
+
+    expect(within(officeLunchCard!).getByRole('button', { name: /Read Office Lunch/i })).toBeInTheDocument()
+    await waitFor(() => {
+      const savedProgress = JSON.parse(localStorage.getItem('kannadaos:progress') ?? '{}')
+      expect(savedProgress.gems).toBe(45)
+      expect(savedProgress.unlockedStoryIds).toContain('office-lunch')
+      expect(savedProgress.completedStoryIds ?? []).not.toContain('office-lunch')
+    })
+
+    unmount()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+    const restoredOfficeLunchCard = screen.getByRole('heading', { name: /Office Lunch/i }).closest('article')
+    expect(restoredOfficeLunchCard).not.toBeNull()
+    expect(within(restoredOfficeLunchCard!).getByRole('button', { name: /Read Office Lunch/i })).toBeInTheDocument()
+  })
+
   it('plays story sentence audio from the reader', async () => {
     const user = userEvent.setup()
     render(<App />)
