@@ -2214,7 +2214,8 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check story answer/i }))
 
     expect(screen.getByRole('heading', { name: /Story Complete/i })).toBeInTheDocument()
-    expect(screen.getByText(/\+20 XP/i)).toBeInTheDocument()
+    expect(screen.getByText(/\+5 XP/i)).toBeInTheDocument()
+    expect(screen.getByText(/Total: 5 XP/i)).toBeInTheDocument()
   })
 
   it('plays story sentence audio from the reader', async () => {

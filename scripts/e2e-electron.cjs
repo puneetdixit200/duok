@@ -96,14 +96,14 @@ async function main() {
     await page.getByRole('heading', { name: /Story Complete/i }).waitFor()
     await page.waitForFunction(() => {
       const progress = JSON.parse(localStorage.getItem('kannadaos:progress') || '{}')
-      return progress.xp === 38
+      return progress.xp === 23
     })
 
     await page.getByRole('button', { name: /blr/i }).click()
     await page.getByText('Auto Ride', { exact: true }).waitFor()
     await page.getByRole('button', { name: /^me$/i }).click()
     await page.getByText(/Level 4 Learner/i).waitFor()
-    await page.getByLabel('38 XP').waitFor()
+    await page.getByLabel('23 XP').waitFor()
     await page.getByText(/Story Starter/i).waitFor()
     await page.getByText(/6\/6 lesson exercises/i).waitFor()
     await page.getByRole('button', { name: /enable daily reminder/i }).click()

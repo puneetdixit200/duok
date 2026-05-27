@@ -147,6 +147,7 @@ const conversationKey = 'kannadaos:conversation-log'
 const aiExpansionKey = 'kannadaos:ai-expansion'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
+const storyQuizXp = 5
 const pronunciationPhrases = survivalPhrases.filter((phrase) =>
   ['namaskara-saar', 'ticket-eshtu', 'swalpa-adjust-maadi', 'majestic-ge-hogbeku', 'illi-nillisi'].includes(phrase.id),
 )
@@ -2313,7 +2314,7 @@ function App() {
           exerciseId: `story-${activeStory.id}`,
           correct: true,
           skillTag: 'story',
-          xp: 20,
+          xp: storyQuizXp,
           vocabularyIds: activeStory.sentences.flatMap((sentence) =>
             sentence.words.map((word) => `${activeStory.id}:${word.text}`),
           ),
@@ -3410,7 +3411,7 @@ function App() {
                 <p className="eyebrow">story quiz</p>
                 <h2 id="story-quiz-title">{activeStory.title}</h2>
               </div>
-              <span className="metric-pill">+20 XP</span>
+              <span className="metric-pill">+{storyQuizXp} XP</span>
             </header>
             <article className="story-quiz-card">
               <h3>{activeStory.quiz.prompt}</h3>
@@ -3457,7 +3458,7 @@ function App() {
                 <span>★</span>
               </div>
               <article className="xp-card">
-                <strong>+20 XP</strong>
+                <strong>+{storyQuizXp} XP</strong>
                 <span>Total: {progress.xp} XP</span>
               </article>
               <button className="primary-action" onClick={returnToStoryList} type="button">
