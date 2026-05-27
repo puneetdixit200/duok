@@ -500,6 +500,25 @@ describe('KannadaOS desktop app', () => {
     expect(within(tipsDialog).getByText(/^English: Please show me this$/i)).toBeInTheDocument()
   })
 
+  it('shows English subtitles for Unit 6 PG-life tips', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    const homeUnit = screen.getByText(/Unit 6: Home & PG Life/i).closest('article')
+    expect(homeUnit).not.toBeNull()
+    await user.click(within(homeUnit!).getByRole('button', { name: /^Tips$/i }))
+
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Home & PG Life/i })
+    expect(within(tipsDialog).getByText(/^English: There is a problem$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: There is a water problem$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getAllByText(/^English: There is no water$/i)).toHaveLength(2)
+    expect(within(tipsDialog).getByText(/^English: Water is not coming$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getAllByText(/^English: When will it come\?$/i)).toHaveLength(3)
+  })
+
   it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),

@@ -568,14 +568,19 @@ const unitSeeds: UnitSeed[] = [
     description: 'PG owner, water, rent, maintenance, and neighbor conversations.',
     tips: [
       {
-        title: '-alli means in or at',
-        body: 'Use -ಲ್ಲಿ with rooms, buildings, neighborhoods, and offices.',
-        examples: ['ರೂಮಿನಲ್ಲಿ', 'ಪಿಜಿಯಲ್ಲಿ'],
+        title: 'Samasye means problem',
+        body: 'ಸಮಸ್ಯೆ means problem and is the fastest way to report PG or apartment issues.',
+        examples: ['ಸಮಸ್ಯೆ ಇದೆ', 'ನೀರಿನ ಸಮಸ್ಯೆ ಇದೆ'],
       },
       {
-        title: 'Problems use ide',
-        body: 'ಸಮಸ್ಯೆ ಇದೆ means there is a problem and is useful for repairs.',
-        examples: ['ನೀರಿನ ಸಮಸ್ಯೆ ಇದೆ', 'ವೈಫೈ ಸಮಸ್ಯೆ ಇದೆ'],
+        title: 'Neeru illa',
+        body: 'ನೀರು ಇಲ್ಲ means there is no water, a core PG-life sentence.',
+        examples: ['ನೀರು ಇಲ್ಲ', 'ನೀರು ಬರಲ್ಲ'],
+      },
+      {
+        title: 'Yaavaaga baruttade',
+        body: 'ಯಾವಾಗ ಬರುತ್ತದೆ? means when will it come, useful for water, power, and repairs.',
+        examples: ['ಯಾವಾಗ ಬರುತ್ತದೆ?', 'ಯಾವಾಗ ಬರುತ್ತೆ?'],
       },
     ],
     lessons: [
@@ -585,11 +590,15 @@ const unitSeeds: UnitSeed[] = [
         ['rules-enu', 'ರೂಲ್ಸ್ ಏನು?', 'What are the rules?', 'PG rules.'],
       ]),
       homeLesson('Household Items', [
+        ['neeru-illa', 'ನೀರು ಇಲ್ಲ', 'There is no water', 'Report water outage.'],
         ['neeru-baralla', 'ನೀರು ಬರಲ್ಲ', 'Water is not coming', 'Maintenance.'],
-        ['yaavaga-barutte', 'ಯಾವಾಗ ಬರುತ್ತೆ?', 'When will it come?', 'Follow-up.'],
+        ['yaavaga-baruttade', 'ಯಾವಾಗ ಬರುತ್ತದೆ?', 'When will it come?', 'Formal follow-up.'],
+        ['yaavaga-barutte', 'ಯಾವಾಗ ಬರುತ್ತೆ?', 'When will it come?', 'Casual follow-up.'],
         ['tank-empty', 'ಟ್ಯಾಂಕ್ ಖಾಲಿ', 'The tank is empty', 'Report issue.'],
       ]),
       homeLesson('Complaints & Requests', [
+        ['samasye-ide', 'ಸಮಸ್ಯೆ ಇದೆ', 'There is a problem', 'Start a complaint.'],
+        ['neerina-samasye-ide', 'ನೀರಿನ ಸಮಸ್ಯೆ ಇದೆ', 'There is a water problem', 'Specific complaint.'],
         ['wifi-kelasa-madalla', 'ವೈಫೈ ಕೆಲಸ ಮಾಡಲ್ಲ', 'Wi-Fi is not working', 'PG issue.'],
         ['current-hogide', 'ಕರಂಟ್ ಹೋಗಿದೆ', 'Power is gone', 'Power cut.'],
         ['repair-madisi', 'ರಿಪೇರ್ ಮಾಡಿಸಿ', 'Please get it repaired', 'Request action.'],

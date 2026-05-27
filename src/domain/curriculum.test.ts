@@ -302,6 +302,33 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(itemPairs.answer).toContain('ಅದು ಕೊಡಿ=Give that one')
   })
 
+  it('teaches the Unit 6 PG-life problem and water phrases named in the frontend spec', () => {
+    const unitSix = coreCurriculumUnits[5]
+    const householdItems = unitSix.lessons.find((lesson) => lesson.title === 'Household Items')!
+    const complaints = unitSix.lessons.find((lesson) => lesson.title === 'Complaints & Requests')!
+    const householdPairs = householdItems.exercises.find((exercise) => exercise.type === 'matchPairs')!
+    const complaintPairs = complaints.exercises.find((exercise) => exercise.type === 'matchPairs')!
+
+    expect(unitSix.tips.map((tip) => tip.title)).toEqual([
+      'Samasye means problem',
+      'Neeru illa',
+      'Yaavaaga baruttade',
+    ])
+    expect(unitSix.tips.flatMap((tip) => tip.examples)).toEqual(expect.arrayContaining([
+      'ಸಮಸ್ಯೆ ಇದೆ',
+      'ನೀರಿನ ಸಮಸ್ಯೆ ಇದೆ',
+      'ನೀರು ಇಲ್ಲ',
+      'ನೀರು ಬರಲ್ಲ',
+      'ಯಾವಾಗ ಬರುತ್ತದೆ?',
+      'ಯಾವಾಗ ಬರುತ್ತೆ?',
+    ]))
+    expect(householdPairs.answer).toContain('ನೀರು ಇಲ್ಲ=There is no water')
+    expect(householdPairs.answer).toContain('ನೀರು ಬರಲ್ಲ=Water is not coming')
+    expect(householdPairs.answer).toContain('ಯಾವಾಗ ಬರುತ್ತದೆ?=When will it come?')
+    expect(complaintPairs.answer).toContain('ಸಮಸ್ಯೆ ಇದೆ=There is a problem')
+    expect(complaintPairs.answer).toContain('ನೀರಿನ ಸಮಸ್ಯೆ ಇದೆ=There is a water problem')
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
