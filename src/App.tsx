@@ -1896,7 +1896,19 @@ function App() {
     }
   // The shortcut handler intentionally uses the latest render's lesson actions.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeBangaloreScenarioId, activeExercise, feedback, screen, selectedAnswer, selectedStoryWord, tab, tipsUnitId])
+  }, [
+    activeBangaloreScenarioId,
+    activeExercise,
+    feedback,
+    recordingTarget,
+    screen,
+    selectedAnswer,
+    selectedStoryWord,
+    speakingResult,
+    tab,
+    tipsUnitId,
+    voiceCaptureSession,
+  ])
 
   function selectExerciseOptionByIndex(exercise: LessonExercise, optionIndex: number) {
     if (feedback || optionIndex < 0 || optionIndex >= exercise.options.length) {
@@ -3502,7 +3514,12 @@ function App() {
               <p className="eyebrow">{selectedTutorPersona.name} - {selectedScenario.difficulty}</p>
               <h2 id="chat-title">{selectedScenario.title}</h2>
             </div>
-            <button className="secondary-action" onClick={recordVoiceInput} type="button">
+            <button
+              aria-keyshortcuts="Meta+M Control+M"
+              className="secondary-action"
+              onClick={recordVoiceInput}
+              type="button"
+            >
               {recordingTarget === 'chat' ? 'Stop Recording' : 'Record Voice'}
             </button>
           </header>
@@ -3873,7 +3890,12 @@ function App() {
               <button className="secondary-action" onClick={() => void playPronunciationReference(0.7)} type="button">
                 Play Slow
               </button>
-              <button className="secondary-action" onClick={recordPronunciationAudio} type="button">
+              <button
+                aria-keyshortcuts="Meta+M Control+M"
+                className="secondary-action"
+                onClick={recordPronunciationAudio}
+                type="button"
+              >
                 {recordingTarget === 'pronunciation' ? 'Stop Recording' : 'Record Pronunciation'}
               </button>
               <label className="transcript-field">
@@ -4832,6 +4854,7 @@ function App() {
               Play slow audio
             </button>
             <button
+              aria-keyshortcuts="Meta+M Control+M"
               className={recordingTarget === 'lesson' ? 'speaker-button recording' : 'speaker-button'}
               onClick={() => recordPhrase(exercise)}
               type="button"

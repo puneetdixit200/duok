@@ -958,6 +958,38 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
   })
 
+  it('supports Cmd+M microphone shortcuts for chat and pronunciation practice', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+
+    expect(screen.getByRole('button', { name: /record voice/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Meta+M Control+M',
+    )
+
+    fireEvent.keyDown(window, { key: 'm', metaKey: true })
+    expect(await screen.findByRole('button', { name: /stop recording/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'm', metaKey: true })
+    expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    expect(screen.getByRole('button', { name: /record pronunciation/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Meta+M Control+M',
+    )
+
+    fireEvent.keyDown(window, { key: 'm', metaKey: true })
+    expect(await screen.findByRole('button', { name: /stop recording/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'm', metaKey: true })
+    expect(await screen.findByLabelText(/Pronunciation result/i)).toBeInTheDocument()
+  })
+
   it('puts English subtitles first on Kannada exercise choices', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -1104,8 +1136,13 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     expect(screen.getByText('speaking')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /record phrase/i }))
-    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+    expect(screen.getByRole('button', { name: /record phrase/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Meta+M Control+M',
+    )
+    fireEvent.keyDown(window, { key: 'm', metaKey: true })
+    expect(await screen.findByRole('button', { name: /stop recording/i })).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'm', metaKey: true })
 
     const speakingResult = await screen.findByLabelText(/Speaking score result/i)
     expect(within(speakingResult).getByText(/Score: \d+ \/ 100/i)).toBeInTheDocument()
