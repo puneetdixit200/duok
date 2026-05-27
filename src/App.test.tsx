@@ -403,6 +403,8 @@ describe('KannadaOS desktop app', () => {
     expect(within(feedbackPanel).getByText('Correct!')).toBeInTheDocument()
     expect(screen.getByText(/\+2 XP/i)).toBeInTheDocument()
     expect(within(feedbackPanel).getByText('ನಮಸ್ಕಾರ ಸಾರ್ = Hello sir')).toBeInTheDocument()
+    expect(within(feedbackPanel).getAllByText('English: Hello sir').length).toBeGreaterThanOrEqual(1)
+    expect(within(feedbackPanel).getAllByText('Say: namaskara saar').length).toBeGreaterThanOrEqual(1)
     expect(within(feedbackPanel).getByText(/respectful hello used across Bangalore/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument()
   })
@@ -1148,6 +1150,8 @@ describe('KannadaOS desktop app', () => {
     expect(within(speakingResult).getByText(/Score: \d+ \/ 100/i)).toBeInTheDocument()
     expect(within(speakingResult).getByText(/Level: Steady/i)).toBeInTheDocument()
     expect(within(speakingResult).getByText(/Problem: ಸಾರ್/i)).toBeInTheDocument()
+    expect(within(speakingResult).getByText('English: sir')).toBeInTheDocument()
+    expect(within(speakingResult).getByText('Say: saar')).toBeInTheDocument()
   })
 
   it('requires a 70 pronunciation score before the speaking continue action unlocks', async () => {
@@ -2140,16 +2144,22 @@ describe('KannadaOS desktop app', () => {
     expect(within(pronunciationResult).getByText(/Score 100/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/Clear pronunciation/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/No problem syllables/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/Latest: 100 \(Clear\)/i)
-    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/ನಮಸ್ಕಾರ ಸಾರ್/i)
+    const history = screen.getByLabelText(/Pronunciation history/i)
+    expect(history).toHaveTextContent(/Latest: 100 \(Clear\)/i)
+    expect(history).toHaveTextContent(/ನಮಸ್ಕಾರ ಸಾರ್/i)
+    expect(within(history).getAllByText('English: Hello sir').length).toBeGreaterThanOrEqual(1)
+    expect(within(history).getAllByText('Say: namaskara saar').length).toBeGreaterThanOrEqual(1)
 
     unmount()
     render(<App />)
     await user.click(screen.getByRole('button', { name: /practice/i }))
 
     expect(screen.getByText(/Last score 100/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/Latest: 100 \(Clear\)/i)
-    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/ನಮಸ್ಕಾರ ಸಾರ್/i)
+    const reloadedHistory = screen.getByLabelText(/Pronunciation history/i)
+    expect(reloadedHistory).toHaveTextContent(/Latest: 100 \(Clear\)/i)
+    expect(reloadedHistory).toHaveTextContent(/ನಮಸ್ಕಾರ ಸಾರ್/i)
+    expect(within(reloadedHistory).getAllByText('English: Hello sir').length).toBeGreaterThanOrEqual(1)
+    expect(within(reloadedHistory).getAllByText('Say: namaskara saar').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows latest, previous, and first pronunciation history attempts', async () => {

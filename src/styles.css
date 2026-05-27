@@ -1453,6 +1453,11 @@ h2 {
   color: var(--color-accent-gold);
 }
 
+.pronunciation-history-phrase {
+  display: grid;
+  gap: 2px;
+}
+
 .pronunciation-history span,
 .pronunciation-history small {
   color: var(--text-secondary);

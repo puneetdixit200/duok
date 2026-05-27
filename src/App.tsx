@@ -3208,8 +3208,8 @@ function App() {
                     <strong>Correct!</strong>
                     <span>+{activeExercise.xp} XP</span>
                   </div>
-                  <p>{getFeedbackAnswerSummary(activeExercise)}</p>
-                  <p>{activeExercise.explanation}</p>
+                  <p><ReadableStatusText text={getFeedbackAnswerSummary(activeExercise)} context={activeExercise} /></p>
+                  <p><ReadableStatusText text={activeExercise.explanation} context={activeExercise} /></p>
                 </>
               )}
               {feedback === 'wrong' && (
@@ -3219,7 +3219,7 @@ function App() {
                     <span>❤️ -1</span>
                   </div>
                   <p><ReadableStatusText text={`Correct answer: ${activeExercise.answer}`} context={activeExercise} /></p>
-                  <p>{activeExercise.explanation}</p>
+                  <p><ReadableStatusText text={activeExercise.explanation} context={activeExercise} /></p>
                 </>
               )}
               {feedback === 'almost' && (
@@ -4127,8 +4127,9 @@ function App() {
                   <article key={attempt.id}>
                     <strong>{formatPronunciationHistoryLabel(index)}: {attempt.score} ({formatPronunciationLevel(attempt.level)})</strong>
                     <ReadableStatusText text={attempt.transcript} />
-                    <small>
-                      {attempt.phrase} - {formatPronunciationAttemptDate(attempt.createdAt)}
+                    <small className="pronunciation-history-phrase">
+                      <ReadableStatusText text={attempt.phrase} />
+                      <span>{formatPronunciationAttemptDate(attempt.createdAt)}</span>
                     </small>
                   </article>
                 ))}
@@ -5076,6 +5077,9 @@ function App() {
                   <span>
                     Problem: {speakingResult.problemParts.length ? speakingResult.problemParts.join(', ') : 'None'}
                   </span>
+                  {speakingResult.problemParts.length > 0 && (
+                    <SubtitleLines text={speakingResult.problemParts.join(' ')} context={exercise} />
+                  )}
                   <span>Tip: {speakingResult.tip}</span>
                   <span className={speakingResult.score >= 70 ? 'score-ready' : 'score-warning'}>
                     {speakingResult.score >= 70 ? 'Ready to continue' : 'Minimum 70 to continue'}
