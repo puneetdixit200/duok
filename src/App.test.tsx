@@ -519,6 +519,26 @@ describe('KannadaOS desktop app', () => {
     expect(within(tipsDialog).getAllByText(/^English: When will it come\?$/i)).toHaveLength(3)
   })
 
+  it('shows English subtitles for Unit 7 office and workplace tips', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    const officeUnit = screen.getByText(/Unit 7: Office & Workplace/i).closest('article')
+    expect(officeUnit).not.toBeNull()
+    await user.click(within(officeUnit!).getByRole('button', { name: /^Tips$/i }))
+
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Office & Workplace/i })
+    expect(within(tipsDialog).getByText(/^English: meeting$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: There is a meeting$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getAllByText(/^English: Please share the screen$/i)).toHaveLength(2)
+    expect(within(tipsDialog).getByText(/^English: I will finish today$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: I will send tomorrow$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: Please explain again$/i)).toBeInTheDocument()
+  })
+
   it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),
@@ -894,8 +914,10 @@ describe('KannadaOS desktop app', () => {
     await user.click(within(officeUnit!).getByRole('button', { name: /tips/i }))
 
     const officeTips = screen.getByRole('dialog', { name: /Tips: Office & Workplace/i })
-    expect(within(officeTips).getByText(/^English: respectful you \/ respectful you$/i)).toBeInTheDocument()
-    expect(within(officeTips).getByText(/^Say: niiv \/ niivu$/i)).toBeInTheDocument()
+    expect(within(officeTips).getByText(/^English: meeting$/i)).toBeInTheDocument()
+    expect(within(officeTips).getByText(/^Say: miiting$/i)).toBeInTheDocument()
+    expect(within(officeTips).getByText(/^English: today \/ tomorrow$/i)).toBeInTheDocument()
+    expect(within(officeTips).getByText(/^English: please do$/i)).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: 'Escape' })
     fireEvent.keyDown(window, { key: '1', metaKey: true })

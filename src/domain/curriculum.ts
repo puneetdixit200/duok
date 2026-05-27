@@ -621,14 +621,19 @@ const unitSeeds: UnitSeed[] = [
     description: 'Meetings, deadlines, help requests, and cafeteria Kannada.',
     tips: [
       {
-        title: 'Formal ನೀವ್/ನೀವು',
-        body: 'Use ನೀವು with colleagues you do not know well or when you want a respectful tone.',
-        examples: ['ನೀವು ಬರುತ್ತೀರಾ?', 'ನಿಮಗೆ ಸಮಯ ಇದೆಯಾ?'],
+        title: 'Meeting loanwords',
+        body: 'ಮೀಟಿಂಗ್ means meeting, and Bangalore Kannada often borrows English tech words.',
+        examples: ['ಮೀಟಿಂಗ್ ಇದೆ', 'ಸ್ಕ್ರೀನ್ ಶೇರ್ ಮಾಡಿ'],
       },
       {
-        title: 'Verb endings',
-        body: 'Kannada verb endings change by tense and respect. Start with reusable chunks.',
-        examples: ['ಬರುತ್ತೇನೆ', 'ಮಾಡುತ್ತೇನೆ', 'ಆಯ್ತು'],
+        title: 'Today and tomorrow',
+        body: 'ಇವತ್ತು means today and ನಾಳೆ means tomorrow for quick status updates.',
+        examples: ['ಇವತ್ತು ಮುಗಿಸ್ತೀನಿ', 'ನಾಳೆ ಕಳುಸ್ತೀನಿ'],
+      },
+      {
+        title: 'Maadi for polite requests',
+        body: 'ಮಾಡಿ is the polite "do it" or "please do" ending for workplace requests.',
+        examples: ['ಸ್ಕ್ರೀನ್ ಶೇರ್ ಮಾಡಿ', 'ಮತ್ತೆ ಎಕ್ಸ್‌ಪ್ಲೇನ್ ಮಾಡಿ'],
       },
     ],
     lessons: [

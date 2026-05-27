@@ -329,6 +329,34 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(complaintPairs.answer).toContain('ನೀರಿನ ಸಮಸ್ಯೆ ಇದೆ=There is a water problem')
   })
 
+  it('teaches the Unit 7 office grammar named in the frontend spec', () => {
+    const unitSeven = coreCurriculumUnits[6]
+    const officeGreetings = unitSeven.lessons.find((lesson) => lesson.title === 'Office Greetings')!
+    const lunchTea = unitSeven.lessons.find((lesson) => lesson.title === 'Lunch & Tea Talk')!
+    const workRequests = unitSeven.lessons.find((lesson) => lesson.title === 'Simple Work Requests')!
+    const officePairs = officeGreetings.exercises.find((exercise) => exercise.type === 'matchPairs')!
+    const lunchPairs = lunchTea.exercises.find((exercise) => exercise.type === 'matchPairs')!
+    const requestPairs = workRequests.exercises.find((exercise) => exercise.type === 'matchPairs')!
+
+    expect(unitSeven.tips.map((tip) => tip.title)).toEqual([
+      'Meeting loanwords',
+      'Today and tomorrow',
+      'Maadi for polite requests',
+    ])
+    expect(unitSeven.tips.flatMap((tip) => tip.examples)).toEqual(expect.arrayContaining([
+      'ಮೀಟಿಂಗ್ ಇದೆ',
+      'ಸ್ಕ್ರೀನ್ ಶೇರ್ ಮಾಡಿ',
+      'ಇವತ್ತು ಮುಗಿಸ್ತೀನಿ',
+      'ನಾಳೆ ಕಳುಸ್ತೀನಿ',
+      'ಮತ್ತೆ ಎಕ್ಸ್‌ಪ್ಲೇನ್ ಮಾಡಿ',
+    ]))
+    expect(officePairs.answer).toContain('ಮೀಟಿಂಗ್ ಇದೆ=There is a meeting')
+    expect(lunchPairs.answer).toContain('ಸ್ಕ್ರೀನ್ ಶೇರ್ ಮಾಡಿ=Please share the screen')
+    expect(lunchPairs.answer).toContain('ಮತ್ತೆ ಎಕ್ಸ್‌ಪ್ಲೇನ್ ಮಾಡಿ=Please explain again')
+    expect(requestPairs.answer).toContain('ಇವತ್ತು ಮುಗಿಸ್ತೀನಿ=I will finish today')
+    expect(requestPairs.answer).toContain('ನಾಳೆ ಕಳುಸ್ತೀನಿ=I will send tomorrow')
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
