@@ -267,6 +267,9 @@ const kannadaWordGlossary: Record<string, ReadableSubtitle> = {
   'ಬೇಡ': { romanization: 'beda', english: 'do not want' },
   'ಸ್ವಲ್ಪ': { romanization: 'swalpa', english: 'a little' },
   'ಕನ್ನಡ': { romanization: 'kannada', english: 'Kannada' },
+  'ನೀವ್': { romanization: 'niiv', english: 'respectful you' },
+  'ನೀವು': { romanization: 'niivu', english: 'respectful you' },
+  'ಮೇಡಂ': { romanization: 'maedam', english: 'madam' },
   'ಬರುತ್ತದೆ': { romanization: 'baruttade', english: 'comes' },
   'ಊಟ': { romanization: 'oota', english: 'meal' },
   'ಆಯ್ತಾ': { romanization: 'aayta', english: 'done?' },
@@ -454,6 +457,30 @@ function EnglishFirstKannadaText({
       />
       <small className="romanization">{formatRomanizationSubtitle(phrase.transliteration)}</small>
       {showContext && phrase.context && <small className="readable-phrase-context">{phrase.context}</small>}
+    </span>
+  )
+}
+
+function ReadableKannadaMark({
+  text,
+  english,
+  transliteration,
+  className,
+}: {
+  text: string
+  english: string
+  transliteration: string
+  className: string
+}) {
+  const subtitle = { english, romanization: transliteration }
+
+  return (
+    <span className="readable-mark-lockup">
+      <KannadaText className={className} text={text} subtitle={subtitle} />
+      <span className="mark-subtitles">
+        <small className="english-subtitle">{formatEnglishSubtitle(english)}</small>
+        <small className="romanization">{formatRomanizationSubtitle(transliteration)}</small>
+      </span>
     </span>
   )
 }
@@ -3084,9 +3111,7 @@ function App() {
     return (
       <main className="app-shell onboarding-shell">
         <section className="splash-panel" aria-labelledby="onboarding-title">
-          <div className="logo-mark" aria-hidden="true">
-            ಕ
-          </div>
+          <ReadableKannadaMark className="logo-mark" english="Kannada letter ka" text="ಕ" transliteration="ka" />
           {onboardingStep === 'welcome' && (
             <>
               <p className="eyebrow">Offline Kannada AI teacher</p>
@@ -3584,17 +3609,18 @@ function App() {
       <aside className="sidebar" aria-label="Primary navigation">
         <div>
           <div className="brand-lockup">
-            <KannadaText ariaLabel="Kannada letter ka, Say: ka" className="brand-mark" text="ಕ" subtitle={null} />
+            <ReadableKannadaMark className="brand-mark" english="Kannada letter ka" text="ಕ" transliteration="ka" />
             <div>
               <strong>KannadaOS</strong>
               <p>
-                <KannadaText
-                  ariaLabel="English: Learn Kannada ಕನ್ನಡ ಕಲಿಯಿರಿ Say: kannada kaliyiri"
-                  text="ಕನ್ನಡ ಕಲಿಯಿರಿ"
-                  subtitle={null}
+                <EnglishFirstKannadaText
+                  phrase={{
+                    english: 'Learn Kannada',
+                    kannada: 'ಕನ್ನಡ ಕಲಿಯಿರಿ',
+                    transliteration: 'kannada kaliyiri',
+                  }}
                 />
               </p>
-              <small>Learn Kannada</small>
             </div>
           </div>
           <nav className="nav-stack">
@@ -3684,7 +3710,7 @@ function App() {
                   key={unit.id}
                 >
                   {unit.optional ? (
-                    <KannadaText ariaLabel="Kannada script academy, Say: a" text="ಅ" subtitle={null} />
+                    <ReadableKannadaMark className="script-unit-mark" english="Kannada letter a" text="ಅ" transliteration="a" />
                   ) : (
                     <span>{unlockedUnit ? '★' : 'lock'}</span>
                   )}
@@ -3743,7 +3769,7 @@ function App() {
                 </header>
                 {activeTipsUnit.tips.map((tip) => (
                   <article className="tip-row" key={tip.title}>
-                    <strong>{tip.title}</strong>
+                    <strong><ReadableStatusText text={tip.title} /></strong>
                     <p><ReadableStatusText text={tip.body} /></p>
                     <ReadableExampleList examples={tip.examples} />
                   </article>
@@ -4914,7 +4940,7 @@ function App() {
           <h3 id="unit-tips-title">{nextUnit.title}</h3>
           {nextUnit.tips.map((tip) => (
             <article key={tip.title}>
-              <strong>{tip.title}</strong>
+              <strong><ReadableStatusText text={tip.title} /></strong>
               <p><ReadableStatusText text={tip.body} /></p>
               <ReadableExampleList examples={tip.examples} />
             </article>
@@ -5010,7 +5036,7 @@ function App() {
               key={unit.id}
             >
               {unit.optional ? (
-                <KannadaText ariaLabel="Kannada script academy, Say: a" text="ಅ" subtitle={null} />
+                <ReadableKannadaMark className="script-unit-mark" english="Kannada letter a" text="ಅ" transliteration="a" />
               ) : (
                 <span>{unlockedUnitIds.has(unit.id) ? '★' : 'lock'}</span>
               )}

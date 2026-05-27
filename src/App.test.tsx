@@ -23,6 +23,21 @@ async function completeOnboarding(user: ReturnType<typeof userEvent.setup>, dail
   await user.click(screen.getByRole('button', { name: /start learning/i }))
 }
 
+async function renderApp() {
+  let rendered: ReturnType<typeof render> | undefined
+  await act(async () => {
+    rendered = render(<App />)
+    await Promise.resolve()
+  })
+  return rendered!
+}
+
+async function pressShortcut(key: string) {
+  await act(async () => {
+    fireEvent.keyDown(window, { key, metaKey: true })
+  })
+}
+
 function stubKannadaWebSpeech(voices: Array<{ lang: string; name: string }> = []) {
   const speak = vi.fn()
   vi.stubGlobal('speechSynthesis', {
@@ -57,7 +72,10 @@ describe('KannadaOS desktop app', () => {
     })
   })
 
-  afterEach(() => {
+  afterEach(async () => {
+    await act(async () => {
+      await Promise.resolve()
+    })
     vi.unstubAllGlobals()
     vi.useRealTimers()
   })
@@ -327,7 +345,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /^English: Sounds like ii\s+ಈ\s+Say: ii/i })).toBeInTheDocument()
   })
 
-  it('shows navigation badges for active streak and due practice reviews', () => {
+  it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),
       streakDays: 3,
@@ -358,7 +376,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:progress', serializeProgress(progress))
 
-    render(<App />)
+    await renderApp()
 
     const navigation = screen.getByLabelText(/Primary navigation/i)
     expect(within(navigation).getByRole('button', { name: /Dashboard.*streak active/i })).toBeInTheDocument()
@@ -377,7 +395,7 @@ describe('KannadaOS desktop app', () => {
       lastHeartLostAt: '2026-05-27T08:30:00.000Z',
     }))
 
-    render(<App />)
+    await renderApp()
 
     const recoveryCard = screen.getByRole('region', { name: /Out of Hearts/i })
     expect(within(recoveryCard).getByRole('heading', { name: /Out of Hearts/i })).toBeInTheDocument()
@@ -678,14 +696,35 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    expect(screen.getByText(/^English: Kannada letter ka$/i)).toBeInTheDocument()
+    expect(screen.getByText(/^Say: ka$/i)).toBeInTheDocument()
+
     await completeOnboarding(user)
 
-    expect(screen.getByLabelText(/^English: Learn Kannada ಕನ್ನಡ ಕಲಿಯಿರಿ Say: kannada kaliyiri$/i)).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/^English: Learn Kannada ಕನ್ನಡ ಕಲಿಯಿರಿ Say: kannada kaliyiri$/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/^English: Kannada letter ka$/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/^Say: ka$/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText(/^Say: kannada kaliyiri$/i)).toBeInTheDocument()
     expect(screen.getAllByText(/^English: hello$/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/^Say: namaskara$/i).length).toBeGreaterThanOrEqual(1)
     expect(
       screen.getAllByLabelText(/^English: I to school need to go\s+ನಾನು ಶಾಲೆಗೆ ಹೋಗಬೇಕು\s+Say: naanu shaalege hogbeku$/i).length,
     ).toBeGreaterThanOrEqual(1)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    expect(screen.getAllByText(/^English: Kannada letter a$/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/^Say: a$/i).length).toBeGreaterThanOrEqual(1)
+
+    const officeUnit = screen.getByText(/Unit 7: Office & Workplace/i).closest('article')
+    expect(officeUnit).not.toBeNull()
+    await user.click(within(officeUnit!).getByRole('button', { name: /tips/i }))
+
+    const officeTips = screen.getByRole('dialog', { name: /Tips: Office & Workplace/i })
+    expect(within(officeTips).getByText(/^English: respectful you \/ respectful you$/i)).toBeInTheDocument()
+    expect(within(officeTips).getByText(/^Say: niiv \/ niivu$/i)).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    fireEvent.keyDown(window, { key: '1', metaKey: true })
 
     await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
@@ -700,7 +739,7 @@ describe('KannadaOS desktop app', () => {
     ).toBeInTheDocument()
   })
 
-  it('keeps English subtitles visible when a Kannada label sounds the same in English', () => {
+  it('keeps English subtitles visible when a Kannada label sounds the same in English', async () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:ai-expansion', JSON.stringify([
       {
@@ -713,7 +752,7 @@ describe('KannadaOS desktop app', () => {
       },
     ]))
 
-    render(<App />)
+    await renderApp()
 
     const expansionQueue = screen.getByLabelText(/AI curriculum expansion/i)
     expect(within(expansionQueue).getByText('English: ticket')).toBeInTheDocument()
@@ -731,7 +770,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:progress', serializeProgress(progress))
 
-    render(<App />)
+    await renderApp()
 
     await user.click(screen.getByRole('button', { name: /learn/i }))
     await user.click(screen.getByRole('button', { name: new RegExp(introductionsLesson.title, 'i') }))
@@ -876,7 +915,7 @@ describe('KannadaOS desktop app', () => {
 
   it('switches primary tabs with desktop keyboard shortcuts', async () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
-    render(<App />)
+    await renderApp()
 
     const navigation = screen.getByLabelText(/Primary navigation/i)
     const navButtons = within(navigation).getAllByRole('button').slice(0, 7)
@@ -899,25 +938,25 @@ describe('KannadaOS desktop app', () => {
       'Meta+7 Control+7',
     ])
 
-    fireEvent.keyDown(window, { key: '1', metaKey: true })
+    await pressShortcut('1')
     expect(screen.getByRole('heading', { name: /^KannadaOS$/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: '2', metaKey: true })
+    await pressShortcut('2')
     expect(screen.getByRole('heading', { name: /Learn Kannada/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: '3', metaKey: true })
+    await pressShortcut('3')
     expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: '4', metaKey: true })
+    await pressShortcut('4')
     expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: '5', metaKey: true })
+    await pressShortcut('5')
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: '6', metaKey: true })
+    await pressShortcut('6')
     expect(screen.getByRole('heading', { name: /Slang of the Day/i })).toBeInTheDocument()
 
-    fireEvent.keyDown(window, { key: '7', metaKey: true })
+    await pressShortcut('7')
     expect(screen.getByRole('heading', { name: /Rahul/i })).toBeInTheDocument()
   })
 
