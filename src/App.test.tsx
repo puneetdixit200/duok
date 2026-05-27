@@ -64,7 +64,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /Continue: Hello & Thanks/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Greetings & Basics/i })).toBeInTheDocument()
     expect(screen.getAllByText(/^Universal polite greeting$/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText(/ನಮಸ್ಕಾರ ಸಾರ್ \(namaskara saar/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/^English: Hello sir$/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByLabelText(/Daily quests/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/0 of 20 XP/i)).toHaveTextContent('0/20')
     expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"dailyGoalXp":20')
@@ -606,6 +606,32 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
 
     expect(screen.getByRole('button', { name: /^English: came\s+ಬಂದ\s+Say: banda/i })).toBeInTheDocument()
+  })
+
+  it('adds English and romanized aria labels to visible Kannada text', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+
+    expect(screen.getByLabelText(/^English: Learn Kannada ಕನ್ನಡ ಕಲಿಯಿರಿ Say: kannada kaliyiri$/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/^English: hello$/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/^Say: namaskara$/i).length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getAllByLabelText(/^English: I to school need to go\s+ನಾನು ಶಾಲೆಗೆ ಹೋಗಬೇಕು\s+Say: naanu shaalege hogbeku$/i).length,
+    ).toBeGreaterThanOrEqual(1)
+
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
+
+    expect(screen.getByLabelText(/^English: Hello sir\s+ನಮಸ್ಕಾರ ಸಾರ್\s+Say: namaskara saar$/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /close lesson/i }))
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+    await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
+
+    expect(
+      screen.getByLabelText(/^English: Rahul came to Bangalore\.\s+ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ\.\s+Say: raahul bengalurige banda$/i),
+    ).toBeInTheDocument()
   })
 
   it('keeps English subtitles visible when a Kannada label sounds the same in English', () => {

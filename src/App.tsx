@@ -379,6 +379,35 @@ function SubtitleLines({ text, context }: { text: string; context?: LessonExerci
   )
 }
 
+interface KannadaTextProps {
+  text: string
+  context?: LessonExercise
+  className?: string
+  ariaLabel?: string
+  subtitle?: ReadableSubtitle | null
+}
+
+function getReadableKannadaAriaLabel(text: string, context?: LessonExercise, subtitle?: ReadableSubtitle | null): string {
+  const readableSubtitle = subtitle === undefined ? getKannadaSubtitle(text, context) : subtitle
+  return readableSubtitle ? formatReadableKannadaChoice(text, readableSubtitle) : text
+}
+
+function KannadaText({ text, context, className, ariaLabel, subtitle }: KannadaTextProps) {
+  return (
+    <span className={className} lang="kn" aria-label={ariaLabel ?? getReadableKannadaAriaLabel(text, context, subtitle)}>
+      {text}
+    </span>
+  )
+}
+
+function KannadaStrong({ text, context, className, ariaLabel, subtitle }: KannadaTextProps) {
+  return (
+    <strong className={className} lang="kn" aria-label={ariaLabel ?? getReadableKannadaAriaLabel(text, context, subtitle)}>
+      {text}
+    </strong>
+  )
+}
+
 function EnglishFirstKannadaText({
   phrase,
   showContext = false,
@@ -389,7 +418,11 @@ function EnglishFirstKannadaText({
   return (
     <span className="readable-phrase" aria-label={formatReadablePhrase(phrase)}>
       <strong className="readable-phrase-english">{formatEnglishSubtitle(phrase.english)}</strong>
-      <span lang="kn">{phrase.kannada}</span>
+      <KannadaText
+        ariaLabel={formatReadablePhrase(phrase)}
+        text={phrase.kannada}
+        subtitle={{ english: phrase.english, romanization: phrase.transliteration }}
+      />
       <small className="romanization">{formatRomanizationSubtitle(phrase.transliteration)}</small>
       {showContext && phrase.context && <small className="readable-phrase-context">{phrase.context}</small>}
     </span>
@@ -403,7 +436,7 @@ function ChoiceText({ text, context }: { text: string; context?: LessonExercise 
 
   const subtitle = getKannadaSubtitle(text, context)
   if (!subtitle) {
-    return <span lang="kn">{text}</span>
+    return <KannadaText text={text} context={context} subtitle={subtitle} />
   }
 
   const hasEnglishSubtitle = hasEnglishSubtitleText(subtitle)
@@ -413,7 +446,7 @@ function ChoiceText({ text, context }: { text: string; context?: LessonExercise 
       {hasEnglishSubtitle && (
         <span className="english-subtitle choice-primary-english">{formatEnglishSubtitle(subtitle.english)}</span>
       )}
-      <span lang="kn">{text}</span>
+      <KannadaText text={text} context={context} subtitle={subtitle} />
       <small className="romanization">{formatRomanizationSubtitle(subtitle.romanization)}</small>
     </span>
   )
@@ -453,7 +486,7 @@ function EnglishWordGuide({ words, context }: { words: string[]; context?: Lesso
       {guideEntries.map(({ word, subtitle }, index) => (
         <article className="word-guide-item" key={`${word}-${index}`} aria-label={formatReadableKannadaChoice(word, subtitle)}>
           <strong className="word-guide-english">{subtitle.english || 'Kannada word'}</strong>
-          <span lang="kn">{word}</span>
+          <KannadaText text={word} context={context} subtitle={subtitle} />
           <small className="romanization">{formatRomanizationSubtitle(subtitle.romanization)}</small>
         </article>
       ))}
@@ -462,11 +495,41 @@ function EnglishWordGuide({ words, context }: { words: string[]; context?: Lesso
 }
 
 function ReadableStatusText({ text, context }: { text: string; context?: LessonExercise }) {
+  const ariaLabel = containsKannada(text) ? getReadableKannadaAriaLabel(text, context) : undefined
+
   return (
     <>
-      <span>{text}</span>
+      <span aria-label={ariaLabel}>{text}</span>
       <SubtitleLines text={text} context={context} />
     </>
+  )
+}
+
+function ReadableExampleList({ examples }: { examples: string[] }) {
+  return (
+    <span className="readable-example-list">
+      {examples.map((example) => (
+        <ReadableExampleText example={example} key={example} />
+      ))}
+    </span>
+  )
+}
+
+function ReadableExampleText({ example }: { example: string }) {
+  const subtitle = getKannadaSubtitle(example)
+
+  if (!subtitle) {
+    return <span className="readable-example">{example}</span>
+  }
+
+  return (
+    <span className="readable-example">
+      {hasEnglishSubtitleText(subtitle) && (
+        <span className="english-subtitle">{formatEnglishSubtitle(subtitle.english)}</span>
+      )}
+      <KannadaText text={example} subtitle={subtitle} />
+      <small className="romanization">{formatRomanizationSubtitle(subtitle.romanization)}</small>
+    </span>
   )
 }
 
@@ -770,17 +833,6 @@ function romanizeKannadaScript(text: string): string {
 
 function flushKannadaConsonant(consonant: string): string {
   return consonant ? `${consonant}a` : ''
-}
-
-function formatReadableExample(example: string): string {
-  const subtitle = getKannadaSubtitle(example)
-
-  if (!subtitle) {
-    return example
-  }
-
-  const english = subtitle.english ? ` - ${subtitle.english}` : ''
-  return `${example} (${subtitle.romanization}${english})`
 }
 
 function buildReviewOptions(phrase: Phrase): string[] {
@@ -2911,10 +2963,16 @@ function App() {
       <aside className="sidebar" aria-label="Primary navigation">
         <div>
           <div className="brand-lockup">
-            <span className="brand-mark">ಕ</span>
+            <KannadaText ariaLabel="Kannada letter ka, Say: ka" className="brand-mark" text="ಕ" subtitle={null} />
             <div>
               <strong>KannadaOS</strong>
-              <p>ಕನ್ನಡ ಕಲಿಯಿರಿ</p>
+              <p>
+                <KannadaText
+                  ariaLabel="English: Learn Kannada ಕನ್ನಡ ಕಲಿಯಿರಿ Say: kannada kaliyiri"
+                  text="ಕನ್ನಡ ಕಲಿಯಿರಿ"
+                  subtitle={null}
+                />
+              </p>
               <small>Learn Kannada</small>
             </div>
           </div>
@@ -3000,7 +3058,11 @@ function App() {
                   className={unlockedUnit ? 'map-node unit-node current' : 'map-node unit-node locked'}
                   key={unit.id}
                 >
-                  <span>{unit.optional ? 'ಅ' : unlockedUnit ? '★' : 'lock'}</span>
+                  {unit.optional ? (
+                    <KannadaText ariaLabel="Kannada script academy, Say: a" text="ಅ" subtitle={null} />
+                  ) : (
+                    <span>{unlockedUnit ? '★' : 'lock'}</span>
+                  )}
                   <strong>Unit {unitNumber}: {unit.title}</strong>
                   <small>{unit.description}</small>
                   <button className="secondary-action compact-action" onClick={() => setTipsUnitId(unit.id)} type="button">
@@ -3043,8 +3105,8 @@ function App() {
                 {activeTipsUnit.tips.map((tip) => (
                   <article className="tip-row" key={tip.title}>
                     <strong>{tip.title}</strong>
-                    <p>{tip.body}</p>
-                    <small>{tip.examples.map(formatReadableExample).join(' / ')}</small>
+                    <p><ReadableStatusText text={tip.body} /></p>
+                    <ReadableExampleList examples={tip.examples} />
                   </article>
                 ))}
                 <button className="primary-action" onClick={() => openLesson(activeTipsUnit.lessons[0].id)} type="button">
@@ -3194,7 +3256,16 @@ function App() {
                   </div>
                   <div className="phrase-card review-card">
                     <small>Choose the meaning</small>
-                    <strong lang="kn">{activeReviewPhrase.kannada}</strong>
+                    <KannadaStrong
+                      ariaLabel={formatReadablePhrase({
+                        kannada: activeReviewPhrase.kannada,
+                        transliteration: activeReviewPhrase.transliteration,
+                        english: activeReviewPhrase.english,
+                        context: activeReviewPhrase.context,
+                      })}
+                      text={activeReviewPhrase.kannada}
+                      subtitle={{ english: activeReviewPhrase.english, romanization: activeReviewPhrase.transliteration }}
+                    />
                     <span className="kannada-subtitles">
                       <small className="romanization">{activeReviewPhrase.transliteration}</small>
                       <small className="english-subtitle">{activeReviewPhrase.english}</small>
@@ -3260,7 +3331,10 @@ function App() {
                 type="button"
               >
                 <small className="english-subtitle flashcard-primary-english">{formatEnglishSubtitle(card.english)}</small>
-                <span lang="kn">{card.kannada}</span>
+                <KannadaText
+                  text={card.kannada}
+                  subtitle={{ english: card.english, romanization: card.transliteration }}
+                />
                 <small className="romanization">{formatRomanizationSubtitle(card.transliteration)}</small>
                 <strong>{flashcardBack ? card.english : card.transliteration}</strong>
                 {flashcardBack ? (
@@ -3444,7 +3518,11 @@ function App() {
               <article className="story-sentence-card" key={activeStorySentence.id}>
                 <span className="metric-pill">{activeStorySentenceIndex + 1}/{activeStorySentenceCount}</span>
                 <strong className="story-sentence-english">{activeStorySentence.english}</strong>
-                <span className="story-sentence-kannada" lang="kn">{activeStorySentence.kannada}</span>
+                <KannadaText
+                  className="story-sentence-kannada"
+                  text={activeStorySentence.kannada}
+                  subtitle={{ english: activeStorySentence.english, romanization: activeStorySentence.transliteration }}
+                />
                 <em>{formatRomanizationSubtitle(activeStorySentence.transliteration)}</em>
                 <div className="story-word-row">
                   {activeStorySentence.words.map((word) => (
@@ -3456,7 +3534,10 @@ function App() {
                       type="button"
                     >
                       <strong className="word-token-english">{formatEnglishSubtitle(word.english)}</strong>
-                      <span lang="kn">{word.text}</span>
+                      <KannadaText
+                        text={word.text}
+                        subtitle={{ english: word.english, romanization: word.transliteration }}
+                      />
                       <small className="romanization">{formatRomanizationSubtitle(word.transliteration)}</small>
                     </button>
                   ))}
@@ -3472,7 +3553,10 @@ function App() {
                 <div>
                   <strong>{formatEnglishSubtitle(selectedStoryWord.english)}</strong>
                   <span className="kannada-subtitles">
-                    <span lang="kn">{selectedStoryWord.text}</span>
+                    <KannadaText
+                      text={selectedStoryWord.text}
+                      subtitle={{ english: selectedStoryWord.english, romanization: selectedStoryWord.transliteration }}
+                    />
                     <small className="romanization">{formatRomanizationSubtitle(selectedStoryWord.transliteration)}</small>
                   </span>
                 </div>
@@ -4049,8 +4133,8 @@ function App() {
           {nextUnit.tips.map((tip) => (
             <article key={tip.title}>
               <strong>{tip.title}</strong>
-              <p>{tip.body}</p>
-              <small>{tip.examples.map(formatReadableExample).join(' / ')}</small>
+              <p><ReadableStatusText text={tip.body} /></p>
+              <ReadableExampleList examples={tip.examples} />
             </article>
           ))}
         </section>
@@ -4143,7 +4227,11 @@ function App() {
               className={unlockedUnitIds.has(unit.id) ? 'map-node unit-node current' : 'map-node unit-node locked'}
               key={unit.id}
             >
-              <span>{unit.optional ? 'ಅ' : unlockedUnitIds.has(unit.id) ? '★' : 'lock'}</span>
+              {unit.optional ? (
+                <KannadaText ariaLabel="Kannada script academy, Say: a" text="ಅ" subtitle={null} />
+              ) : (
+                <span>{unlockedUnitIds.has(unit.id) ? '★' : 'lock'}</span>
+              )}
               <strong>{unit.optional ? `Optional: ${unit.title}` : unit.title}</strong>
               <small>{unit.description}</small>
               <div className="lesson-dot-row">
@@ -4260,7 +4348,7 @@ function App() {
       return (
         <>
           <div className="phrase-card">
-            <strong lang="kn">{exercise.kannada}</strong>
+            <KannadaStrong text={exercise.kannada} context={exercise} />
             <SubtitleLines text={exercise.kannada} context={exercise} />
           </div>
           <div className="speaking-card">
@@ -4334,7 +4422,10 @@ function App() {
         <>
           <div className="phrase-card">
             <small>{exercise.english}</small>
-            <strong lang="kn">{scriptTransliterationExercise ? exercise.kannada : exercise.answer}</strong>
+            <KannadaStrong
+              text={scriptTransliterationExercise ? exercise.kannada : exercise.answer}
+              context={exercise}
+            />
             <SubtitleLines text={scriptTransliterationExercise ? exercise.kannada : exercise.answer} context={exercise} />
             <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
@@ -4391,7 +4482,7 @@ function App() {
         <>
           <div className="phrase-card dialogue-card">
             <small>Reply to the line</small>
-            <strong lang="kn">{exercise.kannada}</strong>
+            <KannadaStrong text={exercise.kannada} context={exercise} />
             <SubtitleLines text={exercise.kannada} context={exercise} />
             <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
@@ -4456,7 +4547,7 @@ function App() {
     return (
       <>
         <div className="phrase-card">
-          <strong lang="kn">{exercise.kannada}</strong>
+          <KannadaStrong text={exercise.kannada} context={exercise} />
           <SubtitleLines text={exercise.kannada} context={exercise} />
           {exercise.english && <small>{exercise.english}</small>}
           <button type="button" className="mini-button" onClick={() => void playExerciseReference(exercise)}>
