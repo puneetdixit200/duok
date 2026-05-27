@@ -82,6 +82,8 @@ async function main() {
     await page.getByRole('heading', { name: /Stories/i }).waitFor()
     await page.getByRole('button', { name: /read first day in bangalore/i }).click()
     await page.getByText(/ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ/i).waitFor()
+    await page.getByRole('button', { name: /play sentence audio/i }).first().click()
+    await page.getByText(/Story Piper audio ready:|Playing story audio:/i).waitFor()
     await page.getByRole('button', { name: 'ಬಂದ' }).click()
     await page.getByRole('dialog', { name: /ಬಂದ/i }).waitFor()
     await page.getByRole('button', { name: /take quiz/i }).click()

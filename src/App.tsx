@@ -69,7 +69,7 @@ import {
   type ConversationStore,
 } from './services/conversationLog'
 import { applyLearnerStorage, collectLearnerStorage } from './services/learnerStore'
-import type { GeneratedExercise, LessonExercise, Phrase, Scenario, StoryWord, TutorPersona } from './types'
+import type { GeneratedExercise, LessonExercise, Phrase, Scenario, StorySentence, StoryWord, TutorPersona } from './types'
 import './styles.css'
 
 type Tab = 'home' | 'learn' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
@@ -420,6 +420,10 @@ function formatReadableKannadaChoice(text: string, subtitle: ReadableSubtitle): 
 
 function isFlashcardAudioStatus(status: string): boolean {
   return /^Playing flashcard audio:|^Flashcard Piper/i.test(status)
+}
+
+function isStoryAudioStatus(status: string): boolean {
+  return /^Playing story audio:|^Story Piper/i.test(status)
 }
 
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
@@ -1729,6 +1733,37 @@ function App() {
     }
 
     setAudioStatus(result.error ?? 'Flashcard Piper synthesis failed.')
+  }
+
+  async function playStorySentenceAudio(sentence: StorySentence) {
+    const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
+    if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      setAudioStatus(`Playing story audio: ${sentence.transliteration}`)
+      return
+    }
+
+    setAudioStatus('Story Piper synthesis running...')
+    const result = await synthesizeNativeSpeech({
+      runtimeConfig,
+      text: sentence.kannada,
+    })
+
+    if (result.ok) {
+      if (result.audioUrl) {
+        try {
+          const audio = new Audio(result.audioUrl)
+          await audio.play()
+        } catch {
+          setAudioStatus(`Story Piper audio ready: ${result.audioPath} (playback unavailable)`)
+          return
+        }
+      }
+
+      setAudioStatus(`Story Piper audio ready: ${result.audioPath}`)
+      return
+    }
+
+    setAudioStatus(result.error ?? 'Story Piper synthesis failed.')
   }
 
   async function checkLocalRuntime() {
@@ -3048,12 +3083,13 @@ function App() {
                       </button>
                     ))}
                   </div>
-                  <button className="mini-button" type="button">
+                  <button className="mini-button" onClick={() => void playStorySentenceAudio(sentence)} type="button">
                     Play sentence audio
                   </button>
                 </article>
               ))}
             </div>
+            {isStoryAudioStatus(audioStatus) && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
             {selectedStoryWord && (
               <aside className="word-popover" role="dialog" aria-label={selectedStoryWord.text}>
                 <div>

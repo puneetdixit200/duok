@@ -1595,4 +1595,17 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Story Complete/i })).toBeInTheDocument()
     expect(screen.getByText(/\+20 XP/i)).toBeInTheDocument()
   })
+
+  it('plays story sentence audio from the reader', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+    await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
+
+    await user.click(screen.getAllByRole('button', { name: /play sentence audio/i })[0])
+
+    expect(screen.getByText(/Playing story audio: raahul bengalurige banda/i)).toBeInTheDocument()
+  })
 })
