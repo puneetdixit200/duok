@@ -2618,9 +2618,9 @@ function App() {
             {[
               ['home', 'Dashboard'],
               ['learn', 'Learn'],
-              ['chat', 'Chat'],
               ['practice', 'Practice'],
               ['stories', 'Stories'],
+              ['chat', 'Chat'],
               ['blr', 'BLR'],
               ['me', 'Me'],
             ].map(([id, label]) => {

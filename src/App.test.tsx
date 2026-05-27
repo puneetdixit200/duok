@@ -513,6 +513,20 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     render(<App />)
 
+    const navigation = screen.getByLabelText(/Primary navigation/i)
+    expect(within(navigation).getAllByRole('button').slice(0, 7).map((button) => button.textContent)).toEqual([
+      'Dashboard',
+      'Learn',
+      'Practice',
+      'Stories',
+      'Chat',
+      'BLR',
+      'Me',
+    ])
+
+    fireEvent.keyDown(window, { key: '1', metaKey: true })
+    expect(screen.getByRole('heading', { name: /^KannadaOS$/i })).toBeInTheDocument()
+
     fireEvent.keyDown(window, { key: '2', metaKey: true })
     expect(screen.getByRole('heading', { name: /Learn Kannada/i })).toBeInTheDocument()
 
@@ -524,6 +538,12 @@ describe('KannadaOS desktop app', () => {
 
     fireEvent.keyDown(window, { key: '5', metaKey: true })
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '6', metaKey: true })
+    expect(screen.getByRole('heading', { name: /Slang of the Day/i })).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: '7', metaKey: true })
+    expect(screen.getByRole('heading', { name: /Rahul/i })).toBeInTheDocument()
   })
 
   it('supports lesson keyboard bindings for select, check, replay, continue, and escape', async () => {
