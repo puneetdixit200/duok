@@ -1861,6 +1861,18 @@ describe('KannadaOS desktop app', () => {
 
   it('configures and persists daily reminder notifications', async () => {
     const user = userEvent.setup()
+    let permission: NotificationPermission = 'default'
+    const NotificationMock = vi.fn()
+    Object.defineProperty(NotificationMock, 'permission', {
+      get: () => permission,
+    })
+    Object.assign(NotificationMock, {
+      requestPermission: vi.fn(async () => {
+        permission = 'granted'
+        return permission
+      }),
+    })
+    vi.stubGlobal('Notification', NotificationMock)
     localStorage.setItem('kannadaos:onboarded', 'true')
     const { unmount } = render(<App />)
 
@@ -1873,8 +1885,10 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /8:30 PM/i }))
     await user.click(screen.getByRole('button', { name: /allow reminder alerts/i }))
 
+    expect(NotificationMock.requestPermission).toHaveBeenCalledOnce()
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(/Next reminder scheduled for/i)
 
     unmount()
     render(<App />)
@@ -1882,6 +1896,7 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(/Next reminder scheduled for/i)
   })
 
   it('exports a learner data snapshot from profile settings', async () => {

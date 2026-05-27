@@ -66,6 +66,14 @@ import {
 } from './services/localRuntime'
 import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
 import { playSoundEffect, type SoundEffectName } from './services/soundEffects'
+import {
+  formatReminderSchedule,
+  getCurrentReminderNotificationPermission,
+  getNextReminderDate,
+  requestReminderNotificationPermission,
+  showDailyReminderNotification,
+  type ReminderPermission,
+} from './services/reminders'
 import { encodePcmWav, startVoiceCapture, type RecordedAudio, type VoiceCaptureSession } from './services/voiceCapture'
 import { buildExportSnapshot, serializeExportSnapshot } from './services/exportSnapshot'
 import {
@@ -107,7 +115,7 @@ interface ModelSetupItem {
 interface ReminderPreference {
   enabled: boolean
   time: string
-  permission: 'default' | 'granted' | 'denied'
+  permission: ReminderPermission
 }
 
 interface LearnerProfile {
@@ -1220,6 +1228,22 @@ function formatHeartRecoveryDuration(remainingMs: number): string {
   return `${minutes}m`
 }
 
+function getReminderStatusText(reminder: ReminderPreference): string {
+  if (!reminder.enabled) {
+    return ''
+  }
+
+  if (reminder.permission === 'denied') {
+    return 'Reminder alerts are blocked. Enable notifications in system settings to schedule alerts.'
+  }
+
+  if (reminder.permission !== 'granted') {
+    return 'Allow reminder alerts to schedule desktop notifications.'
+  }
+
+  return `Next reminder scheduled for ${formatReminderSchedule(getNextReminderDate(reminder.time))}.`
+}
+
 function App() {
   const curriculum = useMemo(() => getLevelOneCurriculum(), [])
   const allCurriculumUnits = useMemo(() => [getScriptCurriculumUnit(), ...coreCurriculumUnits], [])
@@ -1244,6 +1268,7 @@ function App() {
   const [reminder, setReminder] = useState<ReminderPreference>(() =>
     hydrateReminder(localStorage.getItem(reminderKey)),
   )
+  const [reminderDeliveryStatus, setReminderDeliveryStatus] = useState('')
   const [runtimeConfig, setRuntimeConfig] = useState<LocalRuntimeConfig>(() =>
     hydrateLocalRuntimeConfig(localStorage.getItem(runtimeKey)),
   )
@@ -1361,6 +1386,7 @@ function App() {
   const activePronunciationPhrase =
     pronunciationPhrases.find((phrase) => phrase.id === pronunciationPhraseId) ?? pronunciationPhrases[0]
   const latestPronunciationAttempt = pronunciationHistory[0]
+  const reminderStatus = reminderDeliveryStatus || getReminderStatusText(reminder)
   const completedInCurrentLesson = Math.min(
     lessonIndex + (feedback === 'correct' ? 1 : 0),
     lessonRunExercises.length,
@@ -1389,6 +1415,44 @@ function App() {
   useEffect(() => {
     localStorage.setItem(reminderKey, JSON.stringify(reminder))
   }, [reminder])
+
+  useEffect(() => {
+    if (!reminder.enabled || reminder.permission !== 'granted') {
+      return undefined
+    }
+
+    let timeoutId: number | undefined
+    let active = true
+
+    const scheduleNextReminder = (from = new Date()) => {
+      const scheduledFor = getNextReminderDate(reminder.time, from)
+      const delayMs = Math.max(0, scheduledFor.getTime() - Date.now())
+
+      timeoutId = window.setTimeout(() => {
+        if (!active) {
+          return
+        }
+
+        const sent = showDailyReminderNotification(reminder.time)
+        if (!sent) {
+          setReminderDeliveryStatus('Reminder was due, but desktop notifications are unavailable.')
+          return
+        }
+
+        setReminderDeliveryStatus('Reminder sent. The next reminder has been scheduled.')
+        scheduleNextReminder(new Date(Date.now() + 60_000))
+      }, delayMs)
+    }
+
+    scheduleNextReminder()
+
+    return () => {
+      active = false
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId)
+      }
+    }
+  }, [reminder.enabled, reminder.permission, reminder.time])
 
   useEffect(() => {
     localStorage.setItem(runtimeKey, JSON.stringify(runtimeConfig))
@@ -2209,10 +2273,20 @@ function App() {
   }
 
   function toggleDailyReminder() {
-    setReminder((current) => ({ ...current, enabled: !current.enabled }))
+    setReminderDeliveryStatus('')
+    setReminder((current) => {
+      const notificationPermission = getCurrentReminderNotificationPermission()
+
+      return {
+        ...current,
+        enabled: !current.enabled,
+        permission: notificationPermission === 'default' ? current.permission : notificationPermission,
+      }
+    })
   }
 
   function setReminderTime(time: string) {
+    setReminderDeliveryStatus('')
     setReminder((current) => ({ ...current, time }))
   }
 
@@ -2224,8 +2298,20 @@ function App() {
     setSoundPreferences((current) => ({ ...current, [key]: !current[key] }))
   }
 
-  function allowReminderAlerts() {
-    setReminder((current) => ({ ...current, permission: 'granted' }))
+  async function allowReminderAlerts() {
+    const permission = await requestReminderNotificationPermission()
+
+    setReminder((current) => ({
+      ...current,
+      permission,
+    }))
+    setReminderDeliveryStatus(
+      permission === 'granted'
+        ? ''
+        : permission === 'denied'
+          ? 'Reminder alerts are blocked. Enable notifications in system settings to schedule alerts.'
+          : 'Reminder alerts are still waiting for permission.',
+    )
   }
 
   function claimQuestReward(quest: DailyQuest) {
@@ -4463,10 +4549,15 @@ function App() {
                   {time}
                 </button>
               ))}
-              <button className="secondary-action" onClick={allowReminderAlerts} type="button">
+              <button className="secondary-action" onClick={() => void allowReminderAlerts()} type="button">
                 Allow Reminder Alerts
               </button>
             </div>
+            {reminderStatus && (
+              <p className="voice-status" role="status">
+                {reminderStatus}
+              </p>
+            )}
           </section>
           <section className="reminder-card" aria-labelledby="daily-goal-title">
             <div>
