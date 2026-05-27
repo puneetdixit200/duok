@@ -277,6 +277,8 @@ const vowelSigns: Record<string, string> = {
   'ೃ': 'ru',
 }
 
+const knownKannadaSubtitles = buildKnownKannadaSubtitles()
+
 const pendingModels: ModelSetupItem[] = [
   {
     name: 'Aya 8B Q4',
@@ -408,17 +410,17 @@ function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSub
 }
 
 function getKannadaOnlySubtitle(text: string, context?: LessonExercise): ReadableSubtitle {
-  const phrase = survivalPhrases.find((item) => normalizeKannadaText(item.kannada) === normalizeKannadaText(text))
-  if (phrase) {
-    return { romanization: phrase.transliteration, english: phrase.english }
-  }
-
   const words = splitKannadaWords(text)
   if (words.length === 1) {
     const wordGloss = kannadaWordGlossary[words[0]]
     if (wordGloss) {
       return wordGloss
     }
+  }
+
+  const knownSubtitle = knownKannadaSubtitles.get(normalizeKannadaText(text))
+  if (knownSubtitle) {
+    return knownSubtitle
   }
 
   if (context && (text === context.kannada || text === context.answer)) {
@@ -428,10 +430,128 @@ function getKannadaOnlySubtitle(text: string, context?: LessonExercise): Readabl
     }
   }
 
+  const contextWordSubtitle = getContextWordSubtitle(text, context)
+  if (contextWordSubtitle) {
+    return contextWordSubtitle
+  }
+
   return {
     romanization: romanizeKannadaWords(text),
     english: glossKannadaWords(text),
   }
+}
+
+function buildKnownKannadaSubtitles(): Map<string, ReadableSubtitle> {
+  const subtitleMap = new Map<string, ReadableSubtitle>()
+  const allCurriculum = [...coreCurriculumUnits, getScriptCurriculumUnit()]
+
+  for (const phrase of survivalPhrases) {
+    addKnownKannadaSubtitle(subtitleMap, phrase.kannada, {
+      romanization: phrase.transliteration,
+      english: phrase.english,
+    })
+  }
+
+  for (const unit of allCurriculum) {
+    for (const lesson of unit.lessons) {
+      for (const exercise of lesson.exercises) {
+        const exerciseSubtitle = {
+          romanization: exercise.transliteration ?? romanizeKannadaWords(exercise.kannada),
+          english: exercise.english ?? (containsKannada(exercise.answer) ? exercise.explanation : exercise.answer),
+        }
+        addKnownKannadaSubtitle(subtitleMap, exercise.kannada, exerciseSubtitle)
+
+        if (containsKannada(exercise.answer)) {
+          addKnownKannadaSubtitle(subtitleMap, exercise.answer, exerciseSubtitle)
+        }
+      }
+    }
+  }
+
+  for (const scenario of bangaloreScenarios) {
+    addKnownKannadaSubtitle(subtitleMap, scenario.openingLine.kannada, {
+      romanization: scenario.openingLine.transliteration,
+      english: scenario.openingLine.english,
+    })
+
+    for (const phrase of scenario.usefulPhrases) {
+      addKnownKannadaSubtitle(subtitleMap, phrase.kannada, {
+        romanization: phrase.transliteration,
+        english: phrase.english,
+      })
+    }
+  }
+
+  for (const story of stories) {
+    for (const sentence of story.sentences) {
+      addKnownKannadaSubtitle(subtitleMap, sentence.kannada, {
+        romanization: sentence.transliteration,
+        english: sentence.english,
+      })
+
+      for (const word of sentence.words) {
+        addKnownKannadaSubtitle(subtitleMap, word.text, {
+          romanization: word.transliteration,
+          english: word.english,
+        })
+      }
+    }
+  }
+
+  return subtitleMap
+}
+
+function addKnownKannadaSubtitle(
+  subtitleMap: Map<string, ReadableSubtitle>,
+  text: string,
+  subtitle: ReadableSubtitle,
+) {
+  if (!containsKannada(text)) {
+    return
+  }
+
+  const key = normalizeKannadaText(text)
+  if (!key) {
+    return
+  }
+
+  const existing = subtitleMap.get(key)
+  if (!existing || (!existing.english && subtitle.english)) {
+    subtitleMap.set(key, subtitle)
+  }
+}
+
+function getContextWordSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
+  if (!context?.english || splitKannadaWords(text).length !== 1) {
+    return null
+  }
+
+  const normalizedText = normalizeKannadaText(text)
+  const contextWords = new Set([
+    ...splitKannadaWords(context.kannada),
+    ...splitKannadaWords(context.answer),
+  ])
+
+  if (!contextWords.has(normalizedText)) {
+    return null
+  }
+
+  return {
+    romanization: getContextWordRomanization(normalizedText, context) ?? romanizeKannadaWords(text),
+    english: `phrase: ${context.english}`,
+  }
+}
+
+function getContextWordRomanization(normalizedText: string, context: LessonExercise): string | null {
+  if (!context.transliteration) {
+    return null
+  }
+
+  const contextWords = splitKannadaWords(context.kannada)
+  const romanizedWords = context.transliteration.split(/\s+/).map((word) => word.replace(/[?!.,:;]/g, ''))
+  const wordIndex = contextWords.findIndex((word) => word === normalizedText)
+
+  return wordIndex >= 0 ? romanizedWords[wordIndex] ?? null : null
 }
 
 function extractKannadaSegments(text: string): string[] {
@@ -2561,7 +2681,8 @@ function App() {
                     <strong lang="kn">{activeReviewPhrase.kannada}</strong>
                     <span className="kannada-subtitles">
                       <small className="romanization">{activeReviewPhrase.transliteration}</small>
-                      <small className="english-subtitle">{activeReviewPhrase.context}</small>
+                      <small className="english-subtitle">{activeReviewPhrase.english}</small>
+                      <small>{activeReviewPhrase.context}</small>
                     </span>
                   </div>
                   <div className="option-stack review-session-options" aria-label="Review answers">

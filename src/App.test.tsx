@@ -205,6 +205,27 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /ಬಂದ.*banda.*came/i })).toBeInTheDocument()
   })
 
+  it('adds English phrase subtitles to generated Kannada word choices', async () => {
+    const user = userEvent.setup()
+    const firstLesson = coreCurriculumUnits[0].lessons[0]
+    const namesLesson = coreCurriculumUnits[0].lessons[1]
+    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: new RegExp(namesLesson.title, 'i') }))
+    await user.click(screen.getByRole('button', { name: /What is your name/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    const wordBank = screen.getByLabelText(/Word bank/i)
+    expect(within(wordBank).getByRole('button', { name: /ನಿಮ್ಮ.*nimma.*phrase: What is your name/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /ಹೆಸರು.*hesaru.*phrase: What is your name/i })).toBeInTheDocument()
+  })
+
   it('keeps listening answer text hidden until the learner checks', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -961,6 +982,9 @@ describe('KannadaOS desktop app', () => {
     const reviewSession = screen.getByRole('region', { name: /Review Session/i })
     expect(within(reviewSession).getByText(/1 of 1/i)).toBeInTheDocument()
     expect(within(reviewSession).getByText(/ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+    const reviewCard = reviewSession.querySelector('.review-card')
+    expect(reviewCard).not.toBeNull()
+    expect(within(reviewCard as HTMLElement).getByText(/need to go/i)).toBeInTheDocument()
 
     await user.click(within(reviewSession).getByRole('button', { name: /need to go/i }))
     await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))

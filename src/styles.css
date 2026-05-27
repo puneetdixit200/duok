@@ -626,11 +626,16 @@ h2 {
 
 .answer-option .romanization,
 .answer-option .english-subtitle {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .answer-option .english-subtitle {
   color: #f7f7fb;
+}
+
+.word-bank .romanization,
+.word-bank .english-subtitle {
+  font-size: 15px;
 }
 
 .feedback {
