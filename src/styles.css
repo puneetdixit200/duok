@@ -594,6 +594,28 @@ h2 {
   gap: 2px;
 }
 
+.readable-phrase {
+  display: grid;
+  gap: 2px;
+}
+
+.readable-phrase-english {
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.readable-phrase [lang='kn'] {
+  color: #d9d7e8;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.readable-phrase .romanization,
+.readable-phrase-context {
+  font-size: 13px;
+}
+
 .kannada-subtitles {
   color: #c9c7d6;
   line-height: 1.25;

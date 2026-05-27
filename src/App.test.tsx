@@ -817,6 +817,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByLabelText(/Confetti celebration/i)).toBeInTheDocument()
     expect(screen.getByText(/\+18 XP/i)).toBeInTheDocument()
     expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
+    expect(screen.getByLabelText('★☆☆☆☆ Crown')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Continue Learning/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Back to Home/i })).toBeInTheDocument()
 
@@ -1094,6 +1095,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /back/i }))
     await user.click(screen.getByRole('button', { name: /open auto ride in chat/i }))
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: I need to go to Majestic/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /^Me$/i }))
     const stats = screen.getByTestId('profile-stats')
@@ -1113,6 +1115,8 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Situation: You are negotiating an auto from Indiranagar to Majestic/i)).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: /Confirm meter/i })).toBeInTheDocument()
     expect(screen.getByText(/Driver: ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+    expect(screen.getAllByText('English: I need to go to Majestic').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole('radio', { name: /^English: I need to go to Majestic/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /play majestic-ge hogbeku/i }))
     expect(screen.getByText(/Playing scenario audio: Majestic-ge hogbeku/i)).toBeInTheDocument()

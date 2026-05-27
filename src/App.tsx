@@ -200,6 +200,13 @@ interface ReadableSubtitle {
   english: string
 }
 
+interface ReadablePhraseParts {
+  kannada: string
+  transliteration: string
+  english: string
+  context?: string
+}
+
 const kannadaWordGlossary: Record<string, ReadableSubtitle> = {
   'ನಮಸ್ಕಾರ': { romanization: 'namaskara', english: 'hello' },
   'ಸಾರ್': { romanization: 'saar', english: 'sir' },
@@ -365,6 +372,23 @@ function SubtitleLines({ text, context }: { text: string; context?: LessonExerci
   )
 }
 
+function EnglishFirstKannadaText({
+  phrase,
+  showContext = false,
+}: {
+  phrase: ReadablePhraseParts
+  showContext?: boolean
+}) {
+  return (
+    <span className="readable-phrase" aria-label={formatReadablePhrase(phrase)}>
+      <strong className="readable-phrase-english">{formatEnglishSubtitle(phrase.english)}</strong>
+      <span lang="kn">{phrase.kannada}</span>
+      <small className="romanization">{formatRomanizationSubtitle(phrase.transliteration)}</small>
+      {showContext && phrase.context && <small className="readable-phrase-context">{phrase.context}</small>}
+    </span>
+  )
+}
+
 function ChoiceText({ text, context }: { text: string; context?: LessonExercise }) {
   if (!containsKannada(text)) {
     return text
@@ -459,6 +483,10 @@ function formatReadableKannadaChoice(text: string, subtitle: ReadableSubtitle): 
   ]
     .filter(Boolean)
     .join(' ')
+}
+
+function formatReadablePhrase(phrase: ReadablePhraseParts): string {
+  return `${formatEnglishSubtitle(phrase.english)} ${phrase.kannada} ${formatRomanizationSubtitle(phrase.transliteration)}`
 }
 
 function isFlashcardAudioStatus(status: string): boolean {
@@ -2352,6 +2380,7 @@ function App() {
       const lessonAccuracy = lessonAttemptCount > 0 ? Math.round((lessonCorrectCount / lessonAttemptCount) * 100) : 0
       const lessonTime = formatLessonDuration(completedLessonDurationMs)
       const newWordCount = new Set(activeLesson.exercises.flatMap((exercise) => exercise.vocabularyIds)).size
+      const crownRating = formatCrownRating(getLessonProgressSummary(progress, activeLesson.id).masteryLevel)
 
       return (
         <main className="app-shell lesson-shell">
@@ -2381,6 +2410,7 @@ function App() {
               <Stat value={lessonWrongCount} label="Wrong" />
               <Stat value={newWordCount} label="New words" />
               <Stat value={lessonTime} label="Time" />
+              <Stat value={crownRating} label="Crown" />
             </div>
             <div className="completion-actions">
               <button className="primary-action" onClick={() => openLesson()} type="button">
@@ -2942,11 +2972,7 @@ function App() {
           <div className="suggestion-row">
             {selectedScenario.usefulPhrases.map((phrase) => (
               <button key={phrase.id} onClick={() => setChatInput(phrase.kannada)} type="button">
-                <strong lang="kn">{phrase.kannada}</strong>
-                <span className="kannada-subtitles">
-                  <small className="romanization">{phrase.transliteration}</small>
-                  <small className="english-subtitle">{phrase.english}</small>
-                </span>
+                <EnglishFirstKannadaText phrase={phrase} />
               </button>
             ))}
           </div>
@@ -3175,22 +3201,14 @@ function App() {
                   onClick={() => selectPronunciationPhrase(phrase.id)}
                   type="button"
                 >
-                  <strong lang="kn">{phrase.kannada}</strong>
-                  <span className="kannada-subtitles">
-                    <small className="romanization">{phrase.transliteration}</small>
-                    <small className="english-subtitle">{phrase.english}</small>
-                  </span>
+                  <EnglishFirstKannadaText phrase={phrase} />
                 </button>
               ))}
             </div>
             <article className="pronunciation-target">
               <div>
                 <span className="model-category">target phrase</span>
-                <strong lang="kn">{activePronunciationPhrase.kannada}</strong>
-                <span className="kannada-subtitles">
-                  <small className="romanization">{activePronunciationPhrase.transliteration}</small>
-                  <small className="english-subtitle">{activePronunciationPhrase.english}</small>
-                </span>
+                <EnglishFirstKannadaText phrase={activePronunciationPhrase} />
               </div>
               <div className="waveform compact" aria-hidden="true">
                 {Array.from({ length: 14 }, (_, index) => (
@@ -3500,11 +3518,7 @@ function App() {
                 <div className="scenario-phrase-list" aria-label={`${scenario.title} useful phrases`}>
                   {scenario.usefulPhrases.map((phrase) => (
                     <div className="scenario-phrase-row" key={phrase.id}>
-                      <strong lang="kn">{phrase.kannada}</strong>
-                      <span className="kannada-subtitles">
-                        <small className="romanization">{phrase.transliteration}</small>
-                        <small className="english-subtitle">{phrase.english}</small>
-                      </span>
+                      <EnglishFirstKannadaText phrase={phrase} />
                       <div className="scenario-action-row">
                         <button className="mini-button" onClick={() => void playScenarioPhraseAudio(phrase)} type="button">
                           Play {phrase.transliteration}
@@ -3521,10 +3535,7 @@ function App() {
               <article className="scenario-detail-card dialogue-practice-card">
                 <h3>Dialogue Practice</h3>
                 <p>{`Driver: ${scenario.openingLine.kannada}`}</p>
-                <span className="kannada-subtitles">
-                  <small className="romanization">{scenario.openingLine.transliteration}</small>
-                  <small className="english-subtitle">{scenario.openingLine.english}</small>
-                </span>
+                <EnglishFirstKannadaText phrase={scenario.openingLine} />
                 <fieldset>
                   <legend>Your reply</legend>
                   {dialogueOptions.map((option) => (
@@ -3538,9 +3549,7 @@ function App() {
                         }}
                         type="radio"
                       />
-                      <span lang="kn">{option.kannada}</span>
-                      <small className="romanization">{option.transliteration}</small>
-                      <small className="english-subtitle">{option.english}</small>
+                      <EnglishFirstKannadaText phrase={option} />
                     </label>
                   ))}
                 </fieldset>
@@ -4268,6 +4277,11 @@ function formatLessonDuration(durationMs: number): string {
   }
 
   return `${minutes}m ${seconds.toString().padStart(2, '0')}s`
+}
+
+function formatCrownRating(masteryLevel: number): string {
+  const filled = Math.max(0, Math.min(5, Math.round(masteryLevel)))
+  return `${'★'.repeat(filled)}${'☆'.repeat(5 - filled)}`
 }
 
 function getCompletedStoryCount(progress: ProgressState): number {
