@@ -114,6 +114,54 @@ describe('learner progress', () => {
     expect(day30Progress.achievementRewardIds).toContain('streak_30')
   })
 
+  it('uses a streak freeze for one missed day and resets longer gaps', () => {
+    const frozen = applyExerciseResult({
+      ...createInitialProgress(),
+      streakDays: 8,
+      streakFreezes: 1,
+      lastPracticeDate: '2026-05-21',
+    }, {
+      exerciseId: 'freeze-protected-practice',
+      correct: true,
+      skillTag: 'greetings',
+      xp: 2,
+      vocabularyIds: [],
+      now: '2026-05-23T09:00:00.000Z',
+    })
+
+    expect(frozen.streakDays).toBe(9)
+    expect(frozen.streakFreezes).toBe(0)
+    expect(frozen.lastPracticeDate).toBe('2026-05-23')
+
+    const broken = recordPracticeActivity({
+      ...frozen,
+      streakFreezes: 1,
+      lastPracticeDate: '2026-05-20',
+    }, {
+      activityId: 'late-review',
+      xp: 1,
+      now: '2026-05-23T10:00:00.000Z',
+    })
+
+    expect(broken.streakDays).toBe(1)
+    expect(broken.streakFreezes).toBe(1)
+    expect(broken.lastPracticeDate).toBe('2026-05-23')
+  })
+
+  it('applies streak freeze rules to Bangalore checklist activity rewards', () => {
+    const progress = toggleScenarioChecklistItem({
+      ...createInitialProgress(),
+      streakDays: 4,
+      streakFreezes: 1,
+      lastPracticeDate: '2026-05-21',
+    }, 'auto-ride', 'Say destination', ['Say destination'], '2026-05-23T09:00:00.000Z')
+
+    expect(progress.xp).toBe(10)
+    expect(progress.streakDays).toBe(5)
+    expect(progress.streakFreezes).toBe(0)
+    expect(progress.lastPracticeDate).toBe('2026-05-23')
+  })
+
   it('tracks weak areas, removes a heart, and schedules review for incorrect answers', () => {
     const progress = applyExerciseResult(createInitialProgress(), {
       exerciseId: 'survival-fill-1',

@@ -135,12 +135,11 @@ export function createInitialProgress(): ProgressState {
 export function applyExerciseResult(state: ProgressState, result: ExerciseResult): ProgressState {
   const practiceDate = result.now.slice(0, 10)
   const isSamePracticeDate = state.lastPracticeDate === practiceDate
-  const shouldStartOrContinueStreak = !isSamePracticeDate
   const earnedXp = result.correct ? result.xp : 0
   const baseDailyXp = isSamePracticeDate ? state.dailyXp : 0
   const baseTodayActivityIds = isSamePracticeDate ? state.todayActivityIds : []
-  const nextStreakDays = shouldStartOrContinueStreak ? Math.max(1, state.streakDays + 1) : state.streakDays
-  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
+  const streakUpdate = getPracticeStreakUpdate(state, result.now)
+  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, streakUpdate.streakDays)
   const reviewQueue = { ...state.reviewQueue }
 
   for (const vocabularyId of result.vocabularyIds) {
@@ -165,8 +164,9 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
     gems: state.gems + streakRewards.gems,
     hearts: result.correct ? state.hearts : Math.max(0, state.hearts - 1),
     lastHeartLostAt: result.correct ? state.lastHeartLostAt : result.now,
-    streakDays: nextStreakDays,
-    lastPracticeDate: practiceDate,
+    streakDays: streakUpdate.streakDays,
+    lastPracticeDate: streakUpdate.lastPracticeDate,
+    streakFreezes: streakUpdate.streakFreezes,
     completedExerciseIds: state.completedExerciseIds.includes(result.exerciseId)
       ? [...state.completedExerciseIds, ...streakRewards.activityIds]
       : [...state.completedExerciseIds, result.exerciseId, ...streakRewards.activityIds],
@@ -439,8 +439,8 @@ export function recordPracticeActivity(state: ProgressState, result: PracticeAct
     Math.floor(baseTodayActivityIds.length / practiceHeartRefillThreshold) <
       Math.floor(todayActivityIds.length / practiceHeartRefillThreshold)
   const hearts = shouldRestoreHeart ? Math.min(maxHearts, state.hearts + 1) : state.hearts
-  const nextStreakDays = isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1)
-  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
+  const streakUpdate = getPracticeStreakUpdate(state, result.now)
+  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, streakUpdate.streakDays)
 
   const nextState: ProgressState = {
     ...state,
@@ -449,8 +449,9 @@ export function recordPracticeActivity(state: ProgressState, result: PracticeAct
     gems: state.gems + streakRewards.gems,
     hearts,
     lastHeartLostAt: hearts >= maxHearts ? null : state.lastHeartLostAt,
-    streakDays: nextStreakDays,
-    lastPracticeDate: practiceDate,
+    streakDays: streakUpdate.streakDays,
+    lastPracticeDate: streakUpdate.lastPracticeDate,
+    streakFreezes: streakUpdate.streakFreezes,
     completedExerciseIds: state.completedExerciseIds.includes(result.activityId)
       ? [...state.completedExerciseIds, ...streakRewards.activityIds]
       : [...state.completedExerciseIds, result.activityId, ...streakRewards.activityIds],
@@ -504,16 +505,17 @@ export function toggleScenarioChecklistItem(
   const isSamePracticeDate = state.lastPracticeDate === practiceDate
   const baseDailyXp = isSamePracticeDate ? state.dailyXp : 0
   const baseTodayActivityIds = isSamePracticeDate ? state.todayActivityIds : []
-  const nextStreakDays = isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1)
-  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
+  const streakUpdate = getPracticeStreakUpdate(state, now)
+  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, streakUpdate.streakDays)
 
   const nextState: ProgressState = {
     ...state,
     xp: state.xp + bangaloreScenarioChecklistXp,
     dailyXp: baseDailyXp + bangaloreScenarioChecklistXp,
     gems: state.gems + streakRewards.gems,
-    streakDays: nextStreakDays,
-    lastPracticeDate: practiceDate,
+    streakDays: streakUpdate.streakDays,
+    lastPracticeDate: streakUpdate.lastPracticeDate,
+    streakFreezes: streakUpdate.streakFreezes,
     completedExerciseIds: [...state.completedExerciseIds, activityId, ...streakRewards.activityIds],
     todayActivityIds: baseTodayActivityIds.includes(activityId)
       ? baseTodayActivityIds
@@ -751,6 +753,54 @@ function addDays(isoDate: string, days: number): string {
 
 function hydrateStringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+function getPracticeStreakUpdate(
+  state: ProgressState,
+  now: string,
+): Pick<ProgressState, 'streakDays' | 'lastPracticeDate' | 'streakFreezes'> {
+  const today = now.slice(0, 10)
+
+  if (state.lastPracticeDate === today) {
+    return {
+      streakDays: state.streakDays,
+      lastPracticeDate: state.lastPracticeDate,
+      streakFreezes: state.streakFreezes,
+    }
+  }
+
+  if (state.lastPracticeDate === getDateKeyWithOffset(today, -1)) {
+    return {
+      streakDays: state.streakDays + 1,
+      lastPracticeDate: today,
+      streakFreezes: state.streakFreezes,
+    }
+  }
+
+  if (state.streakFreezes > 0 && state.lastPracticeDate === getDateKeyWithOffset(today, -2)) {
+    return {
+      streakDays: state.streakDays + 1,
+      lastPracticeDate: today,
+      streakFreezes: state.streakFreezes - 1,
+    }
+  }
+
+  return {
+    streakDays: 1,
+    lastPracticeDate: today,
+    streakFreezes: state.streakFreezes,
+  }
+}
+
+function getDateKeyWithOffset(dateKey: string, offsetDays: number): string {
+  const date = new Date(`${dateKey}T00:00:00.000Z`)
+
+  if (!Number.isFinite(date.getTime())) {
+    return ''
+  }
+
+  date.setUTCDate(date.getUTCDate() + offsetDays)
+  return date.toISOString().slice(0, 10)
 }
 
 function awardNewAchievementRewards(previousState: ProgressState, nextState: ProgressState): ProgressState {
