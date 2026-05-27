@@ -575,11 +575,11 @@ function getScenarioIconLabel(scenario: Scenario): string {
 }
 
 function isFlashcardAudioStatus(status: string): boolean {
-  return /^Playing flashcard audio:|^Flashcard Piper/i.test(status)
+  return /^Playing (?:Web Speech )?flashcard audio:|^Flashcard Piper/i.test(status)
 }
 
 function isStoryAudioStatus(status: string): boolean {
-  return /^Playing story audio:|^Story Piper/i.test(status)
+  return /^Playing (?:Web Speech )?story audio:|^Story Piper/i.test(status)
 }
 
 function isScriptTransliterationExercise(exercise: LessonExercise): boolean {
@@ -1831,6 +1831,11 @@ function App() {
   async function playScenarioPhraseAudio(phrase: Phrase) {
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      if (playKannadaWithWebSpeech(phrase.kannada) === 'played') {
+        setAudioStatus(`Playing Web Speech scenario audio: ${phrase.transliteration}`)
+        return
+      }
+
       setAudioStatus(`Playing scenario audio: ${phrase.transliteration}`)
       return
     }
@@ -2098,6 +2103,11 @@ function App() {
   async function playFlashcardAudio(phrase: Phrase) {
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      if (playKannadaWithWebSpeech(phrase.kannada) === 'played') {
+        setAudioStatus(`Playing Web Speech flashcard audio: ${phrase.transliteration}`)
+        return
+      }
+
       setAudioStatus(`Playing flashcard audio: ${phrase.transliteration}`)
       return
     }
@@ -2129,6 +2139,11 @@ function App() {
   async function playStorySentenceAudio(sentence: StorySentence) {
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      if (playKannadaWithWebSpeech(sentence.kannada) === 'played') {
+        setAudioStatus(`Playing Web Speech story audio: ${sentence.transliteration}`)
+        return
+      }
+
       setAudioStatus(`Playing story audio: ${sentence.transliteration}`)
       return
     }
@@ -2203,6 +2218,15 @@ function App() {
     const slow = playbackRate < 1
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      if (playKannadaWithWebSpeech(activePronunciationPhrase.kannada, playbackRate) === 'played') {
+        setPronunciationAudioStatus(
+          slow
+            ? `Playing slow Web Speech reference at 0.7x: ${activePronunciationPhrase.transliteration}`
+            : `Playing Web Speech reference: ${activePronunciationPhrase.transliteration}`,
+        )
+        return
+      }
+
       setPronunciationAudioStatus(
         slow
           ? `Slow reference audio at 0.7x: ${activePronunciationPhrase.transliteration}`

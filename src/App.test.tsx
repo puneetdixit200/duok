@@ -23,6 +23,22 @@ async function completeOnboarding(user: ReturnType<typeof userEvent.setup>, dail
   await user.click(screen.getByRole('button', { name: /start learning/i }))
 }
 
+function stubKannadaWebSpeech(voices: Array<{ lang: string; name: string }> = []) {
+  const speak = vi.fn()
+  vi.stubGlobal('speechSynthesis', {
+    getVoices: vi.fn(() => voices),
+    speak,
+  })
+  vi.stubGlobal('SpeechSynthesisUtterance', class MockSpeechSynthesisUtterance {
+    lang = ''
+    rate = 1
+    voice: unknown = null
+
+    constructor(public text: string) {}
+  })
+  return speak
+}
+
 describe('KannadaOS desktop app', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -2087,6 +2103,70 @@ describe('KannadaOS desktop app', () => {
       rate: 0.7,
     })
     expect(screen.getByText(/Playing slow Web Speech reference at 0.7x: ticket eshtu/i)).toBeInTheDocument()
+  }, 30_000)
+
+  it('uses Web Speech fallback for flashcards, stories, and Bangalore scenario phrases', async () => {
+    const user = userEvent.setup()
+    const speak = stubKannadaWebSpeech()
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":true,"autoPlayAudio":false}')
+    render(<App />)
+
+    await completeOnboarding(user)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    await user.click(screen.getByRole('button', { name: /^Play Audio$/i }))
+    expect(speak.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: 'ಹೋಗಬೇಕು',
+      lang: 'kn-IN',
+      rate: 1,
+    })
+    expect(screen.getByText(/Playing Web Speech flashcard audio: hogbeku/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /stories/i }))
+    await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
+    await user.click(screen.getByRole('button', { name: /play sentence audio/i }))
+    expect(speak.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: 'ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ.',
+      lang: 'kn-IN',
+      rate: 1,
+    })
+    expect(screen.getByText(/Playing Web Speech story audio: raahul bengalurige banda/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /blr/i }))
+    await user.click(screen.getByRole('button', { name: /start auto ride/i }))
+    await user.click(screen.getByRole('button', { name: /play majestic-ge hogbeku/i }))
+    expect(speak.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: 'ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು',
+      lang: 'kn-IN',
+      rate: 1,
+    })
+    expect(screen.getByText(/Playing Web Speech scenario audio: majestic-ge hogbeku/i)).toBeInTheDocument()
+  }, 30_000)
+
+  it('uses Web Speech fallback for pronunciation reference audio', async () => {
+    const user = userEvent.setup()
+    const speak = stubKannadaWebSpeech()
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":true,"autoPlayAudio":false}')
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    await user.click(screen.getByRole('button', { name: /^Play Reference$/i }))
+
+    expect(speak.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      lang: 'kn-IN',
+      rate: 1,
+    })
+    expect(screen.getByText(/Playing Web Speech reference: namaskara saar/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /^Play Slow$/i }))
+    expect(speak.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      lang: 'kn-IN',
+      rate: 0.7,
+    })
+    expect(screen.getByText(/Playing slow Web Speech reference at 0.7x: namaskara saar/i)).toBeInTheDocument()
   }, 30_000)
 
   it('synthesizes pronunciation reference audio through the desktop Piper bridge', async () => {
