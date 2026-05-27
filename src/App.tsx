@@ -349,9 +349,9 @@ function SubtitleLines({ text, context }: { text: string; context?: LessonExerci
   return (
     <span className="kannada-subtitles">
       {hasEnglishSubtitle && (
-        <small className="english-subtitle">{subtitle.english}</small>
+        <small className="english-subtitle">{formatEnglishSubtitle(subtitle.english)}</small>
       )}
-      <small className="romanization">{subtitle.romanization}</small>
+      <small className="romanization">{formatRomanizationSubtitle(subtitle.romanization)}</small>
     </span>
   )
 }
@@ -370,9 +370,11 @@ function ChoiceText({ text, context }: { text: string; context?: LessonExercise 
 
   return (
     <span className="choice-text" aria-label={formatReadableKannadaChoice(text, subtitle)}>
-      {hasEnglishSubtitle && <span className="english-subtitle choice-primary-english">{subtitle.english}</span>}
+      {hasEnglishSubtitle && (
+        <span className="english-subtitle choice-primary-english">{formatEnglishSubtitle(subtitle.english)}</span>
+      )}
       <span lang="kn">{text}</span>
-      <small className="romanization">{subtitle.romanization}</small>
+      <small className="romanization">{formatRomanizationSubtitle(subtitle.romanization)}</small>
     </span>
   )
 }
@@ -389,8 +391,8 @@ function ListeningChoiceText({ text, context, revealed }: { text: string; contex
       <span>Audio choice</span>
       {subtitle && (
         <span className="kannada-subtitles">
-          <small className="romanization">{subtitle.romanization}</small>
-          {subtitle.english && <small className="english-subtitle">{subtitle.english}</small>}
+          <small className="romanization">{formatRomanizationSubtitle(subtitle.romanization)}</small>
+          {subtitle.english && <small className="english-subtitle">{formatEnglishSubtitle(subtitle.english)}</small>}
         </span>
       )}
     </span>
@@ -410,11 +412,19 @@ function hasDistinctEnglishSubtitle(subtitle: ReadableSubtitle): boolean {
   return Boolean(subtitle.english && subtitle.english.toLowerCase() !== subtitle.romanization.toLowerCase())
 }
 
+function formatEnglishSubtitle(english: string): string {
+  return `English: ${english}`
+}
+
+function formatRomanizationSubtitle(romanization: string): string {
+  return `Say: ${romanization}`
+}
+
 function formatReadableKannadaChoice(text: string, subtitle: ReadableSubtitle): string {
   return [
-    hasDistinctEnglishSubtitle(subtitle) ? subtitle.english : '',
+    hasDistinctEnglishSubtitle(subtitle) ? formatEnglishSubtitle(subtitle.english) : '',
     text,
-    subtitle.romanization,
+    formatRomanizationSubtitle(subtitle.romanization),
   ]
     .filter(Boolean)
     .join(' ')
@@ -1079,15 +1089,21 @@ function App() {
     }
 
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
-    if (
-      activeExercise.type === 'speaking' ||
-      !synthesizeNativeSpeech ||
-      !runtimeConfig.piperVoicePath.trim() ||
-      !runtimeConfig.piperBinaryPath.trim()
-    ) {
+    const canUseNativePiper = Boolean(
+      synthesizeNativeSpeech &&
+      runtimeConfig.piperVoicePath.trim() &&
+      runtimeConfig.piperBinaryPath.trim(),
+    )
+
+    if (activeExercise.type === 'speaking' || !canUseNativePiper || !synthesizeNativeSpeech) {
       queueMicrotask(() => {
         if (!cancelled) {
-          setAudioStatus(`Auto reference audio: ${activeExercise.transliteration ?? activeExercise.kannada}`)
+          if (activeExercise.type !== 'speaking' && playKannadaWithWebSpeech(activeExercise.kannada) === 'played') {
+            setAudioStatus(`Auto Web Speech reference: ${getExerciseAudioLabel(activeExercise)}`)
+            return
+          }
+
+          setAudioStatus(`Auto reference audio: ${getExerciseAudioLabel(activeExercise)}`)
         }
       })
       return () => {

@@ -509,9 +509,9 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     expect(screen.getByText('arrange')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^hello\s+ನಮಸ್ಕಾರ\s+namaskara/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^sir\s+ಸಾರ್\s+saar/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^how are you\s+ಹೇಗಿದ್ದೀರಾ\s+hegiddira/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: hello\s+ನಮಸ್ಕಾರ\s+Say: namaskara/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: sir\s+ಸಾರ್\s+Say: saar/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\s+Say: hegiddira/i })).toBeInTheDocument()
   })
 
   it('completes all six lesson exercise types and shows the completion screen', async () => {
@@ -754,7 +754,7 @@ describe('KannadaOS desktop app', () => {
     const reply = screen.getByText(/Good\. ಬೇಡ is a clear way/i).closest('article')
     expect(reply).not.toBeNull()
     expect(within(reply!).getByText(/beda/i)).toBeInTheDocument()
-    expect(within(reply!).getByText('do not want')).toBeInTheDocument()
+    expect(within(reply!).getByText('English: do not want')).toBeInTheDocument()
   })
 
   it('renders practice flashcards, Bangalore scenarios, and profile stats', async () => {
@@ -1339,6 +1339,35 @@ describe('KannadaOS desktop app', () => {
       voice: kannadaVoice,
     })
     expect(screen.getByText(/Playing Web Speech reference: namaskara saar/i)).toBeInTheDocument()
+  })
+
+  it('auto-plays lesson reference audio through Web Speech when Piper is unavailable', async () => {
+    const user = userEvent.setup()
+    const speak = vi.fn()
+    vi.stubGlobal('speechSynthesis', {
+      getVoices: vi.fn(() => []),
+      speak,
+    })
+    vi.stubGlobal('SpeechSynthesisUtterance', class MockSpeechSynthesisUtterance {
+      lang = ''
+      rate = 1
+      voice: unknown = null
+
+      constructor(public text: string) {}
+    })
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":true,"autoPlayAudio":true}')
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    await waitFor(() => expect(speak).toHaveBeenCalledTimes(1))
+    expect(speak.mock.calls[0][0]).toMatchObject({
+      text: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      lang: 'kn-IN',
+      rate: 1,
+    })
+    expect(screen.getByText(/Auto Web Speech reference: namaskara saar/i)).toBeInTheDocument()
   })
 
   it('uses 0.7x Web Speech rate for slow lesson audio fallback', async () => {
