@@ -31,7 +31,9 @@ import {
   getDueReviewItems,
   getScenarioChecklistActivityId,
   getWeakSkillSummaries,
+  heartRegenerationIntervalMs,
   hydrateProgress,
+  maxHearts,
   rateReviewItem,
   recordPracticeActivity,
   recordChatMessageSent,
@@ -1181,6 +1183,40 @@ function isEditableShortcutTarget(target: EventTarget | null): boolean {
 
 function getNowMs(): number {
   return Date.now()
+}
+
+function formatNextHeartRecovery(lastHeartLostAt: string | null, nowMs = getNowMs()): string | null {
+  if (!lastHeartLostAt) {
+    return null
+  }
+
+  const lostAtMs = new Date(lastHeartLostAt).getTime()
+  if (!Number.isFinite(lostAtMs)) {
+    return null
+  }
+
+  const remainingMs = lostAtMs + heartRegenerationIntervalMs - nowMs
+  if (remainingMs <= 0) {
+    return 'Next heart ready now.'
+  }
+
+  return `Next heart in ${formatHeartRecoveryDuration(remainingMs)}.`
+}
+
+function formatHeartRecoveryDuration(remainingMs: number): string {
+  const totalMinutes = Math.max(1, Math.ceil(remainingMs / 60000))
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}m`
+  }
+
+  if (hours > 0) {
+    return `${hours}h`
+  }
+
+  return `${minutes}m`
 }
 
 function App() {
@@ -4332,6 +4368,9 @@ function App() {
       coreCurriculumUnits[0]
     const dailyGoalXp = learnerProfile.dailyGoalXp
     const dailyQuests = getDailyQuests(progress, new Date().toISOString(), dailyGoalXp)
+    const nextHeartRecoveryText = progress.hearts < maxHearts
+      ? formatNextHeartRecovery(progress.lastHeartLostAt)
+      : null
 
     return (
       <section className="panel home-panel" aria-labelledby="home-title">
@@ -4372,6 +4411,7 @@ function App() {
               <li>Practice to earn hearts</li>
               <li>Refill with 50 gems</li>
               <li>Wait 4 hours for 1 heart</li>
+              {nextHeartRecoveryText && <li>{nextHeartRecoveryText}</li>}
             </ul>
             <div className="heart-recovery-actions">
               <button className="secondary-action" onClick={() => setTab('practice')} type="button">

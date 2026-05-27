@@ -96,8 +96,8 @@ export interface DailyQuest {
   claimed: boolean
 }
 
-const maxHearts = 5
-const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
+export const maxHearts = 5
+export const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
 const practiceHeartRefillThreshold = 3
 export const bangaloreScenarioChecklistXp = 10
 export const bonusStoryUnlockCost = 75

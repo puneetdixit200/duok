@@ -323,13 +323,14 @@ describe('KannadaOS desktop app', () => {
   })
 
   it('shows recovery actions when the learner is out of hearts', async () => {
-    const user = userEvent.setup()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-05-27T10:00:00.000Z'))
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:progress', serializeProgress({
       ...createInitialProgress(),
       hearts: 0,
       gems: 60,
-      lastHeartLostAt: new Date().toISOString(),
+      lastHeartLostAt: '2026-05-27T08:30:00.000Z',
     }))
 
     render(<App />)
@@ -338,9 +339,10 @@ describe('KannadaOS desktop app', () => {
     expect(within(recoveryCard).getByRole('heading', { name: /Out of Hearts/i })).toBeInTheDocument()
     expect(within(recoveryCard).getAllByText(/Practice to earn hearts/i).length).toBeGreaterThanOrEqual(1)
     expect(within(recoveryCard).getByText(/Wait 4 hours for 1 heart/i)).toBeInTheDocument()
+    expect(within(recoveryCard).getByText(/Next heart in 2h 30m/i)).toBeInTheDocument()
     expect(within(recoveryCard).getByRole('button', { name: /Refill 50 gems/i })).toBeEnabled()
 
-    await user.click(within(recoveryCard).getByRole('button', { name: /Practice Now/i }))
+    fireEvent.click(within(recoveryCard).getByRole('button', { name: /Practice Now/i }))
     expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
   })
 
