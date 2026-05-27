@@ -825,6 +825,50 @@ describe('KannadaOS desktop app', () => {
     expect(within(speakingResult).getByText(/Problem: ಸಾರ್/i)).toBeInTheDocument()
   })
 
+  it('requires a 70 pronunciation score before the speaking continue action unlocks', async () => {
+    const user = userEvent.setup()
+    vi.mocked(window.kannadaOS.transcribeRecordedAudio)
+      .mockResolvedValueOnce({ ok: true, text: '' })
+      .mockResolvedValueOnce({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ticket eshtu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /record phrase/i }))
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+
+    const failedResult = await screen.findByLabelText(/Speaking score result/i)
+    expect(within(failedResult).getByText(/Score: 20 \/ 100/i)).toBeInTheDocument()
+    expect(screen.getByText(/Minimum 70 to continue/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Try Again/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Continue/i })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: /Try Again/i }))
+    expect(screen.queryByLabelText(/Speaking score result/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /record phrase/i }))
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+
+    expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Continue/i }))
+    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+  })
+
   it('completes all six lesson exercise types and shows the completion screen', async () => {
     const user = userEvent.setup()
     render(<App />)

@@ -905,6 +905,23 @@ h2 {
   background: rgba(255, 107, 44, 0.12);
 }
 
+.score-ready {
+  color: #6ee7b7;
+  font-weight: 900;
+}
+
+.score-warning {
+  color: #facc15;
+  font-weight: 900;
+}
+
+.speaking-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+  width: min(420px, 100%);
+}
+
 .lesson-complete {
   text-align: center;
 }

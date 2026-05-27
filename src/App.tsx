@@ -1308,15 +1308,15 @@ function App() {
     setScreen('lesson')
   }
 
-  function checkAnswer(exercise: LessonExercise) {
+  function checkAnswer(exercise: LessonExercise, submittedAnswer = selectedAnswer) {
     if (feedback) {
       return
     }
 
     const typingEvaluation = exercise.type === 'typeKannada'
       ? isScriptTransliterationExercise(exercise)
-        ? evaluateTypedTextAnswer(selectedAnswer, exercise.answer)
-        : evaluateTypedKannadaAnswer(selectedAnswer, exercise.answer)
+        ? evaluateTypedTextAnswer(submittedAnswer, exercise.answer)
+        : evaluateTypedKannadaAnswer(submittedAnswer, exercise.answer)
       : null
     if (typingEvaluation?.almost) {
       setFeedback('almost')
@@ -1324,7 +1324,7 @@ function App() {
       return
     }
 
-    const correct = typingEvaluation ? typingEvaluation.correct : selectedAnswer === exercise.answer
+    const correct = typingEvaluation ? typingEvaluation.correct : submittedAnswer === exercise.answer
     const now = new Date().toISOString()
     const completesLesson = correct && lessonIndex === lessonRunExercises.length - 1
     const nextCorrectCount = lessonCorrectCount + (correct ? 1 : 0)
@@ -1517,6 +1517,20 @@ function App() {
       },
       setAudioStatus,
     )
+  }
+
+  function retrySpeakingExercise() {
+    setSpeakingResult(null)
+    setSelectedAnswer('')
+  }
+
+  function continueSpeakingExercise(exercise: LessonExercise) {
+    if (!speakingResult || speakingResult.score < 70) {
+      return
+    }
+
+    setSelectedAnswer(exercise.answer)
+    checkAnswer(exercise, exercise.answer)
   }
 
   function handleMatchSelection(value: string, side: 'left' | 'right', exercise: LessonExercise) {
@@ -4077,14 +4091,32 @@ function App() {
               {recordingTarget === 'lesson' ? 'Stop Recording' : 'Record phrase'}
             </button>
             {speakingResult && (
-              <div className="score-card" role="status" aria-label="Speaking score result">
-                <strong>Score: {speakingResult.score} / 100</strong>
-                <span>Level: {formatPronunciationLevel(speakingResult.level)}</span>
-                <span>
-                  Problem: {speakingResult.problemParts.length ? speakingResult.problemParts.join(', ') : 'None'}
-                </span>
-                <span>Tip: {speakingResult.tip}</span>
-              </div>
+              <>
+                <div className="score-card" role="status" aria-label="Speaking score result">
+                  <strong>Score: {speakingResult.score} / 100</strong>
+                  <span>Level: {formatPronunciationLevel(speakingResult.level)}</span>
+                  <span>
+                    Problem: {speakingResult.problemParts.length ? speakingResult.problemParts.join(', ') : 'None'}
+                  </span>
+                  <span>Tip: {speakingResult.tip}</span>
+                  <span className={speakingResult.score >= 70 ? 'score-ready' : 'score-warning'}>
+                    {speakingResult.score >= 70 ? 'Ready to continue' : 'Minimum 70 to continue'}
+                  </span>
+                </div>
+                <div className="speaking-actions">
+                  <button className="secondary-action" onClick={retrySpeakingExercise} type="button">
+                    Try Again
+                  </button>
+                  <button
+                    className="primary-action"
+                    disabled={speakingResult.score < 70 || Boolean(feedback)}
+                    onClick={() => continueSpeakingExercise(exercise)}
+                    type="button"
+                  >
+                    Continue →
+                  </button>
+                </div>
+              </>
             )}
             {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
           </div>
