@@ -553,6 +553,12 @@ h2 {
   max-width: 840px;
 }
 
+.lesson-timer {
+  min-width: 72px;
+  color: #ffbc8a;
+  text-align: right;
+}
+
 .lesson-progress {
   flex: 1;
 }

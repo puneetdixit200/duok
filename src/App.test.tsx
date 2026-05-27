@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -43,6 +43,7 @@ describe('KannadaOS desktop app', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.useRealTimers()
   })
 
   it('stores a learner profile from onboarding and moves to the home dashboard', async () => {
@@ -289,6 +290,24 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /Got it/i })).toBeInTheDocument()
   })
 
+  it('adds English subtitles to Kannada correct answers after a wrong lesson answer', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /I am fine.*ಚೆನ್ನಾಗಿದ್ದೇನೆ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    const feedbackPanel = screen.getByRole('status', { name: /Wrong answer feedback/i })
+    expect(within(feedbackPanel).getByText('Correct answer: ನಮಸ್ಕಾರ ಸಾರ್ ಹೇಗಿದ್ದೀರಾ')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('English: Hello sir, how are you?')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('Say: namaskara saar hegiddira')).toBeInTheDocument()
+  })
+
   it('reintroduces a missed lesson exercise after two more exercises', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -515,6 +534,26 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
 
     expect(screen.getByRole('button', { name: /^English: came\s+ಬಂದ\s+Say: banda/i })).toBeInTheDocument()
+  })
+
+  it('keeps English subtitles visible when a Kannada label sounds the same in English', () => {
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:ai-expansion', JSON.stringify([
+      {
+        type: 'translate',
+        prompt: 'AI ticket drill',
+        kannada: 'ಟಿಕೆಟ್',
+        answer: 'ticket',
+        options: ['ticket'],
+        explanation: 'Ticket means ticket.',
+      },
+    ]))
+
+    render(<App />)
+
+    const expansionQueue = screen.getByLabelText(/AI curriculum expansion/i)
+    expect(within(expansionQueue).getByText('English: ticket')).toBeInTheDocument()
+    expect(within(expansionQueue).getByText('Say: ticket')).toBeInTheDocument()
   })
 
   it('adds English phrase subtitles to generated Kannada word choices', async () => {
@@ -782,6 +821,34 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: 'Goodbye sir' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Thank you sir' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'How are you sir' })).not.toBeInTheDocument()
+  })
+
+  it('times out crown-four replay drills after fifteen seconds', async () => {
+    vi.useFakeTimers()
+    const firstLesson = coreCurriculumUnits[0].lessons[0]
+    const progress = Array.from({ length: 3 }).reduce(
+      (state, _unused, index) =>
+        completeLessonProgress(state, firstLesson.id, `2026-05-2${7 + index}T10:00:00.000Z`),
+      createInitialProgress(),
+    )
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /learn/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Greetings, 3 crowns/i }))
+
+    expect(screen.getByText(/15s timed/i)).toBeInTheDocument()
+    expect(screen.getByRole('timer', { name: /15 seconds remaining/i })).toBeInTheDocument()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15_000)
+    })
+
+    expect(screen.getByRole('status', { name: /Wrong answer feedback/i })).toBeInTheDocument()
+    expect(screen.getByText(/Time's up/i)).toBeInTheDocument()
+    expect(screen.getByText('❤️ -1')).toBeInTheDocument()
   })
 
   it('uses spec replay labels and hides Kannada text before checking listening answers', async () => {

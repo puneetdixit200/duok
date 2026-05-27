@@ -365,7 +365,7 @@ function SubtitleLines({ text, context }: { text: string; context?: LessonExerci
     return null
   }
 
-  const hasEnglishSubtitle = hasDistinctEnglishSubtitle(subtitle)
+  const hasEnglishSubtitle = hasEnglishSubtitleText(subtitle)
 
   return (
     <span className="kannada-subtitles">
@@ -404,7 +404,7 @@ function ChoiceText({ text, context }: { text: string; context?: LessonExercise 
     return <span lang="kn">{text}</span>
   }
 
-  const hasEnglishSubtitle = hasDistinctEnglishSubtitle(subtitle)
+  const hasEnglishSubtitle = hasEnglishSubtitleText(subtitle)
 
   return (
     <span className="choice-text" aria-label={formatReadableKannadaChoice(text, subtitle)}>
@@ -468,8 +468,8 @@ function ReadableStatusText({ text, context }: { text: string; context?: LessonE
   )
 }
 
-function hasDistinctEnglishSubtitle(subtitle: ReadableSubtitle): boolean {
-  return Boolean(subtitle.english && subtitle.english.toLowerCase() !== subtitle.romanization.toLowerCase())
+function hasEnglishSubtitleText(subtitle: ReadableSubtitle): boolean {
+  return Boolean(subtitle.english)
 }
 
 function formatEnglishSubtitle(english: string): string {
@@ -482,7 +482,7 @@ function formatRomanizationSubtitle(romanization: string): string {
 
 function formatReadableKannadaChoice(text: string, subtitle: ReadableSubtitle): string {
   return [
-    hasDistinctEnglishSubtitle(subtitle) ? formatEnglishSubtitle(subtitle.english) : '',
+    hasEnglishSubtitleText(subtitle) ? formatEnglishSubtitle(subtitle.english) : '',
     text,
     formatRomanizationSubtitle(subtitle.romanization),
   ]
@@ -1016,6 +1016,8 @@ function App() {
   const [typedAnswer, setTypedAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'almost' | null>(null)
   const [almostTypingDistance, setAlmostTypingDistance] = useState<number | null>(null)
+  const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number | null>(null)
+  const [timedOut, setTimedOut] = useState(false)
   const [chatInput, setChatInput] = useState('')
   const [selectedScenarioId, setSelectedScenarioId] = useState(defaultChatScenario.id)
   const [activeBangaloreScenarioId, setActiveBangaloreScenarioId] = useState<string | null>(null)
@@ -1301,6 +1303,8 @@ function App() {
     setTypedAnswer('')
     setFeedback(null)
     setAlmostTypingDistance(null)
+    setTimeRemainingSeconds(null)
+    setTimedOut(false)
     setPlacedWords([])
     setAudioStatus('')
     setSpeakingResult(null)
@@ -1326,11 +1330,12 @@ function App() {
     setScreen('lesson')
   }
 
-  function checkAnswer(exercise: LessonExercise, submittedAnswer = selectedAnswer) {
+  function checkAnswer(exercise: LessonExercise, submittedAnswer = selectedAnswer, options: { timedOut?: boolean } = {}) {
     if (feedback) {
       return
     }
 
+    setTimedOut(false)
     const typingEvaluation = exercise.type === 'typeKannada'
       ? isScriptTransliterationExercise(exercise)
         ? evaluateTypedTextAnswer(submittedAnswer, exercise.answer)
@@ -1342,13 +1347,14 @@ function App() {
       return
     }
 
-    const correct = typingEvaluation ? typingEvaluation.correct : submittedAnswer === exercise.answer
+    const correct = options.timedOut ? false : typingEvaluation ? typingEvaluation.correct : submittedAnswer === exercise.answer
     const now = new Date().toISOString()
     const completesLesson = correct && lessonIndex === lessonRunExercises.length - 1
     const nextCorrectCount = lessonCorrectCount + (correct ? 1 : 0)
     const nextWrongCount = lessonWrongCount + (correct ? 0 : 1)
     const completesPerfectLesson = completesLesson && nextWrongCount === 0
     const lessonDurationMs = completesLesson ? getNowMs() - lessonStartedAtMs : 0
+    setTimedOut(Boolean(options.timedOut && !correct))
     setFeedback(correct ? 'correct' : 'wrong')
     playAppSound(correct ? 'correct' : 'wrong')
 
@@ -1383,6 +1389,35 @@ function App() {
       setFeedback(null)
     }
   }
+
+  useEffect(() => {
+    if (
+      screen !== 'lesson' ||
+      lessonIndex >= lessonRunExercises.length ||
+      !activeExercise?.timeLimitSeconds ||
+      feedback
+    ) {
+      return
+    }
+
+    const timeLimitSeconds = activeExercise.timeLimitSeconds
+    const intervalId = window.setInterval(() => {
+      setTimeRemainingSeconds((current) => {
+        return Math.max(0, (current ?? timeLimitSeconds) - 1)
+      })
+    }, 1000)
+    const timeoutId = window.setTimeout(() => {
+      setTimeRemainingSeconds(0)
+      checkAnswer(activeExercise, '', { timedOut: true })
+    }, timeLimitSeconds * 1000)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.clearTimeout(timeoutId)
+    }
+  // The timeout must submit the currently visible exercise once when its replay clock expires.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeExercise?.id, activeExercise?.timeLimitSeconds, feedback, lessonIndex, lessonRunExercises.length, screen])
 
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
@@ -2506,6 +2541,15 @@ function App() {
             })}
           </div>
           <strong aria-label="Lesson hearts">❤️ {progress.hearts}</strong>
+          {activeExercise.timeLimitSeconds && !feedback && (
+            <strong
+              aria-label={`${timeRemainingSeconds ?? activeExercise.timeLimitSeconds} seconds remaining`}
+              className="lesson-timer"
+              role="timer"
+            >
+              ⏱ {timeRemainingSeconds ?? activeExercise.timeLimitSeconds}s
+            </strong>
+          )}
         </header>
         <section className="lesson-card" aria-labelledby="lesson-title">
           <p className="eyebrow">
@@ -2550,10 +2594,10 @@ function App() {
               {feedback === 'wrong' && (
                 <>
                   <div className="feedback-header">
-                    <strong>Not quite.</strong>
+                    <strong>{timedOut ? "Time's up." : 'Not quite.'}</strong>
                     <span>❤️ -1</span>
                   </div>
-                  <p>Correct answer: {activeExercise.answer}</p>
+                  <p><ReadableStatusText text={`Correct answer: ${activeExercise.answer}`} context={activeExercise} /></p>
                   <p>{activeExercise.explanation}</p>
                 </>
               )}
@@ -4689,7 +4733,7 @@ function formatReadableReviewLabel(vocabularyId: string) {
   const subtitle = getKannadaSubtitle(fallbackLabel)
 
   if (subtitle) {
-    const english = hasDistinctEnglishSubtitle(subtitle) ? ` - ${subtitle.english}` : ''
+    const english = hasEnglishSubtitleText(subtitle) ? ` - ${subtitle.english}` : ''
     return `${fallbackLabel} - ${subtitle.romanization}${english}`
   }
 
