@@ -489,6 +489,13 @@ function formatReadablePhrase(phrase: ReadablePhraseParts): string {
   return `${formatEnglishSubtitle(phrase.english)} ${phrase.kannada} ${formatRomanizationSubtitle(phrase.transliteration)}`
 }
 
+function formatReadableStoryWord(word: StoryWord): string {
+  return formatReadableKannadaChoice(word.text, {
+    romanization: word.transliteration,
+    english: word.english,
+  })
+}
+
 function isFlashcardAudioStatus(status: string): boolean {
   return /^Playing flashcard audio:|^Flashcard Piper/i.test(status)
 }
@@ -1032,6 +1039,7 @@ function App() {
   const [modelSetupStarted, setModelSetupStarted] = useState(false)
   const [storyMode, setStoryMode] = useState<StoryMode>('list')
   const [selectedStoryId, setSelectedStoryId] = useState(stories[0].id)
+  const [storySentenceIndex, setStorySentenceIndex] = useState(0)
   const [selectedStoryWord, setSelectedStoryWord] = useState<StoryWord | null>(null)
   const [selectedStoryAnswer, setSelectedStoryAnswer] = useState('')
   const [storyFeedback, setStoryFeedback] = useState<'correct' | 'wrong' | null>(null)
@@ -1059,6 +1067,10 @@ function App() {
     getLessonById(activeLessonId) ?? getNextAvailableLesson(coreCurriculumUnits, progress) ?? coreCurriculumUnits[0].lessons[0]
   const activeExercise = lessonRunExercises[Math.min(lessonIndex, lessonRunExercises.length - 1)]
   const activeStory = stories.find((story) => story.id === selectedStoryId) ?? stories[0]
+  const activeStorySentenceCount = activeStory.sentences.length
+  const activeStorySentenceIndex = Math.min(storySentenceIndex, Math.max(0, activeStorySentenceCount - 1))
+  const activeStorySentence = activeStory.sentences[activeStorySentenceIndex]
+  const isLastStorySentence = activeStorySentenceIndex >= activeStorySentenceCount - 1
   const selectedScenario =
     bangaloreScenarios.find((scenario) => scenario.id === selectedScenarioId) ?? defaultChatScenario
   const activeBangaloreScenario = activeBangaloreScenarioId
@@ -2266,10 +2278,29 @@ function App() {
 
   function openStory(storyId: string) {
     setSelectedStoryId(storyId)
+    setStorySentenceIndex(0)
     setSelectedStoryWord(null)
     setSelectedStoryAnswer('')
     setStoryFeedback(null)
     setStoryMode('reader')
+  }
+
+  function returnToStoryList() {
+    setSelectedStoryWord(null)
+    setStorySentenceIndex(0)
+    setStoryMode('list')
+  }
+
+  function goToNextStorySentence() {
+    setSelectedStoryWord(null)
+    setStorySentenceIndex((current) => Math.min(current + 1, Math.max(0, activeStory.sentences.length - 1)))
+  }
+
+  function openStoryQuiz() {
+    setSelectedStoryWord(null)
+    setSelectedStoryAnswer('')
+    setStoryFeedback(null)
+    setStoryMode('quiz')
   }
 
   function checkStoryAnswer() {
@@ -3123,6 +3154,10 @@ function App() {
           <div className="review-layout">
             <div className="flashcard-stack">
               <button
+                aria-label={`${formatReadableKannadaChoice(card.kannada, {
+                  romanization: card.transliteration,
+                  english: card.english,
+                })} ${flashcardBack ? 'Back of flashcard' : 'Tap to flip'}`}
                 className="flashcard"
                 onClick={() => {
                   playAppSound('flip')
@@ -3130,9 +3165,9 @@ function App() {
                 }}
                 type="button"
               >
+                <small className="english-subtitle flashcard-primary-english">{formatEnglishSubtitle(card.english)}</small>
                 <span lang="kn">{card.kannada}</span>
-                <small className="romanization">{card.transliteration}</small>
-                {!flashcardBack && <small className="english-subtitle">{card.english}</small>}
+                <small className="romanization">{formatRomanizationSubtitle(card.transliteration)}</small>
                 <strong>{flashcardBack ? card.english : card.transliteration}</strong>
                 {flashcardBack ? (
                   <>
@@ -3307,45 +3342,44 @@ function App() {
                 <p className="eyebrow">{activeStory.subtitle}</p>
                 <h2 id="story-reader-title">{activeStory.title}</h2>
               </div>
-              <button className="secondary-action" onClick={() => setStoryMode('list')} type="button">
+              <button className="secondary-action" onClick={returnToStoryList} type="button">
                 Back to Stories
               </button>
             </header>
-            <div className="story-sentence-stack">
-              {activeStory.sentences.map((sentence, index) => (
-                <article className="story-sentence-card" key={sentence.id}>
-                  <span className="metric-pill">Sentence {index + 1}</span>
-                  <strong lang="kn">{sentence.kannada}</strong>
-                  <em>{sentence.transliteration}</em>
-                  <p>{sentence.english}</p>
-                  <div className="story-word-row">
-                    {sentence.words.map((word) => (
-                      <button
-                        className="word-token"
-                        key={`${sentence.id}-${word.text}`}
-                        onClick={() => setSelectedStoryWord(word)}
-                        type="button"
-                      >
-                        <span lang="kn">{word.text}</span>
-                        <small>{word.transliteration}</small>
-                        <small className="english-subtitle">{word.english}</small>
-                      </button>
-                    ))}
-                  </div>
-                  <button className="mini-button" onClick={() => void playStorySentenceAudio(sentence)} type="button">
-                    Play sentence audio
-                  </button>
-                </article>
-              ))}
-            </div>
+            {activeStorySentence && (
+              <article className="story-sentence-card" key={activeStorySentence.id}>
+                <span className="metric-pill">{activeStorySentenceIndex + 1}/{activeStorySentenceCount}</span>
+                <strong className="story-sentence-english">{activeStorySentence.english}</strong>
+                <span className="story-sentence-kannada" lang="kn">{activeStorySentence.kannada}</span>
+                <em>{formatRomanizationSubtitle(activeStorySentence.transliteration)}</em>
+                <div className="story-word-row">
+                  {activeStorySentence.words.map((word) => (
+                    <button
+                      aria-label={formatReadableStoryWord(word)}
+                      className="word-token"
+                      key={`${activeStorySentence.id}-${word.text}`}
+                      onClick={() => setSelectedStoryWord(word)}
+                      type="button"
+                    >
+                      <strong className="word-token-english">{formatEnglishSubtitle(word.english)}</strong>
+                      <span lang="kn">{word.text}</span>
+                      <small className="romanization">{formatRomanizationSubtitle(word.transliteration)}</small>
+                    </button>
+                  ))}
+                </div>
+                <button className="mini-button" onClick={() => void playStorySentenceAudio(activeStorySentence)} type="button">
+                  Play sentence audio
+                </button>
+              </article>
+            )}
             {isStoryAudioStatus(audioStatus) && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
             {selectedStoryWord && (
-              <aside className="word-popover" role="dialog" aria-label={selectedStoryWord.text}>
+              <aside className="word-popover" role="dialog" aria-label={formatReadableStoryWord(selectedStoryWord)}>
                 <div>
-                  <strong lang="kn">{selectedStoryWord.text}</strong>
+                  <strong>{formatEnglishSubtitle(selectedStoryWord.english)}</strong>
                   <span className="kannada-subtitles">
-                    <small className="romanization">{selectedStoryWord.transliteration}</small>
-                    <small className="english-subtitle">{selectedStoryWord.english}</small>
+                    <span lang="kn">{selectedStoryWord.text}</span>
+                    <small className="romanization">{formatRomanizationSubtitle(selectedStoryWord.transliteration)}</small>
                   </span>
                 </div>
                 <p>{selectedStoryWord.english}</p>
@@ -3355,9 +3389,15 @@ function App() {
                 </button>
               </aside>
             )}
-            <button className="primary-action" onClick={() => setStoryMode('quiz')} type="button">
-              Take Quiz
-            </button>
+            {isLastStorySentence ? (
+              <button className="primary-action" onClick={openStoryQuiz} type="button">
+                Take Quiz
+              </button>
+            ) : (
+              <button className="primary-action" onClick={goToNextStorySentence} type="button">
+                Next →
+              </button>
+            )}
           </section>
         )
       }
@@ -3420,7 +3460,7 @@ function App() {
                 <strong>+20 XP</strong>
                 <span>Total: {progress.xp} XP</span>
               </article>
-              <button className="primary-action" onClick={() => setStoryMode('list')} type="button">
+              <button className="primary-action" onClick={returnToStoryList} type="button">
                 Continue Stories
               </button>
             </article>

@@ -509,12 +509,12 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /practice/i }))
 
-    expect(screen.getByRole('button', { name: /^ಹೋಗಬೇಕು.*hogbeku.*need to go/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: need to go\s+ಹೋಗಬೇಕು\s+Say: hogbeku/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /stories/i }))
     await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
 
-    expect(screen.getByRole('button', { name: /ಬಂದ.*banda.*came/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: came\s+ಬಂದ\s+Say: banda/i })).toBeInTheDocument()
   })
 
   it('adds English phrase subtitles to generated Kannada word choices', async () => {
@@ -1185,11 +1185,11 @@ describe('KannadaOS desktop app', () => {
 
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /practice/i }))
-    const flashcard = screen.getByRole('button', { name: /^ಹೋಗಬೇಕು/i })
+    const flashcard = screen.getByRole('button', { name: /^English: need to go\s+ಹೋಗಬೇಕು\s+Say: hogbeku/i })
     expect(within(flashcard).getByText(/Context: Core travel word for autos, buses, and directions/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^Play Audio$/i }))
     expect(screen.getByText(/Playing flashcard audio: hogbeku/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /^ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /^English: need to go\s+ಹೋಗಬೇಕು\s+Say: hogbeku/i }))
     expect(within(flashcard).getByText(/^need to go$/i)).toBeInTheDocument()
     expect(screen.getByText(/Skill: Verbs/i)).toBeInTheDocument()
     expect(screen.getByText(/Leitner Box: 1/i)).toBeInTheDocument()
@@ -2185,9 +2185,12 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
 
     expect(screen.getByRole('heading', { name: /First Day in Bangalore/i })).toBeInTheDocument()
+    expect(screen.getByText('1/3')).toBeInTheDocument()
     expect(screen.getByText(/ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ/i)).toBeInTheDocument()
     expect(screen.getByText(/raahul bengalurige banda/i)).toBeInTheDocument()
     expect(screen.getByText(/Rahul came to Bangalore/i)).toBeInTheDocument()
+    expect(screen.queryByText(/ಅವನಿಗೆ ಕನ್ನಡ ಬರುತ್ತಿರಲಿಲ್ಲ/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /take quiz/i })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /ಬಂದ/i }))
 
@@ -2196,6 +2199,15 @@ describe('KannadaOS desktop app', () => {
     expect(within(wordDialog).getByText(/banda/i)).toBeInTheDocument()
     expect(within(wordDialog).getAllByText(/came/i).length).toBeGreaterThanOrEqual(1)
     expect(within(wordDialog).getByRole('button', { name: /add to vocabulary/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /next/i }))
+    expect(screen.getByText('2/3')).toBeInTheDocument()
+    expect(screen.getByText(/ಅವನಿಗೆ ಕನ್ನಡ ಬರುತ್ತಿರಲಿಲ್ಲ/i)).toBeInTheDocument()
+    expect(screen.queryByText(/ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /next/i }))
+    expect(screen.getByText('3/3')).toBeInTheDocument()
+    expect(screen.getByText(/ಬಸ್ ನಿಲ್ದಾಣದಲ್ಲಿ ಅವನು ಕೇಳಿದ/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /take quiz/i }))
     await user.click(screen.getByRole('button', { name: /He does not know Kannada yet/i }))
