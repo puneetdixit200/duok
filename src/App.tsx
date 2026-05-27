@@ -4112,9 +4112,18 @@ function App() {
               </article>
             )}
             {latestPronunciationAttempt && (
-              <p className="pronunciation-history">
-                <ReadableStatusText text={`Latest attempt: ${latestPronunciationAttempt.transcript}`} />
-              </p>
+              <section className="pronunciation-history" aria-label="Pronunciation history">
+                <h3>History</h3>
+                {pronunciationHistory.slice(0, 3).map((attempt, index) => (
+                  <article key={attempt.id}>
+                    <strong>{formatPronunciationHistoryLabel(index)}: {attempt.score} ({formatPronunciationLevel(attempt.level)})</strong>
+                    <ReadableStatusText text={attempt.transcript} />
+                    <small>
+                      {attempt.phrase} - {formatPronunciationAttemptDate(attempt.createdAt)}
+                    </small>
+                  </article>
+                ))}
+              </section>
             )}
           </section>
         </section>
@@ -5746,6 +5755,30 @@ function getActiveHostedModel(settings: AiProviderSettings) {
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function formatPronunciationHistoryLabel(index: number): string {
+  if (index === 0) {
+    return 'Latest'
+  }
+
+  if (index === 1) {
+    return 'Previous'
+  }
+
+  return 'First'
+}
+
+function formatPronunciationAttemptDate(createdAt: string): string {
+  const date = new Date(createdAt)
+  if (!Number.isFinite(date.getTime())) {
+    return 'saved attempt'
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
 function formatPronunciationLevel(level: PronunciationScoreResult['level']) {

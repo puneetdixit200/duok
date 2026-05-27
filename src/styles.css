@@ -1371,8 +1371,7 @@ h2 {
   font-size: 1.75rem;
 }
 
-.pronunciation-target small,
-.pronunciation-history {
+.pronunciation-target small {
   color: var(--text-secondary);
 }
 
@@ -1417,8 +1416,7 @@ h2 {
 
 .pronunciation-result p,
 .pronunciation-result span,
-.pronunciation-result small,
-.pronunciation-history {
+.pronunciation-result small {
   margin: 0;
 }
 
@@ -1428,6 +1426,35 @@ h2 {
 }
 
 .pronunciation-result small {
+  color: var(--text-secondary);
+}
+
+.pronunciation-history {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.pronunciation-history h3 {
+  margin: 0;
+  color: white;
+}
+
+.pronunciation-history article {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pronunciation-history strong {
+  color: var(--color-accent-gold);
+}
+
+.pronunciation-history span,
+.pronunciation-history small {
   color: var(--text-secondary);
 }
 

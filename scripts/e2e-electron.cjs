@@ -77,7 +77,8 @@ async function main() {
     await page.getByRole('button', { name: /score pronunciation/i }).click()
     await page.locator('[aria-label="Pronunciation result"]').getByText(/Score 100/i).waitFor()
     await page.getByText(/No problem syllables/i).waitFor()
-    await page.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i).waitFor()
+    await page.locator('[aria-label="Pronunciation history"]').getByText(/Latest: 100 \(Clear\)/i).waitFor()
+    await page.locator('[aria-label="Pronunciation history"]').getByText(/ನಮಸ್ಕಾರ ಸಾರ್ -/i).waitFor()
 
     await page.getByRole('button', { name: /stories/i }).click()
     await page.getByRole('heading', { name: /Stories/i }).waitFor()

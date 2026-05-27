@@ -2140,14 +2140,73 @@ describe('KannadaOS desktop app', () => {
     expect(within(pronunciationResult).getByText(/Score 100/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/Clear pronunciation/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/No problem syllables/i)).toBeInTheDocument()
-    expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/Latest: 100 \(Clear\)/i)
+    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/ನಮಸ್ಕಾರ ಸಾರ್/i)
 
     unmount()
     render(<App />)
     await user.click(screen.getByRole('button', { name: /practice/i }))
 
     expect(screen.getByText(/Last score 100/i)).toBeInTheDocument()
-    expect(screen.getByText(/Latest attempt: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/Latest: 100 \(Clear\)/i)
+    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/ನಮಸ್ಕಾರ ಸಾರ್/i)
+  })
+
+  it('shows latest, previous, and first pronunciation history attempts', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem(
+      'kannadaos:pronunciation-history',
+      JSON.stringify([
+        {
+          id: 'attempt-latest',
+          phraseId: 'namaskara-saar',
+          phrase: 'ನಮಸ್ಕಾರ ಸಾರ್',
+          transcript: 'ನಮಸ್ಕಾರ ಸಾರ್',
+          score: 98,
+          level: 'clear',
+          feedback: 'Clear pronunciation.',
+          tip: 'Keep the same rhythm.',
+          problemParts: [],
+          createdAt: '2026-05-27T10:00:00.000Z',
+        },
+        {
+          id: 'attempt-previous',
+          phraseId: 'ticket-eshtu',
+          phrase: 'ಟಿಕೆಟ್ ಎಷ್ಟು?',
+          transcript: 'ಟಿಕೆಟ್ ಎಷ್ಟು',
+          score: 82,
+          level: 'steady',
+          feedback: 'Almost there.',
+          tip: 'Hold the ending.',
+          problemParts: ['ಎಷ್ಟು'],
+          createdAt: '2026-05-26T10:00:00.000Z',
+        },
+        {
+          id: 'attempt-first',
+          phraseId: 'illi-nillisi',
+          phrase: 'ಇಲ್ಲಿ ನಿಲ್ಲಿಸಿ',
+          transcript: 'ಇಲ್ಲಿ',
+          score: 58,
+          level: 'needs-practice',
+          feedback: 'Practice slowly.',
+          tip: 'Match each sound.',
+          problemParts: ['ನಿಲ್ಲಿಸಿ'],
+          createdAt: '2026-05-24T10:00:00.000Z',
+        },
+      ]),
+    )
+
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    const history = screen.getByLabelText(/Pronunciation history/i)
+    expect(within(history).getByRole('heading', { name: /History/i })).toBeInTheDocument()
+    expect(history).toHaveTextContent(/Latest: 98 \(Clear\)/i)
+    expect(history).toHaveTextContent(/Previous: 82 \(Steady\)/i)
+    expect(history).toHaveTextContent(/First: 58 \(Needs Practice\)/i)
+    expect(history).toHaveTextContent(/ಟಿಕೆಟ್ ಎಷ್ಟು/i)
+    expect(history).toHaveTextContent(/ಇಲ್ಲಿ/i)
   })
 
   it('records pronunciation audio, transcribes it through Whisper, and scores the transcript', async () => {
