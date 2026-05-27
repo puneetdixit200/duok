@@ -34,6 +34,7 @@ export interface ProgressState {
   totalPracticeTimeMs: number
   chatMessagesSent: number
   streakFreezes: number
+  achievementRewardIds: string[]
 }
 
 export interface ExerciseResult {
@@ -100,6 +101,7 @@ const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
 const practiceHeartRefillThreshold = 3
 export const bangaloreScenarioChecklistXp = 10
 export const bonusStoryUnlockCost = 75
+const achievementGemReward = 25
 const streakMilestones = [
   { days: 7, gems: 50 },
   { days: 30, gems: 200 },
@@ -126,6 +128,7 @@ export function createInitialProgress(): ProgressState {
     totalPracticeTimeMs: 0,
     chatMessagesSent: 0,
     streakFreezes: 0,
+    achievementRewardIds: [],
   }
 }
 
@@ -155,7 +158,7 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
     }
   }
 
-  return {
+  const nextState: ProgressState = {
     ...state,
     xp: state.xp + earnedXp,
     dailyXp: baseDailyXp + earnedXp,
@@ -181,6 +184,8 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
         },
     reviewQueue,
   }
+
+  return awardNewAchievementRewards(state, nextState)
 }
 
 export function completeLessonProgress(
@@ -195,7 +200,7 @@ export function completeLessonProgress(
   const masteryLevel = Math.min(5, previousMasteryLevel + 1)
   const crownGemReward = getCrownGemReward(previousMasteryLevel, masteryLevel)
 
-  return {
+  const nextState: ProgressState = {
     ...state,
     gems: state.gems + crownGemReward,
     totalPracticeTimeMs: state.totalPracticeTimeMs + Math.max(0, Math.round(durationMs)),
@@ -210,6 +215,8 @@ export function completeLessonProgress(
       },
     },
   }
+
+  return awardNewAchievementRewards(state, nextState)
 }
 
 function getCrownGemReward(previousMasteryLevel: number, masteryLevel: number): number {
@@ -402,7 +409,7 @@ export function rateReviewItem(
         : previousBox
   const dueAt = rating === 'hard' ? now : addDays(now, getLeitnerIntervalDays(leitnerBox))
 
-  return {
+  const nextState: ProgressState = {
     ...state,
     reviewQueue: {
       ...state.reviewQueue,
@@ -415,6 +422,8 @@ export function rateReviewItem(
       },
     },
   }
+
+  return awardNewAchievementRewards(state, nextState)
 }
 
 export function recordPracticeActivity(state: ProgressState, result: PracticeActivityResult): ProgressState {
@@ -433,7 +442,7 @@ export function recordPracticeActivity(state: ProgressState, result: PracticeAct
   const nextStreakDays = isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1)
   const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
 
-  return {
+  const nextState: ProgressState = {
     ...state,
     xp: state.xp + result.xp,
     dailyXp: baseDailyXp + result.xp,
@@ -447,13 +456,17 @@ export function recordPracticeActivity(state: ProgressState, result: PracticeAct
       : [...state.completedExerciseIds, result.activityId, ...streakRewards.activityIds],
     todayActivityIds,
   }
+
+  return awardNewAchievementRewards(state, nextState)
 }
 
 export function recordChatMessageSent(state: ProgressState): ProgressState {
-  return {
+  const nextState: ProgressState = {
     ...state,
     chatMessagesSent: state.chatMessagesSent + 1,
   }
+
+  return awardNewAchievementRewards(state, nextState)
 }
 
 export function toggleScenarioChecklistItem(
@@ -476,13 +489,15 @@ export function toggleScenarioChecklistItem(
     !state.completedExerciseIds.includes(activityId)
 
   if (!shouldAwardXp) {
-    return {
+    const nextState: ProgressState = {
       ...state,
       scenarioChecklist: {
         ...state.scenarioChecklist,
         [scenarioId]: nextItems,
       },
     }
+
+    return awardNewAchievementRewards(state, nextState)
   }
 
   const practiceDate = now.slice(0, 10)
@@ -492,7 +507,7 @@ export function toggleScenarioChecklistItem(
   const nextStreakDays = isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1)
   const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
 
-  return {
+  const nextState: ProgressState = {
     ...state,
     xp: state.xp + bangaloreScenarioChecklistXp,
     dailyXp: baseDailyXp + bangaloreScenarioChecklistXp,
@@ -508,6 +523,8 @@ export function toggleScenarioChecklistItem(
       [scenarioId]: nextItems,
     },
   }
+
+  return awardNewAchievementRewards(state, nextState)
 }
 
 export function getScenarioChecklistActivityId(scenarioId: string): string {
@@ -571,6 +588,7 @@ export function hydrateProgress(serialized: string | null, now?: string): Progre
     hydrated.reviewQueue = hydrateReviewQueue(hydrated.reviewQueue)
     hydrated.lessonProgress = hydrateLessonProgress(hydrated.lessonProgress)
     hydrated.unlockedStoryIds = hydrateStringList(hydrated.unlockedStoryIds)
+    hydrated.achievementRewardIds = hydrateStringList(hydrated.achievementRewardIds)
     return now ? regenerateHearts(hydrated, now) : hydrated
   } catch {
     return createInitialProgress()
@@ -733,6 +751,32 @@ function addDays(isoDate: string, days: number): string {
 
 function hydrateStringList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+}
+
+function awardNewAchievementRewards(previousState: ProgressState, nextState: ProgressState): ProgressState {
+  const previouslyUnlocked = new Set(
+    getAchievementSummaries(previousState)
+      .filter((achievement) => achievement.unlocked)
+      .map((achievement) => achievement.code),
+  )
+  const alreadyRewarded = new Set(nextState.achievementRewardIds)
+  const newlyUnlocked = getAchievementSummaries(nextState)
+    .filter((achievement) =>
+      achievement.unlocked &&
+      !previouslyUnlocked.has(achievement.code) &&
+      !alreadyRewarded.has(achievement.code),
+    )
+    .map((achievement) => achievement.code)
+
+  if (!newlyUnlocked.length) {
+    return nextState
+  }
+
+  return {
+    ...nextState,
+    gems: nextState.gems + newlyUnlocked.length * achievementGemReward,
+    achievementRewardIds: [...nextState.achievementRewardIds, ...newlyUnlocked],
+  }
 }
 
 function isScenarioChecklistComplete(completedItems: string[], scenarioItems: string[]): boolean {

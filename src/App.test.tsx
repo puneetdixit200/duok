@@ -1709,11 +1709,12 @@ describe('KannadaOS desktop app', () => {
 
   it('restores one heart after three correct review practice answers', async () => {
     const user = userEvent.setup()
+    const lastHeartLostAt = new Date().toISOString()
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:progress', serializeProgress({
       ...createInitialProgress(),
       hearts: 1,
-      lastHeartLostAt: '2026-05-27T06:00:00.000Z',
+      lastHeartLostAt,
       reviewQueue: {
         hogbeku: {
           vocabularyId: 'hogbeku',
@@ -1759,7 +1760,7 @@ describe('KannadaOS desktop app', () => {
       expect(stored.xp).toBe(3)
       expect(stored.dailyXp).toBe(3)
       expect(stored.hearts).toBe(2)
-      expect(stored.lastHeartLostAt).toBe('2026-05-27T06:00:00.000Z')
+      expect(stored.lastHeartLostAt).toBe(lastHeartLostAt)
       expect(stored.todayActivityIds).toEqual(['review-dhanyavada', 'review-hogbeku', 'review-namaskara-saar'])
     })
   })

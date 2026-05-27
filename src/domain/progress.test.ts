@@ -72,6 +72,8 @@ describe('learner progress', () => {
       gems: 10,
       streakDays: 6,
       lastPracticeDate: '2026-05-22',
+      completedExerciseIds: ['earlier-activity'],
+      achievementRewardIds: ['first_word'],
     }
 
     progress = applyExerciseResult(progress, {
@@ -84,15 +86,16 @@ describe('learner progress', () => {
     })
 
     expect(progress.streakDays).toBe(7)
-    expect(progress.gems).toBe(60)
+    expect(progress.gems).toBe(85)
     expect(progress.completedExerciseIds).toContain('streak-milestone-7')
+    expect(progress.achievementRewardIds).toContain('streak_7')
 
     const sameDayPractice = recordPracticeActivity(progress, {
       activityId: 'same-day-review',
       xp: 1,
       now: '2026-05-23T12:00:00.000Z',
     })
-    expect(sameDayPractice.gems).toBe(60)
+    expect(sameDayPractice.gems).toBe(85)
     expect(sameDayPractice.completedExerciseIds.filter((id) => id === 'streak-milestone-7')).toHaveLength(1)
 
     const day30Progress = recordPracticeActivity({
@@ -106,8 +109,9 @@ describe('learner progress', () => {
     })
 
     expect(day30Progress.streakDays).toBe(30)
-    expect(day30Progress.gems).toBe(260)
+    expect(day30Progress.gems).toBe(310)
     expect(day30Progress.completedExerciseIds).toContain('streak-milestone-30')
+    expect(day30Progress.achievementRewardIds).toContain('streak_30')
   })
 
   it('tracks weak areas, removes a heart, and schedules review for incorrect answers', () => {
@@ -331,6 +335,61 @@ describe('learner progress', () => {
       expect.objectContaining({ code: 'unit_champion', unlocked: true, progressLabel: '1 unit mastered' }),
       expect.objectContaining({ code: 'perfect_lesson', unlocked: true, progressLabel: '1 perfect lesson' }),
     ])
+  })
+
+  it('awards 25 gems once when achievements first unlock', () => {
+    const firstWord = applyExerciseResult({
+      ...createInitialProgress(),
+      gems: 0,
+    }, {
+      exerciseId: 'survival-translate-1',
+      correct: true,
+      skillTag: 'greetings',
+      xp: 2,
+      vocabularyIds: ['namaskara-saar'],
+      now,
+    })
+
+    expect(firstWord.gems).toBe(25)
+    expect(firstWord.achievementRewardIds).toEqual(['first_word'])
+
+    const duplicateFirstWord = applyExerciseResult(firstWord, {
+      exerciseId: 'survival-translate-1',
+      correct: true,
+      skillTag: 'greetings',
+      xp: 2,
+      vocabularyIds: ['namaskara-saar'],
+      now: '2026-05-23T10:00:00.000Z',
+    })
+
+    expect(duplicateFirstWord.gems).toBe(25)
+    expect(duplicateFirstWord.achievementRewardIds).toEqual(['first_word'])
+
+    const reviewPro = rateReviewItem({
+      ...createInitialProgress(),
+      gems: 0,
+      reviewQueue: {
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: '2026-05-23T09:00:00.000Z',
+          strength: 0.6,
+          attempts: 2,
+          leitnerBox: 3,
+        },
+      },
+    }, 'hogbeku', 'easy', now)
+
+    expect(reviewPro.gems).toBe(25)
+    expect(reviewPro.achievementRewardIds).toEqual(['review_pro'])
+
+    const chatMaster = recordChatMessageSent({
+      ...createInitialProgress(),
+      gems: 0,
+      chatMessagesSent: 99,
+    })
+
+    expect(chatMaster.gems).toBe(25)
+    expect(chatMaster.achievementRewardIds).toEqual(['chat_master'])
   })
 
   it('tracks lesson mastery crowns independently from exercise attempts', () => {
