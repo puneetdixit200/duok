@@ -1084,11 +1084,19 @@ export function getStoryLockState(story: Story, progress: ProgressState): { lock
 }
 
 export function transliterateLatinToKannada(value: string): string {
-  return value
-    .trim()
-    .toLocaleLowerCase()
+  const trimmedValue = value.trim()
+  if (!trimmedValue) {
+    return ''
+  }
+
+  const exactPhrase = getKnownTransliteration(trimmedValue)
+  if (exactPhrase) {
+    return syncTerminalPunctuation(trimmedValue, exactPhrase)
+  }
+
+  return trimmedValue
     .split(/\s+/)
-    .map((word) => transliterationDictionary[word] ?? word)
+    .map(transliterateLatinWord)
     .join(' ')
 }
 
@@ -1577,6 +1585,8 @@ function makeStoryWords(kannada: string, transliteration: string, english: strin
     }))
 }
 
+let transliterationLookup: Map<string, string> | null = null
+
 const transliterationDictionary: Record<string, string> = {
   namaskara: 'ನಮಸ್ಕಾರ',
   saar: 'ಸಾರ್',
@@ -1595,4 +1605,269 @@ const transliterationDictionary: Record<string, string> = {
   aayta: 'ಆಯ್ತಾ',
   illi: 'ಇಲ್ಲಿ',
   nillisi: 'ನಿಲ್ಲಿಸಿ',
+}
+
+const independentVowels: Record<string, string> = {
+  aa: 'ಆ',
+  A: 'ಆ',
+  ii: 'ಈ',
+  I: 'ಈ',
+  uu: 'ಊ',
+  U: 'ಊ',
+  ee: 'ಏ',
+  E: 'ಏ',
+  ai: 'ಐ',
+  oo: 'ಓ',
+  O: 'ಓ',
+  au: 'ಔ',
+  a: 'ಅ',
+  i: 'ಇ',
+  u: 'ಉ',
+  e: 'ಎ',
+  o: 'ಒ',
+}
+
+const dependentVowels: Record<string, string> = {
+  aa: 'ಾ',
+  A: 'ಾ',
+  ii: 'ೀ',
+  I: 'ೀ',
+  uu: 'ೂ',
+  U: 'ೂ',
+  ee: 'ೇ',
+  E: 'ೇ',
+  ai: 'ೈ',
+  oo: 'ೋ',
+  O: 'ೋ',
+  au: 'ೌ',
+  a: '',
+  i: 'ಿ',
+  u: 'ು',
+  e: 'ೆ',
+  o: 'ೊ',
+}
+
+const consonants: Record<string, string> = {
+  chha: 'ಛ',
+  kha: 'ಖ',
+  gha: 'ಘ',
+  nga: 'ಙ',
+  cha: 'ಚ',
+  jha: 'ಝ',
+  nya: 'ಞ',
+  Tha: 'ಠ',
+  Dha: 'ಢ',
+  bha: 'ಭ',
+  pha: 'ಫ',
+  sha: 'ಶ',
+  Sha: 'ಷ',
+  ka: 'ಕ',
+  ga: 'ಗ',
+  ja: 'ಜ',
+  Ta: 'ಟ',
+  Da: 'ಡ',
+  Na: 'ಣ',
+  ta: 'ತ',
+  tha: 'ಥ',
+  da: 'ದ',
+  dha: 'ಧ',
+  na: 'ನ',
+  pa: 'ಪ',
+  ba: 'ಬ',
+  ma: 'ಮ',
+  ya: 'ಯ',
+  ra: 'ರ',
+  la: 'ಲ',
+  va: 'ವ',
+  wa: 'ವ',
+  sa: 'ಸ',
+  ha: 'ಹ',
+  La: 'ಳ',
+  kh: 'ಖ',
+  gh: 'ಘ',
+  ng: 'ಙ',
+  chh: 'ಛ',
+  ch: 'ಚ',
+  jh: 'ಝ',
+  ny: 'ಞ',
+  Th: 'ಠ',
+  Dh: 'ಢ',
+  th: 'ಥ',
+  dh: 'ಧ',
+  ph: 'ಫ',
+  bh: 'ಭ',
+  sh: 'ಶ',
+  k: 'ಕ',
+  g: 'ಗ',
+  c: 'ಚ',
+  j: 'ಜ',
+  T: 'ಟ',
+  D: 'ಡ',
+  N: 'ಣ',
+  t: 'ತ',
+  d: 'ದ',
+  n: 'ನ',
+  p: 'ಪ',
+  b: 'ಬ',
+  m: 'ಮ',
+  y: 'ಯ',
+  r: 'ರ',
+  l: 'ಲ',
+  v: 'ವ',
+  w: 'ವ',
+  S: 'ಷ',
+  s: 'ಸ',
+  h: 'ಹ',
+  L: 'ಳ',
+}
+
+const consonantTokens = Object.keys(consonants)
+  .filter((token) => !(token.endsWith('a') && consonants[token.slice(0, -1)] === consonants[token]))
+  .sort((left, right) => right.length - left.length)
+const vowelTokens = Object.keys(independentVowels).sort((left, right) => right.length - left.length)
+
+function transliterateLatinWord(rawWord: string): string {
+  const parts = rawWord.match(/^([^A-Za-z]*)([A-Za-z][A-Za-z-]*)([^A-Za-z]*)$/)
+  if (!parts) {
+    return rawWord
+  }
+
+  const [, prefix, latinWord, suffix] = parts
+  const knownWord = getKnownTransliteration(latinWord)
+  const transliterated = knownWord ?? transliterateLatinTokenByRules(latinWord)
+
+  return `${prefix}${transliterated}${suffix}`
+}
+
+function transliterateLatinTokenByRules(word: string): string {
+  let output = ''
+  let index = 0
+
+  while (index < word.length) {
+    if (word[index] === '-') {
+      output += '-'
+      index += 1
+      continue
+    }
+
+    const consonantToken = findTokenAt(word, index, consonantTokens)
+    if (consonantToken) {
+      index += consonantToken.length
+      const vowelToken = findTokenAt(word, index, vowelTokens)
+      output += consonants[consonantToken]
+
+      if (vowelToken) {
+        output += dependentVowels[vowelToken]
+        index += vowelToken.length
+      }
+
+      continue
+    }
+
+    const vowelToken = findTokenAt(word, index, vowelTokens)
+    if (vowelToken) {
+      output += independentVowels[vowelToken]
+      index += vowelToken.length
+      continue
+    }
+
+    output += word[index]
+    index += 1
+  }
+
+  return output
+}
+
+function findTokenAt(value: string, index: number, tokens: string[]): string | null {
+  return tokens.find((token) => value.startsWith(token, index)) ?? null
+}
+
+function getKnownTransliteration(value: string): string | null {
+  const key = normalizeTransliterationLookupKey(value)
+  if (!key) {
+    return null
+  }
+
+  return getTransliterationLookup().get(key) ?? transliterationDictionary[key] ?? null
+}
+
+function getTransliterationLookup(): Map<string, string> {
+  if (transliterationLookup) {
+    return transliterationLookup
+  }
+
+  const lookup = new Map<string, string>()
+
+  for (const phrase of survivalPhrases) {
+    addTransliterationPair(lookup, phrase.transliteration, phrase.kannada)
+  }
+
+  for (const unit of allUnits) {
+    for (const lesson of unit.lessons) {
+      for (const exercise of lesson.exercises) {
+        if (exercise.transliteration && exercise.skillTag !== 'script') {
+          addTransliterationPair(lookup, exercise.transliteration, exercise.kannada)
+        }
+
+        if (
+          exercise.skillTag !== 'script' &&
+          containsKannada(exercise.answer) &&
+          exercise.options.length === 1 &&
+          !containsKannada(exercise.options[0])
+        ) {
+          addTransliterationPair(lookup, exercise.options[0], exercise.answer)
+        }
+      }
+    }
+  }
+
+  transliterationLookup = lookup
+  return lookup
+}
+
+function addTransliterationPair(lookup: Map<string, string>, latin: string, kannada: string) {
+  const normalizedLatin = normalizeTransliterationLookupKey(latin)
+  if (!normalizedLatin || !containsKannada(kannada)) {
+    return
+  }
+
+  if (!lookup.has(normalizedLatin)) {
+    lookup.set(normalizedLatin, normalizeKannadaTransliterationOutput(kannada))
+  }
+
+  const latinWords = normalizedLatin.split(/\s+/).filter(Boolean)
+  const kannadaWords = normalizeKannadaTransliterationOutput(kannada)
+    .replace(/[?!.,:;]/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (latinWords.length !== kannadaWords.length) {
+    return
+  }
+
+  latinWords.forEach((latinWord, index) => {
+    if (!lookup.has(latinWord)) {
+      lookup.set(latinWord, kannadaWords[index])
+    }
+  })
+}
+
+function normalizeTransliterationLookupKey(value: string): string {
+  return value
+    .normalize('NFC')
+    .trim()
+    .replace(/[?!.,:;"'“”‘’]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLocaleLowerCase()
+}
+
+function normalizeKannadaTransliterationOutput(value: string): string {
+  return value.normalize('NFC').trim().replace(/\s+/g, ' ')
+}
+
+function syncTerminalPunctuation(input: string, kannada: string): string {
+  const inputTerminal = input.trim().match(/[?!.,:;]+$/)?.[0]
+  const withoutKannadaTerminal = kannada.replace(/[?!.,:;]+$/g, '')
+
+  return inputTerminal ? `${withoutKannadaTerminal}${inputTerminal}` : withoutKannadaTerminal
 }

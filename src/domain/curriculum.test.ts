@@ -345,6 +345,18 @@ describe('KannadaOS level 1 curriculum', () => {
   it('converts common romanized Kannada input into Kannada script for typing exercises', () => {
     expect(transliterateLatinToKannada('namaskara saar')).toBe('ನಮಸ್ಕಾರ ಸಾರ್')
     expect(transliterateLatinToKannada('ticket eshtu')).toBe('ಟಿಕೆಟ್ ಎಷ್ಟು')
+    expect(transliterateLatinToKannada('ticket eshtu?')).toBe('ಟಿಕೆಟ್ ಎಷ್ಟು?')
     expect(transliterateLatinToKannada('nanage neeru beku')).toBe('ನನಗೆ ನೀರು ಬೇಕು')
+    expect(transliterateLatinToKannada('Majestic-ge hogbeku')).toBe('ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು')
+    expect(transliterateLatinToKannada('swalpa kammi maadi')).toBe('ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ')
+    expect(transliterateLatinToKannada('doctor elli')).toBe('ಡಾಕ್ಟರ್ ಎಲ್ಲಿ')
+  })
+
+  it('falls back to ITRANS-like Kannada letter rules for unlisted typing input', () => {
+    expect(transliterateLatinToKannada('a aa i ii u uu e ee ai o oo au')).toBe('ಅ ಆ ಇ ಈ ಉ ಊ ಎ ಏ ಐ ಒ ಓ ಔ')
+    expect(transliterateLatinToKannada('ka kaa ki kii ku kuu ke kee kai ko koo kau')).toBe('ಕ ಕಾ ಕಿ ಕೀ ಕು ಕೂ ಕೆ ಕೇ ಕೈ ಕೊ ಕೋ ಕೌ')
+    expect(transliterateLatinToKannada('kha ga gha cha ja Ta Da Na ta da na pa ba bha ma ya ra la va sha Sha sa ha La')).toBe(
+      'ಖ ಗ ಘ ಚ ಜ ಟ ಡ ಣ ತ ದ ನ ಪ ಬ ಭ ಮ ಯ ರ ಲ ವ ಶ ಷ ಸ ಹ ಳ',
+    )
   })
 })
