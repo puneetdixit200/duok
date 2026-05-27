@@ -681,6 +681,10 @@ describe('KannadaOS desktop app', () => {
 
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /practice/i }))
+    const flashcard = screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i })
+    expect(within(flashcard).getByText(/Context: Core travel word for autos, buses, and directions/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Play Audio$/i }))
+    expect(screen.getByText(/Playing flashcard audio: hogbeku/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
     expect(screen.getByText(/need to go/i)).toBeInTheDocument()
     expect(screen.getByText(/Skill: Verbs/i)).toBeInTheDocument()

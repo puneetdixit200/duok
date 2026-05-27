@@ -418,6 +418,10 @@ function formatReadableKannadaChoice(text: string, subtitle: ReadableSubtitle): 
     .join(' ')
 }
 
+function isFlashcardAudioStatus(status: string): boolean {
+  return /^Playing flashcard audio:|^Flashcard Piper/i.test(status)
+}
+
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
   if (!containsKannada(text)) {
     return null
@@ -1638,6 +1642,37 @@ function App() {
     setAudioStatus(result.error ?? 'Piper synthesis failed.')
   }
 
+  async function playFlashcardAudio(phrase: Phrase) {
+    const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
+    if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      setAudioStatus(`Playing flashcard audio: ${phrase.transliteration}`)
+      return
+    }
+
+    setAudioStatus('Flashcard Piper synthesis running...')
+    const result = await synthesizeNativeSpeech({
+      runtimeConfig,
+      text: phrase.kannada,
+    })
+
+    if (result.ok) {
+      if (result.audioUrl) {
+        try {
+          const audio = new Audio(result.audioUrl)
+          await audio.play()
+        } catch {
+          setAudioStatus(`Flashcard Piper audio ready: ${result.audioPath} (playback unavailable)`)
+          return
+        }
+      }
+
+      setAudioStatus(`Flashcard Piper audio ready: ${result.audioPath}`)
+      return
+    }
+
+    setAudioStatus(result.error ?? 'Flashcard Piper synthesis failed.')
+  }
+
   async function checkLocalRuntime() {
     setRuntimeCheckStatus('checking')
     setRuntimeSmokeStatus('idle')
@@ -2757,9 +2792,16 @@ function App() {
                     <small>Next review: {formatFlashcardNextReview(cardReview, now)}</small>
                   </>
                 ) : (
-                  <small>Tap to flip</small>
+                  <>
+                    <small>Context: {card.context}</small>
+                    <small>Tap to flip</small>
+                  </>
                 )}
               </button>
+              <button className="mini-button" onClick={() => void playFlashcardAudio(card)} type="button">
+                Play Audio
+              </button>
+              {isFlashcardAudioStatus(audioStatus) && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
               <div className="review-rating-row" aria-label="Flashcard rating">
                 {[
                   ['hard', 'Hard'],
