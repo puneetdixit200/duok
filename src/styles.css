@@ -446,20 +446,50 @@ h2 {
 
 .continue-card i,
 .lesson-progress {
-  display: block;
+  display: flex;
+  gap: 4px;
   overflow: hidden;
   height: 8px;
   border-radius: 999px;
+}
+
+.continue-card i {
+  display: block;
   background: #30304d;
 }
 
-.continue-card b,
-.lesson-progress span {
+.continue-card b {
   display: block;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #ff6b2c, #ffbc8a);
   transition: width 300ms ease-out;
+}
+
+.lesson-progress-segment {
+  display: block;
+  flex: 1;
+  min-width: 6px;
+  height: 100%;
+  border-radius: inherit;
+  background: #30304d;
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.lesson-progress-segment.completed {
+  background: #58cc02;
+}
+
+.lesson-progress-segment.current {
+  background: #ffbc8a;
+  animation: pulseGlow 1s ease-in-out infinite;
+}
+
+.lesson-progress-segment.wrong {
+  background: #ff4b4b;
+  box-shadow: 0 0 14px rgba(255, 75, 75, 0.55);
 }
 
 .level-map,

@@ -296,6 +296,36 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: 'Hello sir' })).toBeInTheDocument()
   })
 
+  it('renders segmented lesson progress for current, completed, and wrong states', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    let progressBar = screen.getByLabelText(/Lesson progress: 0 of 6 exercises complete/i)
+    expect(within(progressBar).getAllByLabelText(/Exercise \d of 6:/i)).toHaveLength(6)
+    expect(within(progressBar).getByLabelText('Exercise 1 of 6: current')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    progressBar = screen.getByLabelText(/Lesson progress: 1 of 6 exercises complete/i)
+    expect(within(progressBar).getByLabelText('Exercise 1 of 6: completed')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    progressBar = screen.getByLabelText(/Lesson progress: 1 of 6 exercises complete/i)
+    expect(within(progressBar).getByLabelText('Exercise 2 of 6: current')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    progressBar = screen.getByLabelText(/Lesson progress: 1 of 7 exercises complete/i)
+    expect(within(progressBar).getAllByLabelText(/Exercise \d of 7:/i)).toHaveLength(7)
+    expect(within(progressBar).getByLabelText('Exercise 1 of 7: completed')).toBeInTheDocument()
+    expect(within(progressBar).getByLabelText('Exercise 2 of 7: wrong')).toBeInTheDocument()
+  })
+
   it('plays bundled sound effects for lesson feedback and completion', async () => {
     const user = userEvent.setup()
     const play = vi.fn().mockResolvedValue(undefined)

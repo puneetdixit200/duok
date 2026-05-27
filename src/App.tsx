@@ -805,6 +805,26 @@ function reinsertWrongExercise(exercises: LessonExercise[], currentIndex: number
   return updatedExercises
 }
 
+function getLessonProgressSegmentState(
+  segmentIndex: number,
+  currentIndex: number,
+  feedback: 'correct' | 'wrong' | 'almost' | null,
+): 'completed' | 'current' | 'wrong' | 'upcoming' {
+  if (segmentIndex < currentIndex || (segmentIndex === currentIndex && feedback === 'correct')) {
+    return 'completed'
+  }
+
+  if (segmentIndex === currentIndex && feedback === 'wrong') {
+    return 'wrong'
+  }
+
+  if (segmentIndex === currentIndex) {
+    return 'current'
+  }
+
+  return 'upcoming'
+}
+
 function evaluateTypedKannadaAnswer(typedAnswer: string, expectedAnswer: string) {
   const typed = normalizeKannadaAnswer(typedAnswer)
   const expected = normalizeKannadaAnswer(expectedAnswer)
@@ -2344,7 +2364,16 @@ function App() {
             className="lesson-progress"
             aria-label={`Lesson progress: ${completedInCurrentLesson} of ${lessonRunExercises.length} exercises complete`}
           >
-            <span style={{ width: `${Math.max(12, (completedInCurrentLesson / lessonRunExercises.length) * 100)}%` }} />
+            {lessonRunExercises.map((exercise, index) => {
+              const segmentState = getLessonProgressSegmentState(index, lessonIndex, feedback)
+              return (
+                <span
+                  aria-label={`Exercise ${index + 1} of ${lessonRunExercises.length}: ${segmentState}`}
+                  className={`lesson-progress-segment ${segmentState}`}
+                  key={`${exercise.id}-${index}`}
+                />
+              )
+            })}
           </div>
           <strong aria-label="Lesson hearts">❤️ {progress.hearts}</strong>
         </header>
