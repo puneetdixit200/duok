@@ -197,9 +197,14 @@ describe('KannadaOS level 1 curriculum', () => {
       'Vowel Signs',
       'Reading Practice',
     ])
-    expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'vowel')).toHaveLength(14)
+    expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'vowel').map((symbol) => symbol.kannada)).toEqual([
+      'ಅ', 'ಆ', 'ಇ', 'ಈ', 'ಉ', 'ಊ',
+      'ಎ', 'ಏ', 'ಐ', 'ಒ', 'ಓ', 'ಔ',
+    ])
     expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'consonant').length).toBeGreaterThanOrEqual(34)
-    expect(scriptUnit.scriptSymbols.some((symbol) => symbol.kannada === 'ಕಿ' && symbol.transliteration === 'ki')).toBe(true)
+    expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'combination').map((symbol) => symbol.kannada)).toEqual([
+      'ಕಾ', 'ಕಿ', 'ಕೀ', 'ಕು', 'ಕೂ', 'ಕೆ', 'ಕೇ', 'ಕೈ', 'ಕೊ', 'ಕೋ', 'ಕೌ',
+    ])
     expect([...coreCurriculumUnits, scriptUnit].reduce((total, unit) => total + unit.lessons.length, 0)).toBe(49)
     expect(getAllLessonExercises([...coreCurriculumUnits, scriptUnit])).toHaveLength(332)
   })
@@ -207,11 +212,13 @@ describe('KannadaOS level 1 curriculum', () => {
   it('builds Kannada Script Academy lessons from script-specific drill types', () => {
     const scriptUnit = getScriptCurriculumUnit()
     const vowelsPartOne = scriptUnit.lessons.find((lesson) => lesson.title === 'Vowels Part 1')!
+    const vowelsPartTwo = scriptUnit.lessons.find((lesson) => lesson.title === 'Vowels Part 2')!
     const labialsAndOthers = scriptUnit.lessons.find((lesson) => lesson.title === 'Consonants: Labials + Others')!
     const vowelSigns = scriptUnit.lessons.find((lesson) => lesson.title === 'Vowel Signs')!
     const readingPractice = scriptUnit.lessons.find((lesson) => lesson.title === 'Reading Practice')!
 
     expect(vowelsPartOne.exercises).toHaveLength(8)
+    expect(vowelsPartTwo.exercises.map((exercise) => exercise.kannada)).not.toEqual(expect.arrayContaining(['ಋ', 'ಅಂ']))
     expect(labialsAndOthers.exercises).toHaveLength(10)
     expect(vowelSigns.exercises).toHaveLength(10)
     expect(vowelsPartOne.exercises).toEqual(expect.arrayContaining([

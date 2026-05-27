@@ -1525,8 +1525,8 @@ function makeReverseTranslateOptions(answer: Phrase, phrases: Phrase[]): string[
 function buildScriptUnit(): CurriculumUnit {
   const scriptSymbols: ScriptSymbol[] = [
     ...[
-      ['ಅ', 'a'], ['ಆ', 'aa'], ['ಇ', 'i'], ['ಈ', 'ii'], ['ಉ', 'u'], ['ಊ', 'uu'], ['ಋ', 'ru'],
-      ['ಎ', 'e'], ['ಏ', 'ee'], ['ಐ', 'ai'], ['ಒ', 'o'], ['ಓ', 'oo'], ['ಔ', 'au'], ['ಅಂ', 'am'],
+      ['ಅ', 'a'], ['ಆ', 'aa'], ['ಇ', 'i'], ['ಈ', 'ii'], ['ಉ', 'u'], ['ಊ', 'uu'],
+      ['ಎ', 'e'], ['ಏ', 'ee'], ['ಐ', 'ai'], ['ಒ', 'o'], ['ಓ', 'oo'], ['ಔ', 'au'],
     ].map(([kannada, transliteration]) => scriptSymbol('vowel', kannada, transliteration)),
     ...[
       ['ಕ', 'ka'], ['ಖ', 'kha'], ['ಗ', 'ga'], ['ಘ', 'gha'], ['ಙ', 'nga'], ['ಚ', 'cha'], ['ಛ', 'chha'],
@@ -1536,8 +1536,8 @@ function buildScriptUnit(): CurriculumUnit {
       ['ವ', 'va'], ['ಶ', 'sha'], ['ಷ', 'ssa'], ['ಸ', 'sa'], ['ಹ', 'ha'], ['ಳ', 'la'],
     ].map(([kannada, transliteration]) => scriptSymbol('consonant', kannada, transliteration)),
     ...[
-      ['ಕಾ', 'kaa'], ['ಕಿ', 'ki'], ['ಕೀ', 'kii'], ['ಕು', 'ku'], ['ಕೂ', 'kuu'], ['ಕೆ', 'ke'], ['ಕೈ', 'kai'],
-      ['ಕೊ', 'ko'], ['ಕೌ', 'kau'],
+      ['ಕಾ', 'kaa'], ['ಕಿ', 'ki'], ['ಕೀ', 'kii'], ['ಕು', 'ku'], ['ಕೂ', 'kuu'], ['ಕೆ', 'ke'], ['ಕೇ', 'kee'],
+      ['ಕೈ', 'kai'], ['ಕೊ', 'ko'], ['ಕೋ', 'koo'], ['ಕೌ', 'kau'],
     ].map(([kannada, transliteration]) => scriptSymbol('combination', kannada, transliteration)),
   ]
   const vowels = scriptSymbols.filter((symbol) => symbol.kind === 'vowel')
