@@ -132,6 +132,49 @@ describe('KannadaOS level 1 curriculum', () => {
 
   it('ships six complete progressively harder stories and unlocks them from story progress', () => {
     expect(stories).toHaveLength(6)
+    expect(stories.map(({ title, subtitle, difficulty, newWordCount }) => ({
+      title,
+      subtitle,
+      difficulty,
+      newWordCount,
+    }))).toEqual([
+      {
+        title: 'First Day in Bangalore',
+        subtitle: 'Scene: Bus stop',
+        difficulty: 'Beginner',
+        newWordCount: 12,
+      },
+      {
+        title: 'Office Lunch',
+        subtitle: 'Scene: Tech park cafeteria',
+        difficulty: 'Beginner',
+        newWordCount: 16,
+      },
+      {
+        title: 'The Auto Ride',
+        subtitle: 'Scene: Indiranagar to Majestic',
+        difficulty: 'Intermediate',
+        newWordCount: 14,
+      },
+      {
+        title: 'Darshini Breakfast',
+        subtitle: 'Scene: Standing hotel',
+        difficulty: 'Intermediate',
+        newWordCount: 18,
+      },
+      {
+        title: 'The Kirana Run',
+        subtitle: 'Scene: Neighborhood store',
+        difficulty: 'Intermediate',
+        newWordCount: 15,
+      },
+      {
+        title: 'PG Problems',
+        subtitle: 'Scene: PG owner conversation',
+        difficulty: 'Advanced',
+        newWordCount: 20,
+      },
+    ])
     expect(stories.every((story) => story.sentences.length >= 3)).toBe(true)
     expect(stories.every((story) => story.quiz.options.length >= 4)).toBe(true)
 
