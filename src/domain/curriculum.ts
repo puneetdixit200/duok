@@ -516,14 +516,19 @@ const unitSeeds: UnitSeed[] = [
     description: 'Kirana, vegetables, bags, returns, and polite bargaining.',
     tips: [
       {
-        title: 'Beda means no need',
-        body: 'ಬೇಡ is a compact way to decline extras without sounding harsh.',
-        examples: ['ಬ್ಯಾಗ್ ಬೇಡ', 'ಇದು ಬೇಡ'],
+        title: 'Beku and beda',
+        body: 'ಬೇಕು means want or need, while ಬೇಡ means do not want.',
+        examples: ['ಹಾಲು ಬೇಕು', 'ಬ್ಯಾಗ್ ಬೇಡ'],
       },
       {
-        title: 'Comparisons',
-        body: 'ಕಡಿಮೆ means less and ಜಾಸ್ತಿ means more. They work for price, spice, and quantity.',
-        examples: ['ಬೆಲೆ ಜಾಸ್ತಿ', 'ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ'],
+        title: 'Idu and adu',
+        body: 'ಇದು means this and ಅದು means that, useful when pointing at shop items.',
+        examples: ['ಇದು ಎಷ್ಟು?', 'ಅದು ಬೇಡ'],
+      },
+      {
+        title: 'Kodi and torisi',
+        body: 'ಕೊಡಿ means give, and ತೋರಿಸಿ means show me when you want to inspect an item.',
+        examples: ['ಅದು ಕೊಡಿ', 'ಇದನ್ನು ತೋರಿಸಿ'],
       },
     ],
     lessons: [
@@ -531,11 +536,14 @@ const unitSeeds: UnitSeed[] = [
         ['halu-beku', 'ಹಾಲು ಬೇಕು', 'I want milk', 'Neighborhood store.'],
         ['bread-ideya', 'ಬ್ರೆಡ್ ಇದೆಯಾ?', 'Do you have bread?', 'Ask availability.'],
         ['bag-beda', 'ಬ್ಯಾಗ್ ಬೇಡ', 'No bag needed', 'Decline plastic.'],
+        ['idu-eshtu', 'ಇದು ಎಷ್ಟು?', 'How much is this?', 'Point to an item.'],
       ]),
       shoppingLesson('Asking About Items', [
         ['tomato-eshtu', 'ಟೊಮೇಟೊ ಎಷ್ಟು?', 'How much are tomatoes?', 'Vegetable stall.'],
         ['ardha-kg-beku', 'ಅರ್ಧ ಕಿಲೋ ಬೇಕು', 'I want half a kilo', 'Quantity.'],
         ['fresh-ideya', 'ಫ್ರೆಶ್ ಇದೆಯಾ?', 'Is it fresh?', 'Quality check.'],
+        ['idannu-torisi', 'ಇದನ್ನು ತೋರಿಸಿ', 'Please show me this', 'Ask to inspect an item.'],
+        ['adu-kodi', 'ಅದು ಕೊಡಿ', 'Give that one', 'Choose the item.'],
       ]),
       shoppingLesson('Bargaining Practice', [
         ['swalpa-kammi-maadi', 'ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ', 'Please reduce a little', 'Bargaining.'],

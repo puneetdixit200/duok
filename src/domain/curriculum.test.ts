@@ -275,6 +275,33 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(orderingPairs.answer).toContain('ಅನ್ನ ಕೊಡಿ=Please give rice')
   })
 
+  it('teaches the Unit 5 shopping grammar named in the frontend spec', () => {
+    const unitFive = coreCurriculumUnits[4]
+    const kiranaStore = unitFive.lessons.find((lesson) => lesson.title === 'At the Kirana Store')!
+    const askingAboutItems = unitFive.lessons.find((lesson) => lesson.title === 'Asking About Items')!
+    const kiranaPairs = kiranaStore.exercises.find((exercise) => exercise.type === 'matchPairs')!
+    const itemPairs = askingAboutItems.exercises.find((exercise) => exercise.type === 'matchPairs')!
+
+    expect(unitFive.tips.map((tip) => tip.title)).toEqual([
+      'Beku and beda',
+      'Idu and adu',
+      'Kodi and torisi',
+    ])
+    expect(unitFive.tips.flatMap((tip) => tip.examples)).toEqual(expect.arrayContaining([
+      'ಹಾಲು ಬೇಕು',
+      'ಬ್ಯಾಗ್ ಬೇಡ',
+      'ಇದು ಎಷ್ಟು?',
+      'ಅದು ಬೇಡ',
+      'ಅದು ಕೊಡಿ',
+      'ಇದನ್ನು ತೋರಿಸಿ',
+    ]))
+    expect(kiranaPairs.answer).toContain('ಹಾಲು ಬೇಕು=I want milk')
+    expect(kiranaPairs.answer).toContain('ಬ್ಯಾಗ್ ಬೇಡ=No bag needed')
+    expect(kiranaPairs.answer).toContain('ಇದು ಎಷ್ಟು?=How much is this?')
+    expect(itemPairs.answer).toContain('ಇದನ್ನು ತೋರಿಸಿ=Please show me this')
+    expect(itemPairs.answer).toContain('ಅದು ಕೊಡಿ=Give that one')
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
