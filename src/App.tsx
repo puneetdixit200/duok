@@ -3895,7 +3895,11 @@ function App() {
             >
               Play slow audio
             </button>
-            <button className="speaker-button" onClick={() => recordPhrase(exercise)} type="button">
+            <button
+              className={recordingTarget === 'lesson' ? 'speaker-button recording' : 'speaker-button'}
+              onClick={() => recordPhrase(exercise)}
+              type="button"
+            >
               {recordingTarget === 'lesson' ? 'Stop Recording' : 'Record phrase'}
             </button>
             {speakingScore !== null && (

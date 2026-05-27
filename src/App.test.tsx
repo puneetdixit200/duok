@@ -128,6 +128,19 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Correct/i)).toBeInTheDocument()
   })
 
+  it('shows English-readable subtitles on every Kannada script choice', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /Vowels Part 1/i }))
+
+    expect(screen.getByRole('button', { name: /^English: Sounds like aa\s+ಆ\s+Say: aa/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: Sounds like i\s+ಇ\s+Say: i/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: Sounds like ii\s+ಈ\s+Say: ii/i })).toBeInTheDocument()
+  })
+
   it('shows navigation badges for active streak and due practice reviews', () => {
     const progress = {
       ...createInitialProgress(),
