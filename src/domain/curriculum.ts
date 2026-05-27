@@ -797,19 +797,79 @@ export const tutorPersonas: TutorPersona[] = [
   },
 ]
 
-const storyWordGlosses: Record<string, string> = {
-  ಬಂದ: 'came',
-  ಬೆಂಗಳೂರಿಗೆ: 'to Bangalore',
-  ಕನ್ನಡ: 'Kannada',
-  ಟಿಕೆಟ್: 'ticket',
-  ಎಷ್ಟು: 'how much',
-  ಊಟಕ್ಕೆ: 'for lunch',
-  ಕಿರಾಣಿಗೆ: 'to the kirana store',
-  ಹಾಲು: 'milk',
-  ಬ್ಯಾಗ್: 'bag',
-  ಪಿಜಿಯಲ್ಲಿ: 'in the PG',
-  ಸಮಸ್ಯೆ: 'problem',
-  ಮಾಲೀಕರಿಗೆ: 'to the owner',
+interface StoryWordGloss {
+  english: string
+  note: string
+}
+
+const storyWordGlosses: Record<string, StoryWordGloss> = {
+  ರಾಹುಲ್: { english: 'Rahul', note: 'Story character name.' },
+  ಬೆಂಗಳೂರಿಗೆ: { english: 'to Bangalore', note: '-ಗೆ marks direction or destination.' },
+  ಬಂದ: { english: 'came', note: 'Past-tense action in the sentence.' },
+  ಅವನಿಗೆ: { english: 'to him', note: '-ಗೆ marks the person affected.' },
+  ಕನ್ನಡ: { english: 'Kannada', note: 'Language name.' },
+  ಬರುತ್ತಿರಲಿಲ್ಲ: { english: 'did not know yet', note: 'Negative past continuous form for ability here.' },
+  ಬಸ್: { english: 'bus', note: 'Common Bangalore transport word.' },
+  ನಿಲ್ದಾಣದಲ್ಲಿ: { english: 'at the stop', note: '-ದಲ್ಲಿ means in or at a place.' },
+  ಅವನು: { english: 'he', note: 'Masculine third-person pronoun.' },
+  ಕೇಳಿದ: { english: 'asked', note: 'Past-tense verb for asking.' },
+  ಟಿಕೆಟ್: { english: 'ticket', note: 'Common borrowed transport word.' },
+  ಎಷ್ಟು: { english: 'how much', note: 'Question word for price or quantity.' },
+  ಮೀರಾ: { english: 'Meera', note: 'Story character name.' },
+  ರಾಹುಲ್‌ನ್ನು: { english: 'Rahul', note: '-ನ್ನು marks the direct object.' },
+  ಊಟಕ್ಕೆ: { english: 'for lunch', note: '-ಕ್ಕೆ marks purpose or destination.' },
+  ಕರೆದಳು: { english: 'called', note: 'Past-tense feminine verb.' },
+  ಅವಳು: { english: 'she', note: 'Feminine third-person pronoun.' },
+  ಕೇಳಿದಳು: { english: 'asked', note: 'Past-tense feminine verb for asking.' },
+  ಊಟ: { english: 'meal', note: 'Often used for lunch or dinner.' },
+  ಆಯ್ತಾ: { english: 'done?', note: 'Casual question ending for completed action.' },
+  ಹೇಳಿದ: { english: 'said', note: 'Past-tense verb for saying.' },
+  ಇಲ್ಲ: { english: 'no', note: 'Negates or answers no.' },
+  ಒಟ್ಟಿಗೆ: { english: 'together', note: 'Useful for invitations.' },
+  ಹೋಗೋಣ: { english: 'let us go', note: 'Suggestion form with we/us meaning.' },
+  ಇಂದಿರಾನಗರದಲ್ಲಿ: { english: 'in Indiranagar', note: '-ದಲ್ಲಿ marks location.' },
+  ಆಟೋ: { english: 'auto', note: 'Auto-rickshaw in Bangalore speech.' },
+  ನಿಲ್ಲಿಸಿದ: { english: 'stopped', note: 'Past-tense action for stopping.' },
+  ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ: { english: 'to Majestic', note: '-ಗೆ marks the destination.' },
+  ಹೋಗಬೇಕು: { english: 'need to go', note: 'ಬೇಕು adds need or must.' },
+  ಡ್ರೈವರ್: { english: 'driver', note: 'Borrowed English word used in Kannada.' },
+  ಮೀಟರ್: { english: 'meter', note: 'Auto fare meter.' },
+  ಹಾಕಿ: { english: 'put or use', note: 'Polite command form.' },
+  ಕೌಂಟರ್: { english: 'counter', note: 'Borrowed word for service counter.' },
+  ಬಳಿ: { english: 'near', note: 'Location word meaning near or beside.' },
+  ಜನ: { english: 'people', note: 'Plural noun for people.' },
+  ತುಂಬಾ: { english: 'many', note: 'Means very or a lot.' },
+  ಇದ್ದರು: { english: 'were', note: 'Past form of being for plural/respectful subjects.' },
+  ಎರಡು: { english: 'two', note: 'Number word used for orders.' },
+  ಇಡ್ಲಿ: { english: 'idli', note: 'Breakfast food word.' },
+  ಮತ್ತು: { english: 'and', note: 'Connector word.' },
+  ಕಾಫಿ: { english: 'coffee', note: 'Common Bangalore drink word.' },
+  ಕೊಡಿ: { english: 'please give', note: 'Polite request verb.' },
+  ಬಿಲ್: { english: 'bill', note: 'Borrowed word used at restaurants and shops.' },
+  ಎಂದನು: { english: 'said or asked', note: 'Past-tense reporting verb.' },
+  ಕಿರಾಣಿಗೆ: { english: 'to the kirana store', note: '-ಗೆ marks destination.' },
+  ಹೋದ: { english: 'went', note: 'Past-tense motion verb.' },
+  ಹಾಲು: { english: 'milk', note: 'Common kirana-store item.' },
+  ಬೇಕು: { english: 'want or need', note: 'High-value beginner verb.' },
+  ಬ್ಯಾಗ್: { english: 'bag', note: 'Borrowed shopping word.' },
+  ಬೇಡ: { english: 'do not want', note: 'Compact polite refusal.' },
+  ಅಂಗಡಿಯವರು: { english: 'shopkeeper', note: 'Person who runs the shop.' },
+  ಕೇಳಿದರು: { english: 'asked', note: 'Respectful/plural past-tense verb.' },
+  ಚಿಲ್ಲರೆ: { english: 'change', note: 'Small cash change.' },
+  ಇದೆಯಾ: { english: 'is there?', note: 'Question form for availability.' },
+  ಪಿಜಿಯಲ್ಲಿ: { english: 'in the PG', note: '-ದಲ್ಲಿ means in or at a place.' },
+  ಬೆಳಿಗ್ಗೆ: { english: 'in the morning', note: 'Time word.' },
+  ನೀರು: { english: 'water', note: 'Essential home and food word.' },
+  ಬರಲಿಲ್ಲ: { english: 'did not come', note: 'Negative past form of come.' },
+  ಮಾಲೀಕರಿಗೆ: { english: 'to the owner', note: '-ಗೆ marks the person addressed.' },
+  ನೀರಿನ: { english: 'water', note: 'Possessive/related form of water.' },
+  ಸಮಸ್ಯೆ: { english: 'problem', note: 'Useful for complaints.' },
+  ಇದೆ: { english: 'there is', note: 'Existence verb.' },
+  ಮಾಲೀಕರು: { english: 'owner', note: 'Respectful plural form for owner.' },
+  ಹೇಳಿದರು: { english: 'said', note: 'Respectful past-tense reporting verb.' },
+  ಒಂದು: { english: 'one', note: 'Number word.' },
+  ಗಂಟೆಯಲ್ಲಿ: { english: 'in one hour', note: '-ದಲ್ಲಿ marks time here.' },
+  ಬರುತ್ತೆ: { english: 'will come', note: 'Casual future form of come.' },
 }
 
 export const stories: Story[] = [
@@ -1622,17 +1682,27 @@ function makeStory(
 }
 
 function makeStoryWords(kannada: string, transliteration: string, english: string): Story['sentences'][number]['words'] {
-  return kannada
+  const transliterationWords = splitStoryWords(transliteration)
+  const englishWords = splitStoryWords(english)
+
+  return splitStoryWords(kannada).map((word, index) => {
+    const gloss = storyWordGlosses[word]
+
+    return {
+      text: word,
+      transliteration: transliterationWords[index] ?? transliteration,
+      english: gloss?.english ?? (englishWords.slice(index, index + 2).join(' ') || english),
+      note: gloss?.note ?? 'Story word in context.',
+    }
+  })
+}
+
+function splitStoryWords(value: string): string[] {
+  return value
+    .normalize('NFC')
     .replace(/[?.:,]/g, '')
     .split(/\s+/)
     .filter(Boolean)
-    .slice(0, 4)
-    .map((word, index) => ({
-      text: word,
-      transliteration: transliteration.split(/\s+/)[index] ?? transliteration,
-      english: storyWordGlosses[word] ?? (english.split(/\s+/).slice(index, index + 2).join(' ') || english),
-      note: index === 0 ? 'Tap words to build story vocabulary.' : 'Story word in context.',
-    }))
 }
 
 let transliterationLookup: Map<string, string> | null = null

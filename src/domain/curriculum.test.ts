@@ -366,6 +366,31 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(new Set(stories.map((story) => story.imagePath)).size).toBe(stories.length)
     expect(stories.every((story) => story.sentences.length >= 3)).toBe(true)
     expect(stories.every((story) => story.quiz.options.length >= 4)).toBe(true)
+    expect(stories.every((story) =>
+      story.sentences.every((sentence) =>
+        sentence.words.length === sentence.kannada.replace(/[?.:,]/g, '').split(/\s+/).filter(Boolean).length,
+      ),
+    )).toBe(true)
+    expect(stories.every((story) =>
+      story.sentences.every((sentence) =>
+        sentence.words.every((word) => word.english.length > 0 && word.note !== 'Story word in context.'),
+      ),
+    )).toBe(true)
+    expect(stories.find((story) => story.id === 'auto-ride-story')?.sentences[1].words).toContainEqual(
+      expect.objectContaining({
+        text: 'ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ',
+        transliteration: 'majestic-ge',
+        english: 'to Majestic',
+        note: '-ಗೆ marks the destination.',
+      }),
+    )
+    expect(stories.find((story) => story.id === 'pg-problems')?.sentences[2].words).toContainEqual(
+      expect.objectContaining({
+        text: 'ಗಂಟೆಯಲ್ಲಿ',
+        english: 'in one hour',
+        note: '-ದಲ್ಲಿ marks time here.',
+      }),
+    )
 
     const progress = createInitialProgress()
     expect(getStoryLockState(stories[0], progress).locked).toBe(false)
