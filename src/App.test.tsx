@@ -268,6 +268,34 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/\+2 XP/i)).toBeInTheDocument()
   })
 
+  it('reintroduces a missed lesson exercise after two more exercises', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /question will return/i }))
+
+    expect(screen.getByText('arrange')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByText('fillBlank')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByText('translate')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Translate this phrase/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Hello sir' })).toBeInTheDocument()
+  })
+
   it('plays bundled sound effects for lesson feedback and completion', async () => {
     const user = userEvent.setup()
     const play = vi.fn().mockResolvedValue(undefined)
@@ -762,6 +790,11 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
+    expect(screen.getByText('translate')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
     await user.click(screen.getByRole('button', { name: /ticket eshtu/i }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -780,10 +813,6 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: 'Go' }))
     await user.click(screen.getByRole('button', { name: /ಬಾ/i }))
     await user.click(screen.getByRole('button', { name: 'Come' }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
-    await user.click(screen.getByRole('button', { name: /next exercise/i }))
-
-    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()

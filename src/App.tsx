@@ -794,6 +794,17 @@ function markPlacementLessonsCompleted(
   }, progress)
 }
 
+function reinsertWrongExercise(exercises: LessonExercise[], currentIndex: number): LessonExercise[] {
+  const wrongExercise = exercises[currentIndex]
+  if (!wrongExercise || exercises.slice(currentIndex + 1).some((exercise) => exercise.id === wrongExercise.id)) {
+    return exercises
+  }
+
+  const updatedExercises = [...exercises]
+  updatedExercises.splice(Math.min(currentIndex + 3, exercises.length), 0, wrongExercise)
+  return updatedExercises
+}
+
 function evaluateTypedKannadaAnswer(typedAnswer: string, expectedAnswer: string) {
   const typed = normalizeKannadaAnswer(typedAnswer)
   const expected = normalizeKannadaAnswer(expectedAnswer)
@@ -1256,11 +1267,7 @@ function App() {
       setLessonCorrectCount(nextCorrectCount)
     } else {
       setLessonWrongCount(nextWrongCount)
-      setLessonRunExercises((current) =>
-        current.slice(lessonIndex + 1).some((queuedExercise) => queuedExercise.id === exercise.id)
-          ? current
-          : [...current, exercise],
-      )
+      setLessonRunExercises((current) => reinsertWrongExercise(current, lessonIndex))
     }
 
     setProgress((current) =>
