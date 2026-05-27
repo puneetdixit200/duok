@@ -59,7 +59,7 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
     expect(screen.getByText(/Learn Kannada/i)).toBeInTheDocument()
-    expect(screen.getByText(/0 Day Streak/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/🔥 Start a streak!/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByRole('button', { name: /Continue: Greetings/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Greetings & Introductions/i })).toBeInTheDocument()
     expect(screen.getByText(/Respectful address/i)).toBeInTheDocument()
@@ -92,6 +92,36 @@ describe('KannadaOS desktop app', () => {
     fireEvent.keyDown(window, { key: '1', metaKey: true })
     await user.click(within(screen.getByRole('region', { name: /Quick actions/i })).getByRole('button', { name: /Open tutor messages/i }))
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+  })
+
+  it('renders spec navigation icons and learner resource counters', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+
+    const navigation = screen.getByLabelText(/Primary navigation/i)
+    for (const [icon, label] of [
+      ['🏠', 'Dashboard'],
+      ['📚', 'Learn'],
+      ['🔄', 'Practice'],
+      ['📖', 'Stories'],
+      ['💬', 'Chat'],
+      ['🏙️', 'BLR'],
+      ['👤', 'Me'],
+    ]) {
+      const button = within(navigation).getByRole('button', { name: new RegExp(label, 'i') })
+      expect(button).toHaveTextContent(icon)
+      expect(button).toHaveTextContent(label)
+    }
+
+    const resources = screen.getByLabelText(/resources/i)
+    expect(resources).toHaveTextContent('🔥 Start a streak!')
+    expect(resources).toHaveTextContent('❤️ 5')
+    expect(resources).toHaveTextContent('💎 120')
+
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    expect(screen.getByLabelText(/Lesson hearts/i)).toHaveTextContent('❤️ 5')
   })
 
   it('opens the Learn tab with curriculum units and grammar tips', async () => {
@@ -526,7 +556,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByText(/Almost! Check:/i)).toBeInTheDocument()
-    expect(screen.getByText(/Heart 5/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Lesson hearts/i)).toHaveTextContent('❤️ 5')
 
     await user.clear(screen.getByLabelText(/Kannada typing answer/i))
     await user.type(screen.getByLabelText(/Kannada typing answer/i), 'ನಿಮ್ಮ ಹೆಸರು ಏನು?')
@@ -556,7 +586,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     const navigation = screen.getByLabelText(/Primary navigation/i)
-    expect(within(navigation).getAllByRole('button').slice(0, 7).map((button) => button.textContent)).toEqual([
+    expect(within(navigation).getAllByRole('button').slice(0, 7).map((button) => button.getAttribute('aria-label'))).toEqual([
       'Dashboard',
       'Learn',
       'Practice',

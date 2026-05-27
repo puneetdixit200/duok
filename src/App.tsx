@@ -185,6 +185,15 @@ const tabShortcutByKey: Record<string, Tab> = {
   '6': 'blr',
   '7': 'me',
 }
+const navigationItems: Array<{ id: Tab; icon: string; label: string }> = [
+  { id: 'home', icon: '🏠', label: 'Dashboard' },
+  { id: 'learn', icon: '📚', label: 'Learn' },
+  { id: 'practice', icon: '🔄', label: 'Practice' },
+  { id: 'stories', icon: '📖', label: 'Stories' },
+  { id: 'chat', icon: '💬', label: 'Chat' },
+  { id: 'blr', icon: '🏙️', label: 'BLR' },
+  { id: 'me', icon: '👤', label: 'Me' },
+]
 
 interface ReadableSubtitle {
   romanization: string
@@ -2324,7 +2333,7 @@ function App() {
           >
             <span style={{ width: `${Math.max(12, (completedInCurrentLesson / lessonRunExercises.length) * 100)}%` }} />
           </div>
-          <strong>Heart {progress.hearts}</strong>
+          <strong aria-label="Lesson hearts">❤️ {progress.hearts}</strong>
         </header>
         <section className="lesson-card" aria-labelledby="lesson-title">
           <p className="eyebrow">
@@ -2637,15 +2646,7 @@ function App() {
             </div>
           </div>
           <nav className="nav-stack">
-            {[
-              ['home', 'Dashboard'],
-              ['learn', 'Learn'],
-              ['practice', 'Practice'],
-              ['stories', 'Stories'],
-              ['chat', 'Chat'],
-              ['blr', 'BLR'],
-              ['me', 'Me'],
-            ].map(([id, label]) => {
+            {navigationItems.map(({ id, icon, label }) => {
               const showStreakBadge = id === 'home' && progress.streakDays > 0
               const showReviewBadge = id === 'practice' && navDueReviewCount > 0
               const navLabel = [
@@ -2659,9 +2660,10 @@ function App() {
                   aria-label={navLabel}
                   className={tab === id ? 'nav-button active' : 'nav-button'}
                   key={id}
-                  onClick={() => setTab(id as Tab)}
+                  onClick={() => setTab(id)}
                   type="button"
                 >
+                  <span className="nav-icon" aria-hidden="true">{icon}</span>
                   <span className="nav-label">{label}</span>
                   {showStreakBadge && <span aria-hidden="true" className="nav-flame">🔥</span>}
                   {showReviewBadge && <span aria-hidden="true" className="nav-badge">{navDueReviewCount}</span>}
@@ -3702,13 +3704,14 @@ function App() {
             <h2 id="home-title">KannadaOS</h2>
           </div>
           <div className="top-counters" aria-label="resources">
-            <span>Heart {progress.hearts}</span>
-            <span>Gem {progress.gems}</span>
+            <span>{formatStreakCounter(progress.streakDays)}</span>
+            <span>❤️ {progress.hearts}</span>
+            <span>💎 {progress.gems}</span>
           </div>
         </header>
         <section className="streak-banner">
           <div>
-            <strong>{progress.streakDays} Day Streak!</strong>
+            <strong>{formatStreakCounter(progress.streakDays)}</strong>
             <p>Keep it up. {Math.max(0, dailyGoalXp - progress.dailyXp)} XP to hit today&apos;s goal.</p>
           </div>
           <div className="ring" aria-label={`${progress.dailyXp} of ${dailyGoalXp} XP`}>
@@ -4122,6 +4125,10 @@ function Stat({ value, label }: { value: number | string; label: string }) {
       <span>{label}</span>
     </article>
   )
+}
+
+function formatStreakCounter(streakDays: number): string {
+  return streakDays > 0 ? `🔥 ${streakDays}-day streak` : '🔥 Start a streak!'
 }
 
 function formatLessonDuration(durationMs: number): string {
