@@ -1413,6 +1413,12 @@ function App() {
     setSelectedAnswer(nextWords.join(' '))
   }
 
+  function removeArrangeWord(wordIndex: number) {
+    const nextWords = placedWords.filter((_word, index) => index !== wordIndex)
+    setPlacedWords(nextWords)
+    setSelectedAnswer(nextWords.join(' '))
+  }
+
   async function recordPhrase(exercise: LessonExercise) {
     await toggleVoiceRecording(
       'lesson',
@@ -3861,7 +3867,19 @@ function App() {
             <small>{exercise.english}</small>
             {placedWords.length ? (
               <>
-                <strong lang="kn">{placedWords.join(' ')}</strong>
+                <div className="placed-word-row" role="region" aria-label="Placed words">
+                  {placedWords.map((word, index) => (
+                    <button
+                      aria-label={`Remove ${word} from answer`}
+                      className="placed-word-chip"
+                      key={`${word}-${index}`}
+                      onClick={() => removeArrangeWord(index)}
+                      type="button"
+                    >
+                      <ChoiceText text={word} context={exercise} />
+                    </button>
+                  ))}
+                </div>
                 <SubtitleLines text={placedWords.join(' ')} context={exercise} />
               </>
             ) : (

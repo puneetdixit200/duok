@@ -395,6 +395,30 @@ describe('KannadaOS desktop app', () => {
     expect(within(wordGuide).getByText(/Say: namaskara/i)).toBeInTheDocument()
   })
 
+  it('lets learners remove placed words from the arrange answer area', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    const wordBank = screen.getByLabelText(/Word bank/i)
+    await user.click(within(wordBank).getByRole('button', { name: /hello.*ನಮಸ್ಕಾರ.*namaskara/i }))
+
+    const answerArea = screen.getByRole('region', { name: /Placed words/i })
+    expect(within(answerArea).getByRole('button', { name: /Remove ನಮಸ್ಕಾರ from answer/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /hello.*ನಮಸ್ಕಾರ.*namaskara/i })).toBeDisabled()
+
+    await user.click(within(answerArea).getByRole('button', { name: /Remove ನಮಸ್ಕಾರ from answer/i }))
+
+    expect(screen.getByText(/Tap words below/i)).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /hello.*ನಮಸ್ಕಾರ.*namaskara/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /check/i })).toBeDisabled()
+  })
+
   it('shows English subtitles on non-lesson Kannada study surfaces', async () => {
     const user = userEvent.setup()
     render(<App />)

@@ -126,6 +126,7 @@ h2 {
 .primary-action,
 .mini-button,
 .suggestion-row button,
+.placed-word-chip,
 .icon-button {
   border: 1px solid #3d3d5c;
   border-radius: 10px;
@@ -636,6 +637,37 @@ h2 {
 
 .word-guide-item .romanization {
   font-size: 14px;
+}
+
+.placed-word-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.placed-word-chip {
+  display: inline-grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 58px;
+  padding: 8px 12px;
+  border-color: #ffbc8a;
+  text-align: center;
+}
+
+.placed-word-chip .choice-text {
+  justify-items: center;
+  text-align: center;
+}
+
+.placed-word-chip .choice-primary-english {
+  font-size: 14px;
+}
+
+.placed-word-chip [lang='kn'] {
+  font-size: 16px;
 }
 
 .match-grid {
