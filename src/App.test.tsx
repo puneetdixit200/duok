@@ -819,6 +819,62 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
   }, 30_000)
 
+  it('shows matched and wrong visual states in match-pair exercises', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ticket eshtu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /record phrase/i }))
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+    expect(await screen.findByText(/Score: 100%/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    const matchGrid = screen.getByLabelText(/Match pairs/i)
+    const namaskaraButton = within(matchGrid).getByRole('button', { name: /ನಮಸ್ಕಾರ/i })
+    const thankYouButton = within(matchGrid).getByRole('button', { name: /^Thank you$/i })
+
+    await user.click(namaskaraButton)
+    await user.click(thankYouButton)
+
+    expect(namaskaraButton).toHaveClass('mismatch')
+    expect(thankYouButton).toHaveClass('mismatch')
+
+    await waitFor(() => expect(namaskaraButton).not.toHaveClass('mismatch'))
+    await waitFor(() => expect(thankYouButton).not.toHaveClass('mismatch'))
+
+    await user.click(namaskaraButton)
+    const helloButton = within(matchGrid).getByRole('button', { name: /^Hello$/i })
+    await user.click(helloButton)
+
+    expect(namaskaraButton).toHaveClass('matched')
+    expect(helloButton).toHaveClass('matched')
+    expect(namaskaraButton).toHaveTextContent('✅')
+    expect(helloButton).toHaveTextContent('✅')
+    expect(namaskaraButton).toBeDisabled()
+    expect(helloButton).toBeDisabled()
+  }, 30_000)
+
   it('shows lesson completion accuracy from actual correct and wrong attempts', async () => {
     const user = userEvent.setup()
     render(<App />)

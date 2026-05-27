@@ -1024,6 +1024,7 @@ function App() {
   const [speakingTip, setSpeakingTip] = useState('')
   const [selectedMatch, setSelectedMatch] = useState<{ left?: string; right?: string }>({})
   const [matchedPairs, setMatchedPairs] = useState<string[]>([])
+  const [mismatchedPair, setMismatchedPair] = useState<{ left: string; right: string } | null>(null)
   const [voiceCaptureSession, setVoiceCaptureSession] = useState<VoiceCaptureSession | null>(null)
   const [recordingTarget, setRecordingTarget] = useState<VoiceRecordingTarget | null>(null)
 
@@ -1262,6 +1263,7 @@ function App() {
     setSpeakingTip('')
     setSelectedMatch({})
     setMatchedPairs([])
+    setMismatchedPair(null)
   }
 
   function openLesson(lessonId?: string) {
@@ -1497,7 +1499,7 @@ function App() {
     const pairs = parseMatchPairs(exercise.answer)
 
     if (nextSelection.left && nextSelection.right) {
-      const pairId = `${nextSelection.left}=${nextSelection.right}`
+      const pairId = getMatchPairId(nextSelection.left, nextSelection.right)
       const isCorrect = pairs.some(
         (pair) => pair.left === nextSelection.left && pair.right === nextSelection.right,
       )
@@ -1508,6 +1510,16 @@ function App() {
         if (nextMatches.length === pairs.length) {
           setSelectedAnswer(exercise.answer)
         }
+      }
+
+      if (!isCorrect) {
+        const nextMismatch = { left: nextSelection.left, right: nextSelection.right }
+        setMismatchedPair(nextMismatch)
+        window.setTimeout(() => {
+          setMismatchedPair((current) =>
+            current?.left === nextMismatch.left && current.right === nextMismatch.right ? null : current,
+          )
+        }, 500)
       }
 
       setSelectedMatch({})
@@ -4146,31 +4158,48 @@ function App() {
 
     if (exercise.type === 'matchPairs') {
       const pairs = parseMatchPairs(exercise.answer)
+      const matchedPairIds = new Set(matchedPairs)
       return (
         <div className="match-grid" aria-label="Match pairs">
           <div>
-            {pairs.map((pair) => (
-              <button
-                className={selectedMatch.left === pair.left ? 'answer-option selected' : 'answer-option'}
-                key={pair.left}
-                onClick={() => handleMatchSelection(pair.left, 'left', exercise)}
-                type="button"
-              >
-                <ChoiceText text={pair.left} context={exercise} />
-              </button>
-            ))}
+            {pairs.map((pair) => {
+              const pairId = getMatchPairId(pair.left, pair.right)
+              const matched = matchedPairIds.has(pairId)
+              const mismatched = mismatchedPair?.left === pair.left
+
+              return (
+                <button
+                  className={getMatchOptionClass(selectedMatch.left === pair.left, matched, mismatched)}
+                  disabled={matched}
+                  key={pair.left}
+                  onClick={() => handleMatchSelection(pair.left, 'left', exercise)}
+                  type="button"
+                >
+                  {matched && <span className="match-check" aria-hidden="true">✅</span>}
+                  <ChoiceText text={pair.left} context={exercise} />
+                </button>
+              )
+            })}
           </div>
           <div>
-            {pairs.map((pair) => (
-              <button
-                className={selectedMatch.right === pair.right ? 'answer-option selected' : 'answer-option'}
-                key={pair.right}
-                onClick={() => handleMatchSelection(pair.right, 'right', exercise)}
-                type="button"
-              >
-                <ChoiceText text={pair.right} context={exercise} />
-              </button>
-            ))}
+            {pairs.map((pair) => {
+              const pairId = getMatchPairId(pair.left, pair.right)
+              const matched = matchedPairIds.has(pairId)
+              const mismatched = mismatchedPair?.right === pair.right
+
+              return (
+                <button
+                  className={getMatchOptionClass(selectedMatch.right === pair.right, matched, mismatched)}
+                  disabled={matched}
+                  key={pair.right}
+                  onClick={() => handleMatchSelection(pair.right, 'right', exercise)}
+                  type="button"
+                >
+                  {matched && <span className="match-check" aria-hidden="true">✅</span>}
+                  <ChoiceText text={pair.right} context={exercise} />
+                </button>
+              )
+            })}
           </div>
           <p>{matchedPairs.length} of {pairs.length} matched</p>
         </div>
@@ -4491,6 +4520,19 @@ function parseMatchPairs(answer: string) {
     const [left, right] = pair.split('=')
     return { left, right }
   })
+}
+
+function getMatchPairId(left: string, right: string): string {
+  return `${left}=${right}`
+}
+
+function getMatchOptionClass(selected: boolean, matched: boolean, mismatched: boolean): string {
+  return [
+    'answer-option',
+    selected ? 'selected' : '',
+    matched ? 'matched' : '',
+    mismatched ? 'mismatch' : '',
+  ].filter(Boolean).join(' ')
 }
 
 function formatDueReviewSummary(dueReviewIds: string[], progress: ProgressState) {

@@ -726,6 +726,23 @@ h2 {
   text-align: left;
 }
 
+.answer-option.matched {
+  border-color: #58cc02;
+  background: rgba(88, 204, 2, 0.16);
+  color: #f7fff2;
+  opacity: 0.72;
+}
+
+.answer-option.mismatch {
+  border-color: #ff4b4b;
+  background: rgba(255, 75, 75, 0.18);
+  animation: wrongShake 500ms ease-out;
+}
+
+.match-check {
+  font-size: 17px;
+}
+
 .word-bank .answer-option {
   min-height: 86px;
   justify-items: center;
