@@ -2762,6 +2762,12 @@ function App() {
     setPronunciationHistory((current) => [attempt, ...current].slice(0, 5))
   }
 
+  function retryPronunciationPractice() {
+    setPronunciationResult(null)
+    setPronunciationTranscript('')
+    setPronunciationAudioStatus('')
+  }
+
   async function recordPronunciationAudio() {
     await toggleVoiceRecording(
       'pronunciation',
@@ -4109,6 +4115,9 @@ function App() {
                   <SubtitleLines text={pronunciationResult.problemParts.join(' ')} />
                 )}
                 <small>{pronunciationResult.tip}</small>
+                <button className="secondary-action compact-action" onClick={retryPronunciationPractice} type="button">
+                  Try Again
+                </button>
               </article>
             )}
             {latestPronunciationAttempt && (
@@ -5503,7 +5512,7 @@ function hydratePronunciationHistory(serialized: string | null): PronunciationAt
         typeof attempt.tip === 'string' &&
         Array.isArray(attempt.problemParts) &&
         typeof attempt.createdAt === 'string' &&
-        (attempt.level === 'clear' || attempt.level === 'steady' || attempt.level === 'needs-practice'),
+        (attempt.level === 'clear' || attempt.level === 'steady' || attempt.level === 'needs-practice' || attempt.level === 'try-again'),
       )
       .slice(0, 5)
   } catch {

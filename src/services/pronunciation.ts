@@ -1,4 +1,4 @@
-export type PronunciationLevel = 'clear' | 'steady' | 'needs-practice'
+export type PronunciationLevel = 'clear' | 'steady' | 'needs-practice' | 'try-again'
 
 export interface PronunciationScoreInput {
   expectedText: string
@@ -87,7 +87,11 @@ function getPronunciationLevel(score: number): PronunciationLevel {
     return 'steady'
   }
 
-  return 'needs-practice'
+  if (score >= 40) {
+    return 'needs-practice'
+  }
+
+  return 'try-again'
 }
 
 function buildPronunciationFeedback(level: PronunciationLevel, problemParts: string[]): string {
@@ -99,6 +103,10 @@ function buildPronunciationFeedback(level: PronunciationLevel, problemParts: str
     return problemParts.length
       ? `Almost there. Recheck ${problemParts.join(', ')}.`
       : 'Almost there. The phrase is understandable.'
+  }
+
+  if (level === 'try-again') {
+    return "Let's try again. Play the reference and repeat slowly."
   }
 
   return problemParts.length
@@ -113,6 +121,10 @@ function buildPronunciationTip(level: PronunciationLevel, problemParts: string[]
 
   if (level === 'clear') {
     return 'Keep the same rhythm and vowel length.'
+  }
+
+  if (level === 'try-again') {
+    return 'Replay the reference, then repeat one word at a time.'
   }
 
   return 'Say it slowly once, then at normal speed.'

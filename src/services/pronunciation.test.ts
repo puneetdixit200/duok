@@ -25,9 +25,24 @@ describe('pronunciation scoring', () => {
       targetParts: ['ನಮಸ್ಕಾರ', 'ಸಾರ್'],
     })
 
-    expect(result.score).toBeLessThan(50)
-    expect(result.level).toBe('needs-practice')
+    expect(result.score).toBeLessThan(40)
+    expect(result.level).toBe('try-again')
     expect(result.problemParts).toEqual(['ನಮಸ್ಕಾರ', 'ಸಾರ್'])
+    expect(result.feedback).toMatch(/try again/i)
+  })
+
+  it('keeps related but weak speech in the needs-practice band', () => {
+    const result = scorePronunciation({
+      expectedText: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      expectedTransliteration: 'namaskara saar',
+      transcript: 'ಸಾರ್',
+      targetParts: ['ನಮಸ್ಕಾರ', 'ಸಾರ್'],
+    })
+
+    expect(result.score).toBeGreaterThanOrEqual(40)
+    expect(result.score).toBeLessThan(70)
+    expect(result.level).toBe('needs-practice')
+    expect(result.problemParts).toEqual(['ನಮಸ್ಕಾರ'])
   })
 
   it('flags missing phrase parts and returns a specific practice tip', () => {

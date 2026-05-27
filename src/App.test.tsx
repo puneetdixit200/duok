@@ -2209,6 +2209,27 @@ describe('KannadaOS desktop app', () => {
     expect(history).toHaveTextContent(/ಇಲ್ಲಿ/i)
   })
 
+  it('uses the Try Again pronunciation level and resets the current attempt', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    const transcriptInput = screen.getByLabelText(/Transcribed speech/i)
+    await user.type(transcriptInput, 'ಬಸ್ ಟಿಕೆಟ್')
+    await user.click(screen.getByRole('button', { name: /score pronunciation/i }))
+
+    const pronunciationResult = screen.getByLabelText(/Pronunciation result/i)
+    expect(within(pronunciationResult).getByText(/Let's try again/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/Latest: \d+ \(Try Again\)/i)
+
+    await user.click(within(pronunciationResult).getByRole('button', { name: /Try Again/i }))
+
+    expect(screen.queryByLabelText(/Pronunciation result/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Transcribed speech/i)).toHaveValue('')
+    expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/Try Again/i)
+  })
+
   it('records pronunciation audio, transcribes it through Whisper, and scores the transcript', async () => {
     const user = userEvent.setup()
     const transcribeRecordedAudio = vi.fn().mockResolvedValue({ ok: true, text: 'ನಮಸ್ಕಾರ ಸಾರ್' })
