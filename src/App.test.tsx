@@ -2166,6 +2166,52 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Auto Web Speech reference: namaskara saar/i)).toBeInTheDocument()
   })
 
+  it('auto-plays speaking exercise reference audio through Web Speech when Piper is unavailable', async () => {
+    const user = userEvent.setup()
+    const speak = vi.fn()
+    vi.stubGlobal('speechSynthesis', {
+      getVoices: vi.fn(() => []),
+      speak,
+    })
+    vi.stubGlobal('SpeechSynthesisUtterance', class MockSpeechSynthesisUtterance {
+      lang = ''
+      rate = 1
+      voice: unknown = null
+
+      constructor(public text: string) {}
+    })
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":true,"autoPlayAudio":true}')
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
+    await waitFor(() => expect(speak).toHaveBeenCalled())
+
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ticket eshtu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByText('speaking')).toBeInTheDocument()
+    await waitFor(() => expect(speak.mock.calls.length).toBeGreaterThanOrEqual(5))
+    expect(speak.mock.calls.at(-1)?.[0]).toMatchObject({
+      text: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      lang: 'kn-IN',
+      rate: 1,
+    })
+    expect(screen.getByText(/Auto Web Speech reference: namaskara saar/i)).toBeInTheDocument()
+  }, 30_000)
+
   it('auto-plays lesson reference audio through Piper when the desktop bridge is configured', async () => {
     const user = userEvent.setup()
     const playReference = vi.fn().mockResolvedValue(undefined)

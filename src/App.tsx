@@ -1515,10 +1515,10 @@ function App() {
       runtimeConfig.piperBinaryPath.trim(),
     )
 
-    if (activeExercise.type === 'speaking' || !canUseNativePiper || !synthesizeNativeSpeech) {
+    if (!canUseNativePiper || !synthesizeNativeSpeech) {
       queueMicrotask(() => {
         if (!cancelled) {
-          if (activeExercise.type !== 'speaking' && playKannadaWithWebSpeech(activeExercise.kannada) === 'played') {
+          if (playKannadaWithWebSpeech(activeExercise.kannada) === 'played') {
             setAudioStatus(`Auto Web Speech reference: ${getExerciseAudioLabel(activeExercise)}`)
             return
           }
