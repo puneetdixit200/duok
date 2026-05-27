@@ -43,7 +43,7 @@ async function main() {
     await page.getByRole('button', { name: /next: set goal/i }).click()
     await page.getByRole('button', { name: /10 XP/i }).click()
     await page.getByRole('button', { name: /start learning/i }).click()
-    await page.getByRole('button', { name: /continue: greetings/i }).click()
+    await page.getByRole('button', { name: /continue: hello & thanks/i }).click()
     await completeLesson(page)
     await page.getByRole('button', { name: /back to home/i }).click()
 

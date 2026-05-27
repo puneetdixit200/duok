@@ -65,29 +65,56 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(bangaloreScenarios[1].openingLine.kannada).toContain('ಎಲ್ಲಿಗೆ')
   })
 
-  it('ships a Duolingo-grade beginner path with 8 core units, 5 lessons each, grammar tips, and 150+ exercises', () => {
+  it('ships the Section 18 curriculum map with 8 core units, 5 lessons each, and the spec exercise counts', () => {
     expect(coreCurriculumUnits).toHaveLength(8)
-    expect(coreCurriculumUnits.map((unit) => unit.title)).toEqual([
-      'Greetings & Introductions',
-      'Numbers & Prices',
-      'Transport & Directions',
-      'Food & Ordering',
-      'Shopping & Bargaining',
-      'Home & PG Life',
-      'Office & Workplace',
-      'Emergencies & Health',
+    expect(coreCurriculumUnits.map((unit) => ({
+      title: unit.title,
+      lessons: unit.lessons.map((lesson) => lesson.title),
+    }))).toEqual([
+      {
+        title: 'Greetings & Basics',
+        lessons: ['Hello & Thanks', 'How Are You', 'Introductions', 'Small Talk', 'Unit 1 Review'],
+      },
+      {
+        title: 'Numbers & Prices',
+        lessons: ['Numbers 1-5', 'Numbers 6-10', 'Asking Prices', 'Bargaining', 'Unit 2 Review'],
+      },
+      {
+        title: 'Transport & Directions',
+        lessons: ['Auto Ride Basics', 'Bus Phrases', 'Directions', 'At the Metro', 'Unit 3 Review'],
+      },
+      {
+        title: 'Food & Ordering',
+        lessons: ['Darshini Basics', 'Ordering Food', 'Restaurant Phrases', 'Likes & Dislikes', 'Unit 4 Review'],
+      },
+      {
+        title: 'Shopping & Bargaining',
+        lessons: ['At the Kirana Store', 'Asking About Items', 'Bargaining Practice', 'Declining & Accepting', 'Unit 5 Review'],
+      },
+      {
+        title: 'Home & PG Life',
+        lessons: ['PG Owner Conversations', 'Household Items', 'Complaints & Requests', 'Neighbors & Small Talk', 'Unit 6 Review'],
+      },
+      {
+        title: 'Office & Workplace',
+        lessons: ['Office Greetings', 'Lunch & Tea Talk', 'Simple Work Requests', 'Scheduling & Time', 'Unit 7 Review'],
+      },
+      {
+        title: 'Emergencies & Help',
+        lessons: ['Asking for Help', 'Health & Doctor', 'Finding Places', 'Emergency Phrases', 'Unit 8 Review'],
+      },
     ])
 
     for (const unit of coreCurriculumUnits) {
       expect(unit.optional).toBe(false)
       expect(unit.lessons).toHaveLength(5)
       expect(unit.tips.length).toBeGreaterThanOrEqual(2)
-      expect(unit.lessons.every((lesson) => lesson.exercises.length >= 6)).toBe(true)
+      expect(unit.lessons.map((lesson) => lesson.exercises.length)).toEqual([6, 6, 6, 6, 8])
       expect(unit.lessons.every((lesson) => new Set(lesson.exercises.map((exercise) => exercise.type)).size >= 6)).toBe(true)
     }
 
     const exercises = getAllLessonExercises(coreCurriculumUnits)
-    expect(exercises.length).toBeGreaterThanOrEqual(150)
+    expect(exercises).toHaveLength(256)
     expect(exercises.some((exercise) => exercise.type === 'typeKannada')).toBe(true)
     expect(exercises.some((exercise) => exercise.type === 'dialogue')).toBe(true)
     expect(new Set(exercises.map((exercise) => exercise.id)).size).toBe(exercises.length)
@@ -113,6 +140,7 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'consonant').length).toBeGreaterThanOrEqual(34)
     expect(scriptUnit.scriptSymbols.some((symbol) => symbol.kannada === 'ಕಿ' && symbol.transliteration === 'ki')).toBe(true)
     expect([...coreCurriculumUnits, scriptUnit].reduce((total, unit) => total + unit.lessons.length, 0)).toBe(49)
+    expect(getAllLessonExercises([...coreCurriculumUnits, scriptUnit])).toHaveLength(332)
   })
 
   it('builds Kannada Script Academy lessons from script-specific drill types', () => {

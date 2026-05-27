@@ -61,9 +61,9 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
     expect(screen.getByText(/Learn Kannada/i)).toBeInTheDocument()
     expect(screen.getAllByText(/🔥 Start a streak!/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByRole('button', { name: /Continue: Greetings/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Greetings & Introductions/i })).toBeInTheDocument()
-    expect(screen.getByText(/Respectful address/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Continue: Hello & Thanks/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Greetings & Basics/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/^Universal polite greeting$/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/ನಮಸ್ಕಾರ ಸಾರ್ \(namaskara saar/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Daily quests/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/0 of 20 XP/i)).toHaveTextContent('0/20')
@@ -193,7 +193,7 @@ describe('KannadaOS desktop app', () => {
     expect(resources).toHaveTextContent('❤️ 5')
     expect(resources).toHaveTextContent('💎 120')
 
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     expect(screen.getByLabelText(/Lesson hearts/i)).toHaveTextContent('❤️ 5')
   })
 
@@ -206,13 +206,13 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByRole('heading', { name: /Learn Kannada/i })).toBeInTheDocument()
     expect(screen.getByText(/Unit 0: Kannada Script/i)).toBeInTheDocument()
-    expect(screen.getByText(/Unit 1: Greetings & Introductions/i)).toBeInTheDocument()
+    expect(screen.getByText(/Unit 1: Greetings & Basics/i)).toBeInTheDocument()
 
     await user.click(screen.getAllByRole('button', { name: /tips/i })[1])
 
-    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Greetings & Introductions/i })
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Greetings & Basics/i })
     expect(tipsDialog).toBeInTheDocument()
-    expect(within(tipsDialog).getByText(/Respectful address/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getAllByText(/^Universal polite greeting$/i).length).toBeGreaterThanOrEqual(1)
   })
 
   it('runs Kannada Script Academy letter and transliteration drills', async () => {
@@ -333,7 +333,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
 
@@ -350,7 +350,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
 
@@ -367,7 +367,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -385,7 +385,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
@@ -413,7 +413,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     let progressBar = screen.getByLabelText(/Lesson progress: 0 of 6 exercises complete/i)
     expect(within(progressBar).getAllByLabelText(/Exercise \d of 6:/i)).toHaveLength(6)
@@ -448,7 +448,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
@@ -503,7 +503,7 @@ describe('KannadaOS desktop app', () => {
     const { unmount } = render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
 
@@ -516,7 +516,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":false,"autoPlayAudio":true}')
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
 
@@ -528,7 +528,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -555,7 +555,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -574,7 +574,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -630,16 +630,19 @@ describe('KannadaOS desktop app', () => {
 
   it('adds English phrase subtitles to generated Kannada word choices', async () => {
     const user = userEvent.setup()
-    const firstLesson = coreCurriculumUnits[0].lessons[0]
-    const namesLesson = coreCurriculumUnits[0].lessons[1]
-    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    const [firstLesson, secondLesson, introductionsLesson] = coreCurriculumUnits[0].lessons
+    const progress = [firstLesson, secondLesson].reduce(
+      (state, lesson, index) =>
+        completeLessonProgress(state, lesson.id, `2026-05-27T10:0${index}:00.000Z`),
+      createInitialProgress(),
+    )
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:progress', serializeProgress(progress))
 
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: /learn/i }))
-    await user.click(screen.getByRole('button', { name: new RegExp(namesLesson.title, 'i') }))
+    await user.click(screen.getByRole('button', { name: new RegExp(introductionsLesson.title, 'i') }))
     await user.click(screen.getByRole('button', { name: /What is your name/i }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -654,7 +657,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -680,7 +683,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -712,62 +715,24 @@ describe('KannadaOS desktop app', () => {
 
   it('allows a near-miss typeKannada answer to retry without losing a heart', async () => {
     const user = userEvent.setup()
-    const firstLesson = coreCurriculumUnits[0].lessons[0]
-    const namesLesson = coreCurriculumUnits[0].lessons[1]
-    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    const [firstLesson, secondLesson, introductionsLesson] = coreCurriculumUnits[0].lessons
+    const progress = [
+      firstLesson,
+      secondLesson,
+      introductionsLesson,
+      introductionsLesson,
+    ].reduce(
+      (state, lesson, index) =>
+        completeLessonProgress(state, lesson.id, `2026-05-27T10:0${index}:00.000Z`),
+      createInitialProgress(),
+    )
     localStorage.setItem('kannadaos:onboarded', 'true')
     localStorage.setItem('kannadaos:progress', serializeProgress(progress))
 
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: /learn/i }))
-    await user.click(screen.getByRole('button', { name: new RegExp(namesLesson.title, 'i') }))
-
-    await user.click(screen.getByRole('button', { name: /What is your name/i }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
-    await user.click(screen.getByRole('button', { name: /next exercise/i }))
-
-    await user.click(screen.getByRole('button', { name: /ನಿಮ್ಮ/i }))
-    await user.click(screen.getByRole('button', { name: /ಹೆಸರು/i }))
-    await user.click(screen.getByRole('button', { name: /ಏನು/i }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
-    await user.click(screen.getByRole('button', { name: /next exercise/i }))
-
-    await user.click(screen.getByRole('button', { name: /ರಾಹುಲ್/i }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
-    await user.click(screen.getByRole('button', { name: /next exercise/i }))
-
-    await user.click(screen.getByRole('button', { name: /nanna hesaru rahul/i }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
-    await user.click(screen.getByRole('button', { name: /next exercise/i }))
-
-    vi.mocked(window.kannadaOS.transcribeRecordedAudio).mockResolvedValueOnce({
-      ok: true,
-      text: 'ನಿಮ್ಮನ್ನು ಭೇಟಿ ಆಗಿ ಸಂತೋಷ',
-    })
-    await user.click(screen.getByRole('button', { name: /record phrase/i }))
-    await user.click(screen.getByRole('button', { name: /stop recording/i }))
-    expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /^Continue/i }))
-    await user.click(screen.getByRole('button', { name: /next exercise/i }))
-
-    const matchGrid = screen.getByLabelText(/Match pairs/i)
-    const matchButtons = within(matchGrid).getAllByRole('button')
-    const clickMatchButton = async (text: string, exact = false) => {
-      const button = matchButtons.find((candidate) =>
-        exact ? candidate.textContent === text : candidate.textContent?.includes(text),
-      )
-      expect(button).toBeDefined()
-      await user.click(button!)
-    }
-    await clickMatchButton('ನಿಮ್ಮ ಹೆಸರು ಏನು?')
-    await clickMatchButton('What is your name?', true)
-    await clickMatchButton('ನನ್ನ ಹೆಸರು ರಾಹುಲ್')
-    await clickMatchButton('My name is Rahul', true)
-    await clickMatchButton('ನಿಮ್ಮನ್ನು ಭೇಟಿ ಆಗಿ ಸಂತೋಷ')
-    await clickMatchButton('Nice to meet you', true)
-    await user.click(screen.getByRole('button', { name: /check/i }))
-    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: new RegExp(introductionsLesson.title, 'i') }))
 
     expect(screen.getByText('typeKannada')).toBeInTheDocument()
     await user.type(screen.getByLabelText(/Kannada typing answer/i), 'ನಿಮ್ಮ ಹೆಸರು ಏನ')
@@ -796,7 +761,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /start learning/i }))
     await user.click(screen.getByRole('button', { name: /learn/i }))
 
-    expect(screen.getByRole('button', { name: /Auto Basics/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Auto Ride Basics/i })).toBeEnabled()
   })
 
   it('marks script academy lessons complete for learners who can read Kannada script', async () => {
@@ -859,7 +824,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     fireEvent.keyDown(window, { key: ' ' })
     expect(screen.getByText(/Playing reference audio/i)).toBeInTheDocument()
@@ -883,7 +848,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -904,7 +869,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: /learn/i }))
-    await user.click(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Greetings, 1 crowns/i }))
+    await user.click(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Hello & Thanks, 1 crowns/i }))
 
     expect(screen.getByRole('heading', { name: /Translate this phrase/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Hello sir' })).toBeInTheDocument()
@@ -927,7 +892,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: /learn/i }))
-    fireEvent.click(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Greetings, 3 crowns/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Hello & Thanks, 3 crowns/i }))
 
     expect(screen.getByText(/15s timed/i)).toBeInTheDocument()
     expect(screen.getByRole('timer', { name: /15 seconds remaining/i })).toBeInTheDocument()
@@ -946,7 +911,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -979,7 +944,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -1013,7 +978,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
@@ -1054,7 +1019,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     expect(screen.getByText('translate')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
@@ -1110,7 +1075,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /Back to Home/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Continue Learning/i }))
-    expect(screen.getByRole('heading', { name: /Translate for Names/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Translate for How Are You/i })).toBeInTheDocument()
   }, 30_000)
 
   it('shows matched and wrong visual states in match-pair exercises', async () => {
@@ -1118,7 +1083,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
@@ -1174,7 +1139,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
@@ -1700,7 +1665,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     expect(screen.getByRole('button', { name: /question will return/i })).toBeInTheDocument()
@@ -1963,7 +1928,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: /listen/i }))
 
     expect(speak).toHaveBeenCalledTimes(1)
@@ -1994,7 +1959,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     await waitFor(() => expect(speak).toHaveBeenCalledTimes(1))
     expect(speak.mock.calls[0][0]).toMatchObject({
@@ -2036,7 +2001,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
 
     await waitFor(() => expect(synthesizeNativeSpeech).toHaveBeenCalledWith({
       runtimeConfig: {
@@ -2072,7 +2037,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))

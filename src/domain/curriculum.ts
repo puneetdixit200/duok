@@ -278,30 +278,46 @@ export const lessonExercises = baseSurvivalExercises
 const unitSeeds: UnitSeed[] = [
   {
     id: 'unit-1-greetings',
-    title: 'Greetings & Introductions',
+    title: 'Greetings & Basics',
     description: 'Polite hellos, names, small talk, and survival repair phrases.',
     tips: [
       {
-        title: 'Respectful address',
-        body: 'Use ಸಾರ್ or ಮೇಡಂ with strangers, shop staff, drivers, guards, and older people.',
-        examples: ['ನಮಸ್ಕಾರ ಸಾರ್', 'ಧನ್ಯವಾದ ಮೇಡಂ'],
+        title: 'Kannada word order',
+        body: 'Kannada commonly uses subject-object-verb order, so the action often comes at the end.',
+        examples: ['ನಾನು ಶಾಲೆಗೆ ಹೋಗಬೇಕು', 'ನನ್ನ ಹೆಸರು ರಾಹುಲ್'],
       },
       {
-        title: 'Dative feelings',
-        body: 'Kannada often says "to me Kannada comes" where English says "I know Kannada."',
-        examples: ['ನನಗೆ ಕನ್ನಡ ಬರುತ್ತದೆ', 'ನನಗೆ ಕನ್ನಡ ಗೊತ್ತಿಲ್ಲ'],
+        title: 'Universal polite greeting',
+        body: 'ನಮಸ್ಕಾರ is the universal polite greeting for shops, offices, apartments, and transport.',
+        examples: ['ನಮಸ್ಕಾರ ಸಾರ್', 'ನಮಸ್ಕಾರ ಮೇಡಂ'],
+      },
+      {
+        title: 'Respect markers',
+        body: 'Add ಸಾರ್ or ಮೇಡಂ for extra respect with strangers, shop staff, drivers, guards, and older people.',
+        examples: ['ಧನ್ಯವಾದ ಸಾರ್', 'ಹೋಗಿ ಬನ್ನಿ ಮೇಡಂ'],
       },
     ],
     lessons: [
       {
-        title: 'Greetings',
+        title: 'Hello & Thanks',
         subtitle: 'Start conversations safely',
-        objective: 'Greet, thank, and ask how someone is.',
+        objective: 'Greet, thank, and close a simple conversation.',
         skillTag: 'greetings',
         phrases: survivalPhrases.slice(0, 4),
       },
       {
-        title: 'Names',
+        title: 'How Are You',
+        subtitle: 'Ask and answer daily greetings',
+        objective: 'Ask how someone is and answer politely.',
+        skillTag: 'greetings',
+        phrases: [
+          phrase('hegiddira', 'ಹೇಗಿದ್ದೀರಾ?', 'How are you?', 'Respectful daily greeting.'),
+          phrase('chennagiddene', 'ಚೆನ್ನಾಗಿದ್ದೇನೆ', 'I am fine', 'A safe answer to daily greetings.'),
+          phrase('neevu-hegiddira', 'ನೀವು ಹೇಗಿದ್ದೀರಾ?', 'How are you?', 'Respectful return question.'),
+        ],
+      },
+      {
+        title: 'Introductions',
         subtitle: 'Introduce yourself',
         objective: 'Ask and answer name questions.',
         skillTag: 'introductions',
@@ -312,36 +328,25 @@ const unitSeeds: UnitSeed[] = [
         ],
       },
       {
-        title: 'Repair Phrases',
-        subtitle: 'When Kannada gets fast',
-        objective: 'Ask people to repeat or slow down.',
-        skillTag: 'listening',
-        phrases: [
-          phrase('nidhanavagi-heli', 'ನಿಧಾನವಾಗಿ ಹೇಳಿ', 'Please speak slowly', 'Useful in noisy bus stands.'),
-          phrase('matte-heli', 'ಮತ್ತೆ ಹೇಳಿ', 'Please say it again', 'A safe repair phrase.'),
-          phrase('arthavagilla', 'ಅರ್ಥವಾಗಿಲ್ಲ', 'I did not understand', 'Honest and polite.'),
-        ],
-      },
-      {
-        title: 'Language Ability',
-        subtitle: 'Explain your level',
-        objective: 'Say what Kannada you know.',
-        skillTag: 'survival',
-        phrases: [
-          phrase('kannada-gothilla', 'ನನಗೆ ಕನ್ನಡ ಗೊತ್ತಿಲ್ಲ', 'I do not know Kannada', 'Use when stuck.'),
-          phrase('swalpa-kannada-baruttade', 'ಸ್ವಲ್ಪ ಕನ್ನಡ ಬರುತ್ತದೆ', 'I know a little Kannada', 'Encourages slower Kannada.'),
-          phrase('english-barthaa', 'ಇಂಗ್ಲಿಷ್ ಬರುತ್ತಾ?', 'Do you know English?', 'A fallback question.'),
-        ],
-      },
-      {
-        title: 'Friendly Small Talk',
+        title: 'Small Talk',
         subtitle: 'Daily warmth',
         objective: 'Answer common friendly questions.',
         skillTag: 'culture',
         phrases: [
           phrase('oota-aayta', 'ಊಟ ಆಯ್ತಾ?', 'Did you eat?', 'Common office and neighbor small talk.'),
-          phrase('chennagiddene', 'ಚೆನ್ನಾಗಿದ್ದೇನೆ', 'I am fine', 'A safe reply.'),
-          phrase('neevu-hegiddira', 'ನೀವು ಹೇಗಿದ್ದೀರಾ?', 'How are you?', 'Respectful return question.'),
+          phrase('banni', 'ಬನ್ನಿ', 'Please come', 'Friendly invitation.'),
+          phrase('hogi-banni', 'ಹೋಗಿ ಬನ್ನಿ', 'Go and come back', 'Polite goodbye.'),
+        ],
+      },
+      {
+        title: 'Unit 1 Review',
+        subtitle: 'Review greetings and basics',
+        objective: 'Mix greetings, introductions, small talk, and repair phrases.',
+        skillTag: 'survival',
+        phrases: [
+          phrase('kannada-gothilla', 'ನನಗೆ ಕನ್ನಡ ಗೊತ್ತಿಲ್ಲ', 'I do not know Kannada', 'Use when stuck.'),
+          phrase('swalpa-kannada-baruttade', 'ಸ್ವಲ್ಪ ಕನ್ನಡ ಬರುತ್ತದೆ', 'I know a little Kannada', 'Encourages slower Kannada.'),
+          phrase('english-barthaa', 'ಇಂಗ್ಲಿಷ್ ಬರುತ್ತಾ?', 'Do you know English?', 'A fallback question.'),
         ],
       },
     ],
@@ -363,12 +368,12 @@ const unitSeeds: UnitSeed[] = [
       },
     ],
     lessons: [
-      priceLesson('One to Five', 'Count small orders', 'numbers', [
+      priceLesson('Numbers 1-5', 'Count small orders', 'numbers', [
         ['ondu', 'ಒಂದು', 'one', 'One coffee or one ticket.'],
         ['eradu', 'ಎರಡು', 'two', 'Two idlis or two tickets.'],
         ['mooru', 'ಮೂರು', 'three', 'Three people or three plates.'],
       ]),
-      priceLesson('Six to Ten', 'Count slightly larger groups', 'numbers', [
+      priceLesson('Numbers 6-10', 'Count slightly larger groups', 'numbers', [
         ['aaru', 'ಆರು', 'six', 'Six rupees or six people.'],
         ['elu', 'ಏಳು', 'seven', 'Seven stops.'],
         ['hattu', 'ಹತ್ತು', 'ten', 'Ten rupees.'],
@@ -378,12 +383,12 @@ const unitSeeds: UnitSeed[] = [
         ['ticket-eshtu', 'ಟಿಕೆಟ್ ಎಷ್ಟು?', 'How much is the ticket?', 'BMTC conductor phrase.'],
         ['coffee-eshtu', 'ಕಾಫಿ ಎಷ್ಟು?', 'How much is coffee?', 'Darshini phrase.'],
       ]),
-      priceLesson('Paying', 'Use cash and UPI lines', 'prices', [
+      priceLesson('Bargaining', 'Reduce and settle prices', 'prices', [
         ['upi-ideya', 'ಯುಪಿಐ ಇದೆಯಾ?', 'Do you have UPI?', 'Common payment question.'],
         ['change-ideya', 'ಚಿಲ್ಲರೆ ಇದೆಯಾ?', 'Do you have change?', 'Cash payment phrase.'],
         ['bill-kodi', 'ಬಿಲ್ ಕೊಡಿ', 'Please give the bill', 'Restaurant or shop phrase.'],
       ]),
-      priceLesson('Quantities', 'Buy common quantities', 'shopping', [
+      priceLesson('Unit 2 Review', 'Review numbers and prices', 'shopping', [
         ['ardha-kg-beku', 'ಅರ್ಧ ಕಿಲೋ ಬೇಕು', 'I want half a kilo', 'Vegetable shop.'],
         ['ondu-liter-halu', 'ಒಂದು ಲೀಟರ್ ಹಾಲು', 'One liter of milk', 'Kirana store.'],
         ['eradu-plate-idli', 'ಎರಡು ಪ್ಲೇಟ್ ಇಡ್ಲಿ', 'Two plates of idli', 'Darshini order.'],
@@ -407,12 +412,12 @@ const unitSeeds: UnitSeed[] = [
       },
     ],
     lessons: [
-      transportLesson('Auto Basics', 'Start an auto ride', [
+      transportLesson('Auto Ride Basics', 'Start an auto ride', [
         ['majestic-ge-hogbeku', 'ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು', 'I need to go to Majestic', 'Auto destination.'],
         ['meter-haaki', 'ಮೀಟರ್ ಹಾಕಿ', 'Please use the meter', 'Negotiating politely.'],
         ['illi-nillisi', 'ಇಲ್ಲಿ ನಿಲ್ಲಿಸಿ', 'Stop here', 'End of ride.'],
       ]),
-      transportLesson('Bus Ticket', 'Talk to a conductor', [
+      transportLesson('Bus Phrases', 'Talk to a conductor', [
         ['koramangala-ticket', 'ಕೋರಮಂಗಲಕ್ಕೆ ಟಿಕೆಟ್', 'Ticket to Koramangala', 'BMTC phrase.'],
         ['ticket-eshtu', 'ಟಿಕೆಟ್ ಎಷ್ಟು?', 'How much is the ticket?', 'Fare question.'],
         ['change-beku', 'ಚಿಲ್ಲರೆ ಬೇಕು', 'I need change', 'Cash on bus.'],
@@ -422,12 +427,12 @@ const unitSeeds: UnitSeed[] = [
         ['edakke-hogi', 'ಎಡಕ್ಕೆ ಹೋಗಿ', 'Go left', 'Direction phrase.'],
         ['balakke-hogi', 'ಬಲಕ್ಕೆ ಹೋಗಿ', 'Go right', 'Direction phrase.'],
       ]),
-      transportLesson('Metro', 'Use metro stations', [
+      transportLesson('At the Metro', 'Use metro stations', [
         ['metro-station-elli', 'ಮೆಟ್ರೋ ಸ್ಟೇಷನ್ ಎಲ್ಲಿ?', 'Where is the metro station?', 'Ask for station.'],
         ['card-recharge-beku', 'ಕಾರ್ಡ್ ರೀಚಾರ್ಜ್ ಬೇಕು', 'I need to recharge the card', 'Metro counter.'],
         ['yaava-platform', 'ಯಾವ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್?', 'Which platform?', 'Station navigation.'],
       ]),
-      transportLesson('Late Night', 'Stay safe at night', [
+      transportLesson('Unit 3 Review', 'Review transport and directions', [
         ['safe-route-yaavudu', 'ಸೇಫ್ ರೂಟ್ ಯಾವುದು?', 'Which route is safe?', 'Night travel.'],
         ['phone-madthini', 'ಫೋನ್ ಮಾಡ್ತೀನಿ', 'I will call', 'Safety phrase.'],
         ['gate-hatra-bidi', 'ಗೇಟ್ ಹತ್ತಿರ ಬಿಡಿ', 'Drop me near the gate', 'Cab or auto.'],
@@ -451,27 +456,27 @@ const unitSeeds: UnitSeed[] = [
       },
     ],
     lessons: [
-      foodLesson('Breakfast Counter', [
+      foodLesson('Darshini Basics', [
         ['ondu-dosa-beku', 'ಒಂದು ದೋಸೆ ಬೇಕು', 'I want one dosa', 'Darshini breakfast.'],
         ['eradu-idli-beku', 'ಎರಡು ಇಡ್ಲಿ ಬೇಕು', 'I want two idlis', 'Common order.'],
         ['coffee-kodi', 'ಕಾಫಿ ಕೊಡಿ', 'Please give coffee', 'Counter request.'],
       ]),
-      foodLesson('Water and Extras', [
+      foodLesson('Ordering Food', [
         ['neeru-kodi', 'ನೀರು ಕೊಡಿ', 'Please give water', 'Universal request.'],
         ['chutney-swalpa', 'ಚಟ್ನಿ ಸ್ವಲ್ಪ', 'A little chutney', 'Food counter.'],
         ['sambar-beku', 'ಸಾಂಬಾರ್ ಬೇಕು', 'I want sambar', 'Extra serving.'],
       ]),
-      foodLesson('Spice Level', [
+      foodLesson('Restaurant Phrases', [
         ['khara-kammi', 'ಖಾರ ಕಡಿಮೆ', 'Less spicy', 'Ask before ordering.'],
         ['khara-jaasti', 'ಖಾರ ಜಾಸ್ತಿ', 'More spicy', 'Food preference.'],
         ['sari-ide', 'ಸರಿ ಇದೆ', 'It is okay', 'Accept food or spice level.'],
       ]),
-      foodLesson('Billing', [
+      foodLesson('Likes & Dislikes', [
         ['bill-kodi', 'ಬಿಲ್ ಕೊಡಿ', 'Please give the bill', 'At the end.'],
         ['parcel-beku', 'ಪಾರ್ಸೆಲ್ ಬೇಕು', 'I want parcel/takeaway', 'Takeaway order.'],
         ['illi-thinbeku', 'ಇಲ್ಲಿ ತಿನ್ನಬೇಕು', 'I want to eat here', 'Dine-in.'],
       ]),
-      foodLesson('Diet Needs', [
+      foodLesson('Unit 4 Review', [
         ['veg-ideya', 'ವೆಜ್ ಇದೆಯಾ?', 'Is there vegetarian food?', 'Food check.'],
         ['mosaru-beku', 'ಮೊಸರು ಬೇಕು', 'I want curd', 'Meal request.'],
         ['allergy-ide', 'ಅಲರ್ಜಿ ಇದೆ', 'I have an allergy', 'Health safety.'],
@@ -495,27 +500,27 @@ const unitSeeds: UnitSeed[] = [
       },
     ],
     lessons: [
-      shoppingLesson('Kirana Basics', [
+      shoppingLesson('At the Kirana Store', [
         ['halu-beku', 'ಹಾಲು ಬೇಕು', 'I want milk', 'Neighborhood store.'],
         ['bread-ideya', 'ಬ್ರೆಡ್ ಇದೆಯಾ?', 'Do you have bread?', 'Ask availability.'],
         ['bag-beda', 'ಬ್ಯಾಗ್ ಬೇಡ', 'No bag needed', 'Decline plastic.'],
       ]),
-      shoppingLesson('Vegetables', [
+      shoppingLesson('Asking About Items', [
         ['tomato-eshtu', 'ಟೊಮೇಟೊ ಎಷ್ಟು?', 'How much are tomatoes?', 'Vegetable stall.'],
         ['ardha-kg-beku', 'ಅರ್ಧ ಕಿಲೋ ಬೇಕು', 'I want half a kilo', 'Quantity.'],
         ['fresh-ideya', 'ಫ್ರೆಶ್ ಇದೆಯಾ?', 'Is it fresh?', 'Quality check.'],
       ]),
-      shoppingLesson('Bargain', [
+      shoppingLesson('Bargaining Practice', [
         ['swalpa-kammi-maadi', 'ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ', 'Please reduce a little', 'Bargaining.'],
         ['bele-jaasti', 'ಬೆಲೆ ಜಾಸ್ತಿ', 'The price is high', 'Polite pushback.'],
         ['sari-kodi', 'ಸರಿ ಕೊಡಿ', 'Okay, give it', 'Close the deal.'],
       ]),
-      shoppingLesson('Returns', [
+      shoppingLesson('Declining & Accepting', [
         ['change-madbeku', 'ಚೇಂಜ್ ಮಾಡಬೇಕು', 'I need to exchange it', 'Return counter.'],
         ['receipt-ide', 'ರಸೀದಿ ಇದೆ', 'I have the receipt', 'Proof.'],
         ['size-sari-illa', 'ಸೈಸ್ ಸರಿ ಇಲ್ಲ', 'The size is not right', 'Clothes.'],
       ]),
-      shoppingLesson('Phone Shop', [
+      shoppingLesson('Unit 5 Review', [
         ['charger-ideya', 'ಚಾರ್ಜರ್ ಇದೆಯಾ?', 'Do you have a charger?', 'Phone store.'],
         ['warranty-ideya', 'ವಾರಂಟಿ ಇದೆಯಾ?', 'Is there a warranty?', 'Electronics.'],
         ['online-price-eshtu', 'ಆನ್‌ಲೈನ್ ಬೆಲೆ ಎಷ್ಟು?', 'What is the online price?', 'Comparison.'],
@@ -539,27 +544,27 @@ const unitSeeds: UnitSeed[] = [
       },
     ],
     lessons: [
-      homeLesson('PG Check-in', [
+      homeLesson('PG Owner Conversations', [
         ['room-elli', 'ರೂಮ್ ಎಲ್ಲಿ?', 'Where is the room?', 'PG arrival.'],
         ['key-kodi', 'ಕೀ ಕೊಡಿ', 'Please give the key', 'Move-in.'],
         ['rules-enu', 'ರೂಲ್ಸ್ ಏನು?', 'What are the rules?', 'PG rules.'],
       ]),
-      homeLesson('Water Problem', [
+      homeLesson('Household Items', [
         ['neeru-baralla', 'ನೀರು ಬರಲ್ಲ', 'Water is not coming', 'Maintenance.'],
         ['yaavaga-barutte', 'ಯಾವಾಗ ಬರುತ್ತೆ?', 'When will it come?', 'Follow-up.'],
         ['tank-empty', 'ಟ್ಯಾಂಕ್ ಖಾಲಿ', 'The tank is empty', 'Report issue.'],
       ]),
-      homeLesson('Wi-Fi and Power', [
+      homeLesson('Complaints & Requests', [
         ['wifi-kelasa-madalla', 'ವೈಫೈ ಕೆಲಸ ಮಾಡಲ್ಲ', 'Wi-Fi is not working', 'PG issue.'],
         ['current-hogide', 'ಕರಂಟ್ ಹೋಗಿದೆ', 'Power is gone', 'Power cut.'],
         ['repair-madisi', 'ರಿಪೇರ್ ಮಾಡಿಸಿ', 'Please get it repaired', 'Request action.'],
       ]),
-      homeLesson('Rent', [
+      homeLesson('Neighbors & Small Talk', [
         ['rent-eshtu', 'ರೆಂಟ್ ಎಷ್ಟು?', 'How much is the rent?', 'Housing question.'],
         ['deposit-eshtu', 'ಡಿಪಾಸಿಟ್ ಎಷ್ಟು?', 'How much is the deposit?', 'Before move-in.'],
         ['receipt-kodi', 'ರಸೀದಿ ಕೊಡಿ', 'Please give a receipt', 'Payment proof.'],
       ]),
-      homeLesson('Neighbors', [
+      homeLesson('Unit 6 Review', [
         ['noise-kammi-maadi', 'ನಾಯ್ಸ್ ಕಡಿಮೆ ಮಾಡಿ', 'Please reduce the noise', 'Neighbor request.'],
         ['swalpa-adjust-maadi', 'ಸ್ವಲ್ಪ ಅಡ್ಜಸ್ಟ್ ಮಾಡಿ', 'Please adjust a little', 'Shared living.'],
         ['thanks-help', 'ಸಹಾಯಕ್ಕೆ ಧನ್ಯವಾದ', 'Thanks for the help', 'Neighbor courtesy.'],
@@ -583,27 +588,27 @@ const unitSeeds: UnitSeed[] = [
       },
     ],
     lessons: [
-      officeLesson('Morning Office', [
+      officeLesson('Office Greetings', [
         ['good-morning', 'ಗುಡ್ ಮಾರ್ನಿಂಗ್', 'Good morning', 'Office greeting.'],
         ['meeting-ide', 'ಮೀಟಿಂಗ್ ಇದೆ', 'There is a meeting', 'Calendar phrase.'],
         ['coffee-barthira', 'ಕಾಫಿಗೆ ಬರುತ್ತೀರಾ?', 'Will you come for coffee?', 'Friendly invite.'],
       ]),
-      officeLesson('Meetings', [
+      officeLesson('Lunch & Tea Talk', [
         ['time-ideya', 'ಸಮಯ ಇದೆಯಾ?', 'Do you have time?', 'Ask availability.'],
         ['screen-share-maadi', 'ಸ್ಕ್ರೀನ್ ಶೇರ್ ಮಾಡಿ', 'Please share the screen', 'Meeting request.'],
         ['matte-explain-maadi', 'ಮತ್ತೆ ಎಕ್ಸ್‌ಪ್ಲೇನ್ ಮಾಡಿ', 'Please explain again', 'Clarification.'],
       ]),
-      officeLesson('Deadlines', [
+      officeLesson('Simple Work Requests', [
         ['ivattu-mugisthini', 'ಇವತ್ತು ಮುಗಿಸ್ತೀನಿ', 'I will finish today', 'Status update.'],
         ['naale-kalustini', 'ನಾಳೆ ಕಳುಸ್ತೀನಿ', 'I will send tomorrow', 'Deadline phrase.'],
         ['help-beku', 'ಹೆಲ್ಪ್ ಬೇಕು', 'I need help', 'Ask early.'],
       ]),
-      officeLesson('Cafeteria', [
+      officeLesson('Scheduling & Time', [
         ['oota-aayta', 'ಊಟ ಆಯ್ತಾ?', 'Did you eat?', 'Lunch small talk.'],
         ['table-ideya', 'ಟೇಬಲ್ ಇದೆಯಾ?', 'Is there a table?', 'Cafeteria.'],
         ['together-hogona', 'ಒಟ್ಟಿಗೆ ಹೋಗೋಣ', 'Let us go together', 'Invite.'],
       ]),
-      officeLesson('Leave and HR', [
+      officeLesson('Unit 7 Review', [
         ['leave-beku', 'ಲೀವ್ ಬೇಕು', 'I need leave', 'HR phrase.'],
         ['health-sari-illa', 'ಆರೋಗ್ಯ ಸರಿ ಇಲ್ಲ', 'Health is not okay', 'Sick leave.'],
         ['form-elli', 'ಫಾರ್ಮ್ ಎಲ್ಲಿ?', 'Where is the form?', 'Admin.'],
@@ -612,7 +617,7 @@ const unitSeeds: UnitSeed[] = [
   },
   {
     id: 'unit-8-emergency',
-    title: 'Emergencies & Health',
+    title: 'Emergencies & Help',
     description: 'Ask for help, explain symptoms, and handle urgent travel or health needs.',
     tips: [
       {
@@ -627,27 +632,27 @@ const unitSeeds: UnitSeed[] = [
       },
     ],
     lessons: [
-      emergencyLesson('Ask for Help', [
+      emergencyLesson('Asking for Help', [
         ['sahaya-beku', 'ಸಹಾಯ ಬೇಕು', 'I need help', 'Emergency anchor.'],
         ['police-ge-call-maadi', 'ಪೊಲೀಸ್‌ಗೆ ಕಾಲ್ ಮಾಡಿ', 'Please call the police', 'Safety.'],
         ['ambulance-beku', 'ಆಂಬುಲೆನ್ಸ್ ಬೇಕು', 'Need an ambulance', 'Medical emergency.'],
       ]),
-      emergencyLesson('Doctor', [
+      emergencyLesson('Health & Doctor', [
         ['doctor-elli', 'ಡಾಕ್ಟರ್ ಎಲ್ಲಿ?', 'Where is the doctor?', 'Clinic.'],
         ['appointment-beku', 'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬೇಕು', 'I need an appointment', 'Hospital desk.'],
         ['medicine-kodi', 'ಮೆಡಿಸಿನ್ ಕೊಡಿ', 'Please give medicine', 'Pharmacy.'],
       ]),
-      emergencyLesson('Symptoms', [
+      emergencyLesson('Finding Places', [
         ['jwara-ide', 'ಜ್ವರ ಇದೆ', 'I have fever', 'Symptom.'],
         ['thale-novu', 'ತಲೆ ನೋವು', 'Headache', 'Symptom.'],
         ['hotte-novu', 'ಹೊಟ್ಟೆ ನೋವು', 'Stomach pain', 'Symptom.'],
       ]),
-      emergencyLesson('Lost Items', [
+      emergencyLesson('Emergency Phrases', [
         ['phone-kaledu-hoytu', 'ಫೋನ್ ಕಳೆದು ಹೋಯ್ತು', 'I lost my phone', 'Lost item.'],
         ['bag-sigalla', 'ಬ್ಯಾಗ್ ಸಿಗಲ್ಲ', 'I cannot find my bag', 'Lost item.'],
         ['complaint-hakbeku', 'ಕಂಪ್ಲೇಂಟ್ ಹಾಕಬೇಕು', 'I need to file a complaint', 'Police station.'],
       ]),
-      emergencyLesson('Urgent Travel', [
+      emergencyLesson('Unit 8 Review', [
         ['tumba-urgent', 'ತುಂಬಾ ಅರ್ಜೆಂಟ್', 'It is very urgent', 'Urgency.'],
         ['hospital-ge-hogbeku', 'ಹಾಸ್ಪಿಟಲ್‌ಗೆ ಹೋಗಬೇಕು', 'I need to go to the hospital', 'Travel emergency.'],
         ['begane-banni', 'ಬೇಗನೆ ಬನ್ನಿ', 'Please come quickly', 'Calling help.'],
@@ -1135,8 +1140,9 @@ function buildExercisesForLesson(
   const fillPrompt = fillParts.length > 1 ? `${fillParts.slice(0, -1).join(' ')} ___` : '___'
   const matchPairs = phrases.map((phrase) => `${phrase.kannada}=${phrase.english}`).join(';')
   const idPrefix = `${lessonId}-exercise`
+  const reviewLesson = /\bReview$/.test(lessonSeed.title)
 
-  return [
+  const exercises = [
     exercise(idPrefix, 1, 'translate', `Translate for ${lessonSeed.title}:`, first, first.english, typeChoices, 2),
     {
       ...exercise(idPrefix, 2, 'arrange', 'Arrange the Kannada sentence:', first, first.kannada, arrangedWords, 3),
@@ -1179,6 +1185,8 @@ function buildExercisesForLesson(
       unitNumber > 4 || lessonNumber > 3 ? 'ನಂತರ ಹೇಳುತ್ತೇನೆ' : 'ನಮಸ್ಕಾರ',
     ], 3),
   ]
+
+  return reviewLesson ? exercises : exercises.slice(0, 6)
 }
 
 function exercise(
