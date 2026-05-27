@@ -45,7 +45,7 @@ async function main() {
     await page.getByRole('button', { name: /start learning/i }).click()
     await page.getByRole('button', { name: /continue: greetings/i }).click()
     await completeLesson(page)
-    await page.getByRole('button', { name: /^continue$/i }).click()
+    await page.getByRole('button', { name: /back to home/i }).click()
 
     await page.getByRole('button', { name: /chat/i }).click()
     await page.getByPlaceholder(/type in kannada/i).fill('Majestic hogbeku')

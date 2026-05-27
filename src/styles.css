@@ -1079,6 +1079,13 @@ h2 {
   gap: 12px;
 }
 
+.completion-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
 .chat-panel {
   display: grid;
   grid-template-rows: auto auto auto 1fr auto auto;

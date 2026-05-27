@@ -817,6 +817,11 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByLabelText(/Confetti celebration/i)).toBeInTheDocument()
     expect(screen.getByText(/\+18 XP/i)).toBeInTheDocument()
     expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Continue Learning/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Back to Home/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Continue Learning/i }))
+    expect(screen.getByRole('heading', { name: /Translate for Names/i })).toBeInTheDocument()
   }, 30_000)
 
   it('shows matched and wrong visual states in match-pair exercises', async () => {

@@ -2382,9 +2382,14 @@ function App() {
               <Stat value={newWordCount} label="New words" />
               <Stat value={lessonTime} label="Time" />
             </div>
-            <button className="primary-action" onClick={() => setScreen('app')} type="button">
-              Continue
-            </button>
+            <div className="completion-actions">
+              <button className="primary-action" onClick={() => openLesson()} type="button">
+                Continue Learning
+              </button>
+              <button className="secondary-action" onClick={() => setScreen('app')} type="button">
+                Back to Home
+              </button>
+            </div>
           </section>
         </main>
       )
