@@ -1309,6 +1309,80 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Whisper runtime is not ready/i)).toBeInTheDocument()
   })
 
+  it('falls back to Web Speech for lesson reference audio when Piper is unavailable', async () => {
+    const user = userEvent.setup()
+    const speak = vi.fn()
+    const kannadaVoice = { lang: 'kn-IN', name: 'Kannada Voice' }
+    vi.stubGlobal('speechSynthesis', {
+      getVoices: vi.fn(() => [kannadaVoice]),
+      speak,
+    })
+    vi.stubGlobal('SpeechSynthesisUtterance', class MockSpeechSynthesisUtterance {
+      lang = ''
+      rate = 1
+      voice: unknown = null
+
+      constructor(public text: string) {}
+    })
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":true,"autoPlayAudio":false}')
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: /listen/i }))
+
+    expect(speak).toHaveBeenCalledTimes(1)
+    expect(speak.mock.calls[0][0]).toMatchObject({
+      text: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      lang: 'kn-IN',
+      rate: 1,
+      voice: kannadaVoice,
+    })
+    expect(screen.getByText(/Playing Web Speech reference: namaskara saar/i)).toBeInTheDocument()
+  })
+
+  it('uses 0.7x Web Speech rate for slow lesson audio fallback', async () => {
+    const user = userEvent.setup()
+    const speak = vi.fn()
+    vi.stubGlobal('speechSynthesis', {
+      getVoices: vi.fn(() => []),
+      speak,
+    })
+    vi.stubGlobal('SpeechSynthesisUtterance', class MockSpeechSynthesisUtterance {
+      lang = ''
+      rate = 1
+      voice: unknown = null
+
+      constructor(public text: string) {}
+    })
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":true,"autoPlayAudio":false}')
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /play slow audio/i }))
+
+    expect(speak).toHaveBeenCalledTimes(1)
+    expect(speak.mock.calls[0][0]).toMatchObject({
+      text: 'ಟಿಕೆಟ್ ಎಷ್ಟು?',
+      lang: 'kn-IN',
+      rate: 0.7,
+    })
+    expect(screen.getByText(/Playing slow Web Speech reference at 0.7x: ticket eshtu/i)).toBeInTheDocument()
+  }, 30_000)
+
   it('synthesizes pronunciation reference audio through the desktop Piper bridge', async () => {
     const user = userEvent.setup()
     const playReference = vi.fn().mockResolvedValue(undefined)

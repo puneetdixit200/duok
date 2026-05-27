@@ -133,6 +133,7 @@ interface ExportStatus {
 }
 
 type LearnerStoreStatus = 'loading' | 'saving' | 'synced' | 'browser' | 'error'
+type WebSpeechResult = 'played' | 'unavailable'
 
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
@@ -1676,6 +1677,16 @@ function App() {
     const slow = playbackRate < 1
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
     if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      if (playKannadaWithWebSpeech(exercise.kannada, playbackRate) === 'played') {
+        const audioLabel = getExerciseAudioLabel(exercise)
+        setAudioStatus(
+          slow
+            ? `Playing slow Web Speech reference at 0.7x: ${audioLabel}`
+            : `Playing Web Speech reference: ${audioLabel}`,
+        )
+        return
+      }
+
       setAudioStatus(
         slow
           ? `Playing slow reference audio at 0.7x: ${exercise.transliteration ?? exercise.kannada}`
@@ -1711,6 +1722,27 @@ function App() {
     }
 
     setAudioStatus(result.error ?? 'Piper synthesis failed.')
+  }
+
+  function playKannadaWithWebSpeech(text: string, playbackRate = 1): WebSpeechResult {
+    if (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') {
+      return 'unavailable'
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'kn-IN'
+    utterance.rate = playbackRate
+    const kannadaVoice = speechSynthesis.getVoices().find((voice) => voice.lang.toLowerCase() === 'kn-in')
+    if (kannadaVoice) {
+      utterance.voice = kannadaVoice
+    }
+
+    speechSynthesis.speak(utterance)
+    return 'played'
+  }
+
+  function getExerciseAudioLabel(exercise: LessonExercise): string {
+    return exercise.transliteration ?? getKannadaSubtitle(exercise.kannada, exercise)?.romanization ?? exercise.kannada
   }
 
   async function playFlashcardAudio(phrase: Phrase) {
