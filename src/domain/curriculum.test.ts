@@ -4,6 +4,7 @@ import {
   coreCurriculumUnits,
   getAllLessonExercises,
   getExerciseCoverage,
+  getExercisesForMastery,
   getLevelOneCurriculum,
   getLessonById,
   getNextAvailableLesson,
@@ -214,6 +215,44 @@ describe('KannadaOS level 1 curriculum', () => {
     )
 
     expect(getNextAvailableLesson(coreCurriculumUnits, firstLessonMastered)?.id).toBe(allCoreLessons[1].id)
+  })
+
+  it('builds crown replay exercise variants from current mastery level', () => {
+    const lesson = coreCurriculumUnits[0].lessons[0]
+
+    expect(getExercisesForMastery(lesson, 0)).toEqual(lesson.exercises)
+
+    const crownTwoReplay = getExercisesForMastery(lesson, 1)
+    expect(crownTwoReplay.find((exercise) => exercise.id === 'survival-translate-1')?.options).toEqual([
+      'Hello sir',
+      'Goodbye sir',
+      'Thank you sir',
+    ])
+    expect(crownTwoReplay.find((exercise) => exercise.id === 'survival-arrange-1')?.options).toEqual([
+      'ಸಾರ್',
+      'ಹೇಗಿದ್ದೀರಾ',
+      'ನಮಸ್ಕಾರ',
+      'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+    ])
+
+    const crownThreeReplay = getExercisesForMastery(lesson, 2)
+    expect(crownThreeReplay.some((exercise) => exercise.type === 'typeKannada' && exercise.id.endsWith('-mastery-type'))).toBe(true)
+    expect(crownThreeReplay.find((exercise) => exercise.id === 'survival-translate-1-mastery-type')).toEqual(
+      expect.objectContaining({
+        type: 'typeKannada',
+        prompt: 'Type this in Kannada script:',
+        answer: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      }),
+    )
+
+    const crownFourReplay = getExercisesForMastery(lesson, 3)
+    expect(crownFourReplay.every((exercise) => 'timeLimitSeconds' in exercise)).toBe(true)
+    expect(crownFourReplay[0]).toHaveProperty('timeLimitSeconds', 15)
+
+    const crownFiveReplay = getExercisesForMastery(lesson, 4)
+    expect(crownFiveReplay.map((exercise) => exercise.id)).not.toEqual(lesson.exercises.map((exercise) => exercise.id))
+    expect(crownFiveReplay[0]).toHaveProperty('timeLimitSeconds', 15)
+    expect(crownFiveReplay.some((exercise) => exercise.type === 'typeKannada')).toBe(true)
   })
 
   it('ships six complete progressively harder stories and unlocks them from story progress', () => {

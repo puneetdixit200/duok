@@ -912,6 +912,33 @@ export function getAllLessonExercises(units = allUnits): LessonExercise[] {
   return units.flatMap((unit) => unit.lessons.flatMap((lesson) => lesson.exercises))
 }
 
+export function getExercisesForMastery(lesson: CurriculumLesson, masteryLevel: number): LessonExercise[] {
+  if (masteryLevel <= 0) {
+    return lesson.exercises
+  }
+
+  if (masteryLevel === 1) {
+    return lesson.exercises.map(reduceToThreeOptions)
+  }
+
+  if (masteryLevel === 2) {
+    return lesson.exercises.map(addTypingVariant)
+  }
+
+  if (masteryLevel === 3) {
+    return lesson.exercises.map(addTimedMode)
+  }
+
+  const hardTimedExercises = lesson.exercises.map(reduceToThreeOptions).map(addTimedMode)
+  const typingChallenges = lesson.exercises
+    .filter((exercise) => exercise.type !== 'typeKannada')
+    .slice(0, 2)
+    .map(addTypingVariant)
+    .map(addTimedMode)
+
+  return [...typingChallenges, ...hardTimedExercises.reverse()]
+}
+
 export function getScriptCurriculumUnit(): CurriculumUnit {
   return scriptUnit
 }
@@ -987,6 +1014,50 @@ function isCoreUnitUnlocked(units: CurriculumUnit[], unitIndex: number, progress
 
 function isLessonCompleted(lessonId: string, progress: ProgressState): boolean {
   return (progress.lessonProgress[lessonId]?.masteryLevel ?? 0) >= 1
+}
+
+function reduceToThreeOptions(exercise: LessonExercise): LessonExercise {
+  if (!['translate', 'fillBlank', 'listening', 'dialogue'].includes(exercise.type) || exercise.options.length <= 3) {
+    return exercise
+  }
+
+  const reducedOptions = [
+    exercise.answer,
+    ...exercise.options.filter((option) => option !== exercise.answer),
+  ].slice(0, 3)
+
+  return {
+    ...exercise,
+    options: reducedOptions,
+  }
+}
+
+function addTypingVariant(exercise: LessonExercise): LessonExercise {
+  if (exercise.type === 'typeKannada') {
+    return exercise
+  }
+
+  const answer = containsKannada(exercise.answer) ? exercise.answer : exercise.kannada
+
+  return {
+    ...exercise,
+    id: `${exercise.id}-mastery-type`,
+    type: 'typeKannada',
+    prompt: 'Type this in Kannada script:',
+    answer,
+    options: [exercise.transliteration ?? answer],
+  }
+}
+
+function addTimedMode(exercise: LessonExercise): LessonExercise {
+  return {
+    ...exercise,
+    timeLimitSeconds: 15,
+  }
+}
+
+function containsKannada(text: string): boolean {
+  return /[\u0C80-\u0CFF]/.test(text)
 }
 
 export function getStoryLockState(story: Story, progress: ProgressState): { locked: boolean; reason: string } {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   bangaloreScenarios,
   coreCurriculumUnits,
+  getExercisesForMastery,
   getNextAvailableLesson,
   getPhraseByVocabularyId,
   getScriptCurriculumUnit,
@@ -1312,8 +1313,9 @@ function App() {
     const nextLesson =
       (lessonId ? getLessonById(lessonId) : getNextAvailableLesson(coreCurriculumUnits, progress)) ??
       coreCurriculumUnits[0].lessons[0]
+    const masteryLevel = getLessonProgressSummary(progress, nextLesson.id).masteryLevel
     setActiveLessonId(nextLesson.id)
-    setLessonRunExercises([...nextLesson.exercises])
+    setLessonRunExercises(getExercisesForMastery(nextLesson, masteryLevel))
     setLessonIndex(0)
     setTotalLessonXp(0)
     setLessonStartedAtMs(getNowMs())
@@ -2509,6 +2511,7 @@ function App() {
           <p className="eyebrow">
             <span>{activeExercise.type}</span>
             <small>{activeLesson.title}</small>
+            {activeExercise.timeLimitSeconds && <small>{activeExercise.timeLimitSeconds}s timed</small>}
           </p>
           <h1 id="lesson-title">{activeExercise.prompt}</h1>
           {renderExerciseContent(activeExercise)}

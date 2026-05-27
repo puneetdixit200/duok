@@ -191,11 +191,13 @@ export function completeLessonProgress(
   durationMs = 0,
 ): ProgressState {
   const previous = state.lessonProgress[lessonId]
-  const masteryLevel = Math.min(5, (previous?.masteryLevel ?? 0) + 1)
+  const previousMasteryLevel = previous?.masteryLevel ?? 0
+  const masteryLevel = Math.min(5, previousMasteryLevel + 1)
+  const crownGemReward = getCrownGemReward(previousMasteryLevel, masteryLevel)
 
   return {
     ...state,
-    gems: state.gems + (previous ? 5 : 15),
+    gems: state.gems + crownGemReward,
     totalPracticeTimeMs: state.totalPracticeTimeMs + Math.max(0, Math.round(durationMs)),
     lessonProgress: {
       ...state.lessonProgress,
@@ -208,6 +210,18 @@ export function completeLessonProgress(
       },
     },
   }
+}
+
+function getCrownGemReward(previousMasteryLevel: number, masteryLevel: number): number {
+  if (masteryLevel <= previousMasteryLevel) {
+    return 0
+  }
+
+  if (masteryLevel === 1 || masteryLevel === 5) {
+    return 15
+  }
+
+  return 5
 }
 
 export function getLessonProgressSummary(

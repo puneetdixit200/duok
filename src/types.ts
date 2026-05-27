@@ -30,6 +30,7 @@ export interface LessonExercise {
   skillTag: string
   xp: number
   vocabularyIds: string[]
+  timeLimitSeconds?: number
 }
 
 export interface Curriculum {

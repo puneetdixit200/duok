@@ -765,6 +765,25 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\s+Say: hegiddira/i })).toBeInTheDocument()
   })
 
+  it('opens one-crown lessons with reduced-option crown replay drills', async () => {
+    const user = userEvent.setup()
+    const firstLesson = coreCurriculumUnits[0].lessons[0]
+    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Greetings, 1 crowns/i }))
+
+    expect(screen.getByRole('heading', { name: /Translate this phrase/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Hello sir' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Goodbye sir' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Thank you sir' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'How are you sir' })).not.toBeInTheDocument()
+  })
+
   it('uses spec replay labels and hides Kannada text before checking listening answers', async () => {
     const user = userEvent.setup()
     render(<App />)

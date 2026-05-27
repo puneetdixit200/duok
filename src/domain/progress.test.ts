@@ -361,6 +361,30 @@ describe('learner progress', () => {
     })
   })
 
+  it('awards frontend-spec gems for first, replay, and fifth lesson crowns', () => {
+    const baseProgress = {
+      ...createInitialProgress(),
+      gems: 0,
+    }
+    const lessonId = 'unit-1-greetings-lesson-1'
+
+    const firstCrown = completeLessonProgress(baseProgress, lessonId, '2026-05-27T10:00:00.000Z')
+    const secondCrown = completeLessonProgress(firstCrown, lessonId, '2026-05-28T10:00:00.000Z')
+    const thirdCrown = completeLessonProgress(secondCrown, lessonId, '2026-05-29T10:00:00.000Z')
+    const fourthCrown = completeLessonProgress(thirdCrown, lessonId, '2026-05-30T10:00:00.000Z')
+    const fifthCrown = completeLessonProgress(fourthCrown, lessonId, '2026-05-31T10:00:00.000Z')
+    const cappedReplay = completeLessonProgress(fifthCrown, lessonId, '2026-06-01T10:00:00.000Z')
+
+    expect(firstCrown.gems).toBe(15)
+    expect(secondCrown.gems).toBe(20)
+    expect(thirdCrown.gems).toBe(25)
+    expect(fourthCrown.gems).toBe(30)
+    expect(fifthCrown.gems).toBe(45)
+    expect(getLessonProgressSummary(fifthCrown, lessonId).masteryLevel).toBe(5)
+    expect(cappedReplay.gems).toBe(45)
+    expect(getLessonProgressSummary(cappedReplay, lessonId).masteryLevel).toBe(5)
+  })
+
   it('adds lesson duration to total practice time when a lesson is completed', () => {
     const progress = completeLessonProgress(
       createInitialProgress(),
