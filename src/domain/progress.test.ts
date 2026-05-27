@@ -154,7 +154,7 @@ describe('learner progress', () => {
     expect(wrong.reviewQueue.eshtu.dueAt).toBe('2026-06-02T09:00:00.000Z')
   })
 
-  it('updates review strength from Hard, Okay, and Easy flashcard ratings', () => {
+  it('updates Leitner boxes from Hard, Okay, and Easy flashcard ratings', () => {
     const initial = applyExerciseResult(createInitialProgress(), {
       exerciseId: 'prices-translate-1',
       correct: true,
@@ -169,12 +169,12 @@ describe('learner progress', () => {
     expect(hard.reviewQueue.eshtu.dueAt).toBe('2026-05-26T09:00:00.000Z')
 
     const okay = rateReviewItem(hard, 'eshtu', 'okay', '2026-05-26T09:30:00.000Z')
-    expect(okay.reviewQueue.eshtu.leitnerBox).toBe(2)
-    expect(okay.reviewQueue.eshtu.dueAt).toBe('2026-05-29T09:30:00.000Z')
+    expect(okay.reviewQueue.eshtu.leitnerBox).toBe(1)
+    expect(okay.reviewQueue.eshtu.dueAt).toBe('2026-05-27T09:30:00.000Z')
 
     const easy = rateReviewItem(okay, 'eshtu', 'easy', '2026-05-29T09:30:00.000Z')
-    expect(easy.reviewQueue.eshtu.leitnerBox).toBe(4)
-    expect(easy.reviewQueue.eshtu.dueAt).toBe('2026-06-12T09:30:00.000Z')
+    expect(easy.reviewQueue.eshtu.leitnerBox).toBe(2)
+    expect(easy.reviewQueue.eshtu.dueAt).toBe('2026-06-01T09:30:00.000Z')
   })
 
   it('summarizes weak skills and lowers adaptive difficulty when review pressure is high', () => {

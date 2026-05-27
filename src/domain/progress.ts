@@ -373,8 +373,8 @@ export function rateReviewItem(
     rating === 'hard'
       ? Math.max(1, previousBox - 1)
       : rating === 'easy'
-        ? clampLeitnerBox(previousBox + 2)
-        : clampLeitnerBox(previousBox + 1)
+        ? clampLeitnerBox(previousBox + 1)
+        : previousBox
   const dueAt = rating === 'hard' ? now : addDays(now, getLeitnerIntervalDays(leitnerBox))
 
   return {

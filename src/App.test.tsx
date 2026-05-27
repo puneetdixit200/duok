@@ -669,7 +669,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/need to go/i)).toBeInTheDocument()
     expect(screen.getAllByText(/Strength 20%/i).length).toBeGreaterThanOrEqual(1)
     await user.click(screen.getByRole('button', { name: /^Easy$/i }))
-    expect(screen.getByText(/Strength 60%/i)).toBeInTheDocument()
+    expect(screen.getByText(/Strength 40%/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /blr/i }))
     expect(screen.getByText(/Slang of the Day/i)).toBeInTheDocument()
