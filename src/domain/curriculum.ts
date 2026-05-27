@@ -921,42 +921,72 @@ export function getLessonById(lessonId: string): CurriculumLesson | null {
 }
 
 export function getNextAvailableLesson(units: CurriculumUnit[], progress: ProgressState): CurriculumLesson | null {
-  for (const lesson of units.filter((unit) => !unit.optional).flatMap((unit) => unit.lessons)) {
-    if (!progress.lessonProgress[lesson.id]) {
-      return lesson
-    }
+  const unlockedLessons = units
+    .filter((unit) => !unit.optional)
+    .flatMap((unit) => unit.lessons)
+    .filter((lesson) => isLessonUnlocked(lesson.id, progress))
+
+  const uncompletedLesson = unlockedLessons.find((lesson) => !isLessonCompleted(lesson.id, progress))
+  if (uncompletedLesson) {
+    return uncompletedLesson
   }
 
-  return units.filter((unit) => !unit.optional).at(-1)?.lessons.at(-1) ?? null
+  const lowestMasteryLesson = unlockedLessons
+    .filter((lesson) => (progress.lessonProgress[lesson.id]?.masteryLevel ?? 0) < 5)
+    .sort((left, right) =>
+      (progress.lessonProgress[left.id]?.masteryLevel ?? 0) -
+      (progress.lessonProgress[right.id]?.masteryLevel ?? 0),
+    )[0]
+
+  if (lowestMasteryLesson) {
+    return lowestMasteryLesson
+  }
+
+  return unlockedLessons.at(-1) ?? null
 }
 
 export function getUnlockedCurriculumUnits(units: CurriculumUnit[], progress: ProgressState): CurriculumUnit[] {
   const coreUnits = units.filter((unit) => !unit.optional)
-  const unlockedCoreUnits = coreUnits.filter((_unit, index) => {
-    if (index === 0) {
-      return true
-    }
-
-    const previousUnit = coreUnits[index - 1]
-    return previousUnit.lessons.every((lesson) => Boolean(progress.lessonProgress[lesson.id]))
-  })
+  const unlockedCoreUnits = coreUnits.filter((_unit, index) => isCoreUnitUnlocked(coreUnits, index, progress))
 
   return [...unlockedCoreUnits, ...units.filter((unit) => unit.optional)]
 }
 
 export function isLessonUnlocked(lessonId: string, progress: ProgressState): boolean {
-  const coreLessons = coreCurriculumUnits.flatMap((unit) => unit.lessons)
-  const lessonIndex = coreLessons.findIndex((lesson) => lesson.id === lessonId)
+  const coreUnitIndex = coreCurriculumUnits.findIndex((unit) =>
+    unit.lessons.some((lesson) => lesson.id === lessonId),
+  )
 
-  if (lessonIndex === -1) {
+  if (coreUnitIndex === -1) {
     return Boolean(scriptUnit.lessons.find((lesson) => lesson.id === lessonId))
   }
+
+  if (!isCoreUnitUnlocked(coreCurriculumUnits, coreUnitIndex, progress)) {
+    return false
+  }
+
+  const unit = coreCurriculumUnits[coreUnitIndex]
+  const lessonIndex = unit.lessons.findIndex((lesson) => lesson.id === lessonId)
 
   if (lessonIndex === 0) {
     return true
   }
 
-  return Boolean(progress.lessonProgress[coreLessons[lessonIndex - 1].id])
+  const previousLesson = unit.lessons[lessonIndex - 1]
+  return isLessonCompleted(previousLesson.id, progress)
+}
+
+function isCoreUnitUnlocked(units: CurriculumUnit[], unitIndex: number, progress: ProgressState): boolean {
+  if (unitIndex === 0) {
+    return true
+  }
+
+  const previousUnit = units[unitIndex - 1]
+  return previousUnit.lessons.filter((lesson) => isLessonCompleted(lesson.id, progress)).length >= 3
+}
+
+function isLessonCompleted(lessonId: string, progress: ProgressState): boolean {
+  return (progress.lessonProgress[lessonId]?.masteryLevel ?? 0) >= 1
 }
 
 export function getStoryLockState(story: Story, progress: ProgressState): { locked: boolean; reason: string } {

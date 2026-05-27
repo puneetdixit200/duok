@@ -10,6 +10,7 @@ import {
   getScriptCurriculumUnit,
   getStoryLockState,
   getUnlockedCurriculumUnits,
+  isLessonUnlocked,
   stories,
   transliterateLatinToKannada,
 } from './curriculum'
@@ -128,6 +129,43 @@ describe('KannadaOS level 1 curriculum', () => {
     const afterFirstLesson = completeLessonProgress(progress, firstLesson.id, '2026-05-27T10:00:00.000Z')
 
     expect(getNextAvailableLesson(coreCurriculumUnits, afterFirstLesson)?.id).toBe(secondLesson.id)
+  })
+
+  it('unlocks the next unit after three lessons and gates lessons inside that unit sequentially', () => {
+    const [firstUnit, secondUnit, thirdUnit] = coreCurriculumUnits
+    const afterThreeLessons = firstUnit.lessons.slice(0, 3).reduce(
+      (state, lesson, index) =>
+        completeLessonProgress(state, lesson.id, `2026-05-27T10:0${index}:00.000Z`),
+      createInitialProgress(),
+    )
+
+    expect(getUnlockedCurriculumUnits([...coreCurriculumUnits, getScriptCurriculumUnit()], afterThreeLessons).map((unit) => unit.id)).toEqual([
+      firstUnit.id,
+      secondUnit.id,
+      'unit-script',
+    ])
+    expect(isLessonUnlocked(secondUnit.lessons[0].id, afterThreeLessons)).toBe(true)
+    expect(isLessonUnlocked(secondUnit.lessons[1].id, afterThreeLessons)).toBe(false)
+    expect(getUnlockedCurriculumUnits([...coreCurriculumUnits, getScriptCurriculumUnit()], afterThreeLessons).map((unit) => unit.id)).not.toContain(thirdUnit.id)
+  })
+
+  it('recommends the lowest-mastery unlocked lesson after every core lesson has one crown', () => {
+    const allCoreLessons = coreCurriculumUnits.flatMap((unit) => unit.lessons)
+    const oneCrownProgress = allCoreLessons.reduce(
+      (state, lesson, index) =>
+        completeLessonProgress(state, lesson.id, `2026-05-27T11:${String(index).padStart(2, '0')}:00.000Z`),
+      createInitialProgress(),
+    )
+
+    expect(getNextAvailableLesson(coreCurriculumUnits, oneCrownProgress)?.id).toBe(allCoreLessons[0].id)
+
+    const firstLessonMastered = Array.from({ length: 4 }).reduce<ReturnType<typeof createInitialProgress>>(
+      (state, _unused, index) =>
+        completeLessonProgress(state, allCoreLessons[0].id, `2026-05-27T12:0${index}:00.000Z`),
+      oneCrownProgress,
+    )
+
+    expect(getNextAvailableLesson(coreCurriculumUnits, firstLessonMastered)?.id).toBe(allCoreLessons[1].id)
   })
 
   it('ships six complete progressively harder stories and unlocks them from story progress', () => {
