@@ -72,6 +72,37 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /learn/i })).toBeInTheDocument()
   })
 
+  it('offers every spec onboarding motivation and starting-level choice', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+
+    const motivationChoices = screen.getByLabelText(/Choose learning motivation/i)
+    expect(within(motivationChoices).getByRole('button', { name: /I just moved to Bangalore/i })).toBeInTheDocument()
+    expect(within(motivationChoices).getByRole('button', { name: /I want to talk to family\/friends/i })).toBeInTheDocument()
+    expect(within(motivationChoices).getByRole('button', { name: /I'm curious about the language/i })).toBeInTheDocument()
+    expect(within(motivationChoices).getByRole('button', { name: /Work requires some Kannada/i })).toBeInTheDocument()
+
+    await user.click(within(motivationChoices).getByRole('button', { name: /Work requires some Kannada/i }))
+    await user.click(screen.getByRole('button', { name: /next: choose level/i }))
+
+    const levelChoices = screen.getByLabelText(/Choose Kannada level/i)
+    expect(within(levelChoices).getByRole('button', { name: /Zero.*Teach me everything/i })).toBeInTheDocument()
+    expect(within(levelChoices).getByRole('button', { name: /I know a few words.*namaskara.*eshtu.*beku/i })).toBeInTheDocument()
+    expect(within(levelChoices).getByRole('button', { name: /I can have basic conversations/i })).toBeInTheDocument()
+    expect(within(levelChoices).getByRole('button', { name: /I can read Kannada script/i })).toBeInTheDocument()
+
+    await user.click(within(levelChoices).getByRole('button', { name: /I know a few words/i }))
+    await user.click(screen.getByRole('button', { name: /next: set goal/i }))
+    await user.click(screen.getByRole('button', { name: /5 XP/i }))
+    await user.click(screen.getByRole('button', { name: /start learning/i }))
+
+    expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"motivation":"work"')
+    expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"startingLevel":"few-words"')
+    expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"dailyGoalXp":5')
+  })
+
   it('shows home quick actions for practice, stories, and chat', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -725,6 +756,24 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /learn/i }))
 
     expect(screen.getByRole('button', { name: /Auto Basics/i })).toBeEnabled()
+  })
+
+  it('marks script academy lessons complete for learners who can read Kannada script', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+    await user.click(screen.getByRole('button', { name: /I just moved to Bangalore/i }))
+    await user.click(screen.getByRole('button', { name: /next: choose level/i }))
+    await user.click(screen.getByRole('button', { name: /I can read Kannada script/i }))
+    await user.click(screen.getByRole('button', { name: /next: set goal/i }))
+    await user.click(screen.getByRole('button', { name: /10 XP/i }))
+    await user.click(screen.getByRole('button', { name: /start learning/i }))
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    expect(screen.getByRole('button', { name: /Learn unit 1 lesson 1: Vowels Part 1, 1 crowns/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Learn unit 1 lesson 9: Reading Practice, 1 crowns/i })).toBeInTheDocument()
+    expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"startingLevel":"can-read"')
   })
 
   it('switches primary tabs with desktop keyboard shortcuts', async () => {

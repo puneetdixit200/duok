@@ -171,14 +171,16 @@ const defaultSoundPreferences: SoundPreferences = {
   autoPlayAudio: true,
 }
 const motivationOptions = [
-  { id: 'moved-to-bangalore', label: 'Moved to Bangalore', detail: 'Autos, buses, PGs, darshinis, and office Kannada.' },
-  { id: 'work-and-friends', label: 'Work and friends', detail: 'Everyday conversation with coworkers and locals.' },
-  { id: 'family-and-culture', label: 'Family and culture', detail: 'Read signs, greetings, and respectful phrases.' },
+  { id: 'moved-to-bangalore', label: 'I just moved to Bangalore', detail: 'Autos, buses, PGs, darshinis, and daily Kannada.' },
+  { id: 'family', label: 'I want to talk to family/friends', detail: 'Everyday conversation with people close to you.' },
+  { id: 'curious', label: "I'm curious about the language", detail: 'Read signs, greetings, and understand Kannada culture.' },
+  { id: 'work', label: 'Work requires some Kannada', detail: 'Office, cafeteria, meeting, and coworker Kannada.' },
 ] as const
 const startingLevelOptions = [
-  { id: 'zero', label: 'Zero. Teach me everything.', detail: 'Start with script, greetings, and survival phrases.' },
-  { id: 'can-read-script', label: 'I can read Kannada script', detail: 'Keep script available but focus on speaking.' },
-  { id: 'basic-conversations', label: 'I know basic conversations', detail: 'Start with Bangalore situations and review basics.' },
+  { id: 'zero', label: 'Zero - Teach me everything', detail: 'Start with script, greetings, and survival phrases.' },
+  { id: 'few-words', label: 'I know a few words (namaskara, eshtu, beku)', detail: 'Start at the beginning but move faster through familiar phrases.' },
+  { id: 'basic-conversations', label: 'I can have basic conversations', detail: 'Unlock the first three core units immediately.' },
+  { id: 'can-read', label: 'I can read Kannada script', detail: 'Mark the Script Academy as complete and focus on speaking.' },
 ] as const
 const dailyGoalOptions = [5, 10, 20, 30] as const
 const tabShortcutByKey: Record<string, Tab> = {
@@ -796,7 +798,7 @@ function applyStartingLevelPlacement(
 ): ProgressState {
   let nextProgress = progress
 
-  if (startingLevel === 'can-read-script') {
+  if (startingLevel === 'can-read' || startingLevel === 'can-read-script') {
     nextProgress = markPlacementLessonsCompleted(nextProgress, getScriptCurriculumUnit().lessons, completedAt)
   }
 
