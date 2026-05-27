@@ -1212,7 +1212,7 @@ function buildScriptUnit(): CurriculumUnit {
   const consonants = scriptSymbols.filter((symbol) => symbol.kind === 'consonant')
   const vowelSigns = scriptSymbols.filter((symbol) => symbol.kind === 'combination')
   const readingPracticeSymbols = [
-    ['ಕನ್ನಡ', 'kannada'], ['ನಮಸ್ಕಾರ', 'namaskara'], ['ಸಾರ್', 'saar'], ['ಟಿಕೆಟ್', 'ticket'], ['ನೀರು', 'neeru'], ['ಧನ್ಯವಾದ', 'dhanyavada'],
+    ['ಕನ್ನಡ', 'kannada'], ['ನಮಸ್ಕಾರ', 'namaskara'], ['ಸಾರ್', 'saar'], ['ಟಿಕೆಟ್', 'ticket'], ['ನೀರು', 'neeru'], ['ಧನ್ಯವಾದ', 'dhanyavada'], ['ಹೋಗಬೇಕು', 'hogbeku'], ['ಬೇಡ', 'beda'],
   ].map(([kannada, transliteration]) => scriptSymbol('combination', kannada, transliteration))
   const lessons: CurriculumLesson[] = [
     scriptLesson('script-vowels-1', 'Vowels Part 1', vowels.slice(0, 6)),
@@ -1258,29 +1258,185 @@ function scriptSymbol(kind: ScriptSymbol['kind'], kannada: string, transliterati
   }
 }
 
-function scriptLesson(id: string, title: string, symbols: ScriptSymbol[]): CurriculumLesson {
-  const phrases = symbols.slice(0, 6).map((symbol) => ({
-    id: symbol.id,
+function buildScriptExercisesForLesson(lessonId: string, title: string, symbols: ScriptSymbol[]): LessonExercise[] {
+  if (title === 'Reading Practice') {
+    return symbols.slice(0, 8).map((symbol, index) =>
+      scriptExercise({
+        lessonId,
+        index: index + 1,
+        type: 'translate',
+        prompt: 'Sound out this word:',
+        symbol,
+        answer: symbol.transliteration,
+        options: makeScriptSoundOptions(symbol, symbols),
+        xp: 2,
+      }),
+    )
+  }
+
+  const targetCount = title === 'Consonants: Labials + Others' || title === 'Vowel Signs' ? 10 : 8
+  const exercises: LessonExercise[] = [
+    scriptExercise({
+      lessonId,
+      index: 1,
+      type: 'translate',
+      prompt: `Which letter makes the "${symbols[0].transliteration}" sound?`,
+      symbol: symbols[0],
+      answer: symbols[0].kannada,
+      options: makeScriptLetterOptions(symbols[0], symbols),
+      xp: 2,
+    }),
+    scriptExercise({
+      lessonId,
+      index: 2,
+      type: 'listening',
+      prompt: 'Which letter did you hear?',
+      symbol: symbols[1] ?? symbols[0],
+      answer: (symbols[1] ?? symbols[0]).kannada,
+      options: makeScriptLetterOptions(symbols[1] ?? symbols[0], symbols),
+      xp: 3,
+    }),
+    scriptExercise({
+      lessonId,
+      index: 3,
+      type: 'matchPairs',
+      prompt: 'Match script to sound:',
+      symbol: symbols[0],
+      answer: makeScriptMatchPairs(symbols.slice(0, 4)),
+      options: makeScriptMatchOptions(symbols.slice(0, 4)),
+      xp: 4,
+    }),
+    scriptExercise({
+      lessonId,
+      index: 4,
+      type: 'typeKannada',
+      prompt: 'Type the transliteration:',
+      symbol: symbols[0],
+      answer: symbols[0].transliteration,
+      options: makeScriptSoundOptions(symbols[0], symbols),
+      xp: 3,
+    }),
+    scriptExercise({
+      lessonId,
+      index: 5,
+      type: 'translate',
+      prompt: `Which letter makes the "${(symbols[2] ?? symbols[0]).transliteration}" sound?`,
+      symbol: symbols[2] ?? symbols[0],
+      answer: (symbols[2] ?? symbols[0]).kannada,
+      options: makeScriptLetterOptions(symbols[2] ?? symbols[0], symbols),
+      xp: 2,
+    }),
+    scriptExercise({
+      lessonId,
+      index: 6,
+      type: 'listening',
+      prompt: 'Which letter did you hear?',
+      symbol: symbols[3] ?? symbols[0],
+      answer: (symbols[3] ?? symbols[0]).kannada,
+      options: makeScriptLetterOptions(symbols[3] ?? symbols[0], symbols),
+      xp: 3,
+    }),
+    scriptExercise({
+      lessonId,
+      index: 7,
+      type: 'typeKannada',
+      prompt: 'Type the transliteration:',
+      symbol: symbols[1] ?? symbols[0],
+      answer: (symbols[1] ?? symbols[0]).transliteration,
+      options: makeScriptSoundOptions(symbols[1] ?? symbols[0], symbols),
+      xp: 3,
+    }),
+    scriptExercise({
+      lessonId,
+      index: 8,
+      type: 'matchPairs',
+      prompt: 'Match script to sound:',
+      symbol: symbols[0],
+      answer: makeScriptMatchPairs(symbols.slice(2, 6)),
+      options: makeScriptMatchOptions(symbols.slice(2, 6)),
+      xp: 4,
+    }),
+  ]
+
+  for (let index = exercises.length; index < targetCount; index += 1) {
+    const symbol = symbols[index % symbols.length]
+    exercises.push(scriptExercise({
+      lessonId,
+      index: index + 1,
+      type: index % 2 === 0 ? 'translate' : 'listening',
+      prompt: index % 2 === 0 ? `Which letter makes the "${symbol.transliteration}" sound?` : 'Which letter did you hear?',
+      symbol,
+      answer: symbol.kannada,
+      options: makeScriptLetterOptions(symbol, symbols),
+      xp: 2,
+    }))
+  }
+
+  return exercises
+}
+
+function scriptExercise({
+  lessonId,
+  index,
+  type,
+  prompt,
+  symbol,
+  answer,
+  options,
+  xp,
+}: {
+  lessonId: string
+  index: number
+  type: ExerciseType
+  prompt: string
+  symbol: ScriptSymbol
+  answer: string
+  options: string[]
+  xp: number
+}): LessonExercise {
+  return {
+    id: `${lessonId}-script-${index}`,
+    type,
+    prompt,
     kannada: symbol.kannada,
     transliteration: symbol.transliteration,
     english: symbol.soundHint,
-    context: 'Kannada script recognition.',
+    answer,
+    options: Array.from(new Set(options)),
+    explanation: `${symbol.kannada} is read as "${symbol.transliteration}".`,
     skillTag: 'script',
-  }))
+    xp,
+    vocabularyIds: [symbol.id],
+  }
+}
 
+function makeScriptLetterOptions(answer: ScriptSymbol, symbols: ScriptSymbol[]): string[] {
+  return Array.from(new Set([answer.kannada, ...symbols.map((symbol) => symbol.kannada)].filter(Boolean))).slice(0, 4)
+}
+
+function makeScriptSoundOptions(answer: ScriptSymbol, symbols: ScriptSymbol[]): string[] {
+  return Array.from(new Set([answer.transliteration, ...symbols.map((symbol) => symbol.transliteration)].filter(Boolean))).slice(0, 4)
+}
+
+function makeScriptMatchPairs(symbols: ScriptSymbol[]): string {
+  return symbols.map((symbol) => `${symbol.kannada}=${symbol.transliteration}`).join(';')
+}
+
+function makeScriptMatchOptions(symbols: ScriptSymbol[]): string[] {
+  return [
+    ...symbols.map((symbol) => symbol.kannada),
+    ...symbols.map((symbol) => symbol.transliteration),
+  ]
+}
+
+function scriptLesson(id: string, title: string, symbols: ScriptSymbol[]): CurriculumLesson {
   return {
     id,
     unitId: 'unit-script',
     title,
     subtitle: 'Read the shape and sound',
     objective: `Recognize ${title.toLocaleLowerCase()}.`,
-    exercises: buildExercisesForLesson(9, 1, id, {
-      title,
-      subtitle: 'Script practice',
-      objective: `Recognize ${title}.`,
-      skillTag: 'script',
-      phrases,
-    }, phrases),
+    exercises: buildScriptExercisesForLesson(id, title, symbols),
   }
 }
 

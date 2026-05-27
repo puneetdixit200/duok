@@ -380,7 +380,7 @@ function ChoiceText({ text, context }: { text: string; context?: LessonExercise 
 }
 
 function ListeningChoiceText({ text, context, revealed }: { text: string; context?: LessonExercise; revealed: boolean }) {
-  if (!containsKannada(text) || revealed) {
+  if (!containsKannada(text) || revealed || context?.skillTag === 'script') {
     return <ChoiceText text={text} context={context} />
   }
 
@@ -436,6 +436,10 @@ function isFlashcardAudioStatus(status: string): boolean {
 
 function isStoryAudioStatus(status: string): boolean {
   return /^Playing story audio:|^Story Piper/i.test(status)
+}
+
+function isScriptTransliterationExercise(exercise: LessonExercise): boolean {
+  return exercise.type === 'typeKannada' && exercise.skillTag === 'script' && !containsKannada(exercise.answer)
 }
 
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
@@ -772,12 +776,29 @@ function evaluateTypedKannadaAnswer(typedAnswer: string, expectedAnswer: string)
   }
 }
 
+function evaluateTypedTextAnswer(typedAnswer: string, expectedAnswer: string) {
+  const typed = normalizeTextAnswer(typedAnswer)
+  const expected = normalizeTextAnswer(expectedAnswer)
+  const correct = typed === expected
+  const distance = levenshteinDistance(typed, expected)
+
+  return {
+    correct,
+    distance,
+    almost: !correct && typed.length > 0 && distance <= 1,
+  }
+}
+
 function normalizeKannadaAnswer(value: string): string {
   return value
     .normalize('NFC')
     .replace(/[?!.,:;]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function normalizeTextAnswer(value: string): string {
+  return normalizeKannadaAnswer(value).toLocaleLowerCase()
 }
 
 function levenshteinDistance(left: string, right: string): number {
@@ -1179,7 +1200,9 @@ function App() {
     }
 
     const typingEvaluation = exercise.type === 'typeKannada'
-      ? evaluateTypedKannadaAnswer(selectedAnswer, exercise.answer)
+      ? isScriptTransliterationExercise(exercise)
+        ? evaluateTypedTextAnswer(selectedAnswer, exercise.answer)
+        : evaluateTypedKannadaAnswer(selectedAnswer, exercise.answer)
       : null
     if (typingEvaluation?.almost) {
       setFeedback('almost')
@@ -3888,43 +3911,50 @@ function App() {
     }
 
     if (exercise.type === 'typeKannada') {
-      const convertedAnswer = transliterateLatinToKannada(typedAnswer)
+      const scriptTransliterationExercise = isScriptTransliterationExercise(exercise)
+      const convertedAnswer = scriptTransliterationExercise
+        ? `${exercise.kannada} = ${typedAnswer || exercise.answer}`
+        : transliterateLatinToKannada(typedAnswer)
+      const inputLabel = scriptTransliterationExercise ? 'Script transliteration answer' : 'Kannada typing answer'
       return (
         <>
           <div className="phrase-card">
             <small>{exercise.english}</small>
-            <strong lang="kn">{exercise.answer}</strong>
-            <SubtitleLines text={exercise.answer} context={exercise} />
+            <strong lang="kn">{scriptTransliterationExercise ? exercise.kannada : exercise.answer}</strong>
+            <SubtitleLines text={scriptTransliterationExercise ? exercise.kannada : exercise.answer} context={exercise} />
             <button className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
             </button>
           </div>
           <label className="transcript-field typing-helper">
-            <span>Kannada typing answer</span>
+            <span>{inputLabel}</span>
             <input
-              aria-label="Kannada typing answer"
+              aria-label={inputLabel}
               onChange={(event) => {
                 setTypedAnswer(event.target.value)
-                setSelectedAnswer(transliterateLatinToKannada(event.target.value))
+                setSelectedAnswer(scriptTransliterationExercise ? event.target.value : transliterateLatinToKannada(event.target.value))
                 if (feedback === 'almost') {
                   setFeedback(null)
                   setAlmostTypingDistance(null)
                 }
               }}
-              placeholder="Type namaskara saar"
+              placeholder={scriptTransliterationExercise ? `Type ${exercise.answer}` : 'Type namaskara saar'}
               value={typedAnswer}
             />
           </label>
-          <article className="keyboard-helper" aria-label="Kannada keyboard helper">
-            <strong>Keyboard helper</strong>
-            <ReadableStatusText text={typedAnswer ? convertedAnswer : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'} context={exercise} />
+          <article className="keyboard-helper" aria-label={scriptTransliterationExercise ? 'Script sound helper' : 'Kannada keyboard helper'}>
+            <strong>{scriptTransliterationExercise ? 'Script sound helper' : 'Keyboard helper'}</strong>
+            <ReadableStatusText
+              text={scriptTransliterationExercise ? convertedAnswer : typedAnswer ? convertedAnswer : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'}
+              context={exercise}
+            />
             <div className="suggestion-row compact">
               {exercise.options.map((option) => (
                 <button
                   key={option}
                   onClick={() => {
                     setTypedAnswer(option)
-                    setSelectedAnswer(transliterateLatinToKannada(option))
+                    setSelectedAnswer(scriptTransliterationExercise ? option : transliterateLatinToKannada(option))
                     if (feedback === 'almost') {
                       setFeedback(null)
                       setAlmostTypingDistance(null)

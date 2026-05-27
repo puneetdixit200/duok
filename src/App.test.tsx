@@ -89,6 +89,45 @@ describe('KannadaOS desktop app', () => {
     expect(within(tipsDialog).getByText(/Respectful address/i)).toBeInTheDocument()
   })
 
+  it('runs Kannada Script Academy letter and transliteration drills', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /Vowels Part 1/i }))
+
+    expect(screen.getByRole('heading', { name: /Which letter makes the "a" sound/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /ಅ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByRole('heading', { name: /Which letter did you hear/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /ಆ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByRole('heading', { name: /Match script to sound/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /ಅ/i }))
+    await user.click(screen.getByRole('button', { name: /^a$/i }))
+    await user.click(screen.getByRole('button', { name: /ಆ/i }))
+    await user.click(screen.getByRole('button', { name: /^aa$/i }))
+    await user.click(screen.getByRole('button', { name: /ಇ/i }))
+    await user.click(screen.getByRole('button', { name: /^i$/i }))
+    await user.click(screen.getByRole('button', { name: /ಈ/i }))
+    await user.click(screen.getByRole('button', { name: /^ii$/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    expect(screen.getByRole('heading', { name: /Type the transliteration/i })).toBeInTheDocument()
+    await user.type(screen.getByLabelText(/Script transliteration answer/i), 'a')
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+  })
+
   it('shows navigation badges for active streak and due practice reviews', () => {
     const progress = {
       ...createInitialProgress(),

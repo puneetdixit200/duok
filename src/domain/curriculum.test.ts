@@ -114,6 +114,54 @@ describe('KannadaOS level 1 curriculum', () => {
     expect([...coreCurriculumUnits, scriptUnit].reduce((total, unit) => total + unit.lessons.length, 0)).toBe(49)
   })
 
+  it('builds Kannada Script Academy lessons from script-specific drill types', () => {
+    const scriptUnit = getScriptCurriculumUnit()
+    const vowelsPartOne = scriptUnit.lessons.find((lesson) => lesson.title === 'Vowels Part 1')!
+    const labialsAndOthers = scriptUnit.lessons.find((lesson) => lesson.title === 'Consonants: Labials + Others')!
+    const vowelSigns = scriptUnit.lessons.find((lesson) => lesson.title === 'Vowel Signs')!
+    const readingPractice = scriptUnit.lessons.find((lesson) => lesson.title === 'Reading Practice')!
+
+    expect(vowelsPartOne.exercises).toHaveLength(8)
+    expect(labialsAndOthers.exercises).toHaveLength(10)
+    expect(vowelSigns.exercises).toHaveLength(10)
+    expect(vowelsPartOne.exercises).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'translate',
+        prompt: 'Which letter makes the "a" sound?',
+        answer: 'ಅ',
+        options: expect.arrayContaining(['ಅ', 'ಆ', 'ಇ', 'ಈ']),
+      }),
+      expect.objectContaining({
+        type: 'listening',
+        prompt: 'Which letter did you hear?',
+        answer: 'ಆ',
+        transliteration: 'aa',
+      }),
+      expect.objectContaining({
+        type: 'matchPairs',
+        prompt: 'Match script to sound:',
+        answer: expect.stringContaining('ಅ=a'),
+      }),
+      expect.objectContaining({
+        type: 'typeKannada',
+        prompt: 'Type the transliteration:',
+        kannada: 'ಅ',
+        answer: 'a',
+        options: expect.arrayContaining(['a', 'aa', 'i', 'ii']),
+      }),
+    ]))
+    expect(readingPractice.exercises).toHaveLength(8)
+    expect(readingPractice.exercises).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'translate',
+        prompt: 'Sound out this word:',
+        kannada: 'ಕನ್ನಡ',
+        answer: 'kannada',
+        options: expect.arrayContaining(['kannada', 'namaskara']),
+      }),
+    ]))
+  })
+
   it('unlocks lessons sequentially while keeping the optional script path available', () => {
     const progress = createInitialProgress()
     const firstLesson = coreCurriculumUnits[0].lessons[0]
