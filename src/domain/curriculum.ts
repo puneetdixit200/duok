@@ -1142,7 +1142,7 @@ function buildExercisesForLesson(
 ): LessonExercise[] {
   const [first, second, third] = phrases
   const typeChoices = makeTypeOptions(first.english)
-  const arrangedWords = first.kannada.split(/\s+/).filter(Boolean)
+  const arrangeOptions = makeArrangeWordOptions(first, phrases)
   const fillParts = second.kannada.split(/\s+/).filter(Boolean)
   const fillAnswer = fillParts.at(-1) ?? second.kannada
   const fillPrompt = fillParts.length > 1 ? `${fillParts.slice(0, -1).join(' ')} ___` : '___'
@@ -1157,7 +1157,7 @@ function buildExercisesForLesson(
   const exercises = [
     translateExercise,
     {
-      ...exercise(idPrefix, 2, 'arrange', 'Arrange the Kannada sentence:', first, first.kannada, arrangedWords, 3),
+      ...exercise(idPrefix, 2, 'arrange', 'Arrange the Kannada sentence:', first, first.kannada, arrangeOptions, 3),
       english: first.english,
     },
     {
@@ -1199,6 +1199,30 @@ function buildExercisesForLesson(
   ]
 
   return reviewLesson ? exercises : exercises.slice(0, 6)
+}
+
+function makeArrangeWordOptions(target: Phrase, lessonPhrases: Phrase[]): string[] {
+  const answerWords = target.kannada.split(/\s+/).filter(Boolean)
+  const optionWords = [...answerWords]
+  const fallbackDistractors = ['ಧನ್ಯವಾದ', 'ಬೇಡ', 'ಸರಿ', 'ಇಲ್ಲ']
+  const candidateWords = [
+    ...lessonPhrases
+      .filter((phrase) => phrase.id !== target.id)
+      .flatMap((phrase) => phrase.kannada.split(/\s+/).filter(Boolean)),
+    ...fallbackDistractors,
+  ].filter((word) => !answerWords.includes(word))
+
+  for (const word of candidateWords) {
+    if (!optionWords.includes(word)) {
+      optionWords.push(word)
+    }
+
+    if (optionWords.length >= answerWords.length + 2) {
+      break
+    }
+  }
+
+  return optionWords
 }
 
 function reverseTranslateExercise(

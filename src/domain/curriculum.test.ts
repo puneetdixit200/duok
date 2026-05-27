@@ -134,6 +134,20 @@ describe('KannadaOS level 1 curriculum', () => {
     }))
   })
 
+  it('adds one or two distractor chips to generated arrange-word drills', () => {
+    const generatedArrange = coreCurriculumUnits[0].lessons[1].exercises.find((exercise) => exercise.type === 'arrange')
+    expect(generatedArrange).toBeDefined()
+
+    if (!generatedArrange) {
+      throw new Error('Expected a generated arrange exercise')
+    }
+
+    const answerWords = generatedArrange.answer.split(/\s+/).filter(Boolean)
+    expect(generatedArrange.options.length).toBeGreaterThan(answerWords.length)
+    expect(generatedArrange.options.length).toBeLessThanOrEqual(answerWords.length + 2)
+    expect(generatedArrange.options.some((option) => !answerWords.includes(option))).toBe(true)
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
