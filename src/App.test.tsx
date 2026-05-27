@@ -462,6 +462,25 @@ describe('KannadaOS desktop app', () => {
     expect(within(tipsDialog).getByText(/^English: Go straight$/i)).toBeInTheDocument()
   })
 
+  it('shows English subtitles for Unit 4 food-ordering tips', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    const foodUnit = screen.getByText(/Unit 4: Food & Ordering/i).closest('article')
+    expect(foodUnit).not.toBeNull()
+    await user.click(within(foodUnit!).getByRole('button', { name: /^Tips$/i }))
+
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Food & Ordering/i })
+    expect(within(tipsDialog).getByText(/^English: give me$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^Say: kodi$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: Please give one dosa$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: tea$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getByText(/^English: rice$/i)).toBeInTheDocument()
+  })
+
   it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),

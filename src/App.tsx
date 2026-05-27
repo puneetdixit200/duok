@@ -297,6 +297,12 @@ const kannadaWordGlossary: Record<string, ReadableSubtitle> = {
   'ನೇರ': { romanization: 'nera', english: 'straight' },
   'ನೇರವಾಗಿ': { romanization: 'neravagi', english: 'straight' },
   'ಇಂದಿರಾನಗರದಿಂದ': { romanization: 'indiranagaradinda', english: 'from Indiranagar' },
+  'ಕೊಡಿ': { romanization: 'kodi', english: 'give me' },
+  'ಇಡ್ಲಿ': { romanization: 'idli', english: 'idli' },
+  'ದೋಸೆ': { romanization: 'dose', english: 'dosa' },
+  'ಕಾಫಿ': { romanization: 'kaafi', english: 'coffee' },
+  'ಚಹಾ': { romanization: 'chahaa', english: 'tea' },
+  'ಅನ್ನ': { romanization: 'anna', english: 'rice' },
 }
 
 const independentVowels: Record<string, string> = {

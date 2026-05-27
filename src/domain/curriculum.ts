@@ -465,26 +465,33 @@ const unitSeeds: UnitSeed[] = [
     description: 'Darshini ordering, spice level, water, and bill requests.',
     tips: [
       {
-        title: 'Object before verb',
-        body: 'Kannada usually places the object before the verb or request word.',
-        examples: ['ಒಂದು ಕಾಫಿ ಬೇಕು', 'ನೀರು ಕೊಡಿ'],
+        title: 'Kodi for polite requests',
+        body: 'ಕೊಡಿ means "give me" and is the safest polite imperative at food counters.',
+        examples: ['ಕಾಫಿ ಕೊಡಿ', 'ನೀರು ಕೊಡಿ'],
       },
       {
-        title: 'Polite requests',
-        body: 'ಕೊಡಿ means give please and is useful in food, shopping, and offices.',
-        examples: ['ಚಟ್ನಿ ಕೊಡಿ', 'ಬಿಲ್ ಕೊಡಿ'],
+        title: 'One item formula',
+        body: 'ಒಂದು __ ಕೊಡಿ means "give me one __" for quick Darshini orders.',
+        examples: ['ಒಂದು ದೋಸೆ ಕೊಡಿ', 'ಒಂದು ಚಹಾ ಕೊಡಿ'],
+      },
+      {
+        title: 'Menu items',
+        body: 'High-frequency menu words are ಇಡ್ಲಿ, ದೋಸೆ, ಕಾಫಿ, ಚಹಾ, and ಅನ್ನ.',
+        examples: ['ಇಡ್ಲಿ', 'ದೋಸೆ', 'ಕಾಫಿ', 'ಚಹಾ', 'ಅನ್ನ'],
       },
     ],
     lessons: [
       foodLesson('Darshini Basics', [
-        ['ondu-dosa-beku', 'ಒಂದು ದೋಸೆ ಬೇಕು', 'I want one dosa', 'Darshini breakfast.'],
+        ['ondu-dose-kodi', 'ಒಂದು ದೋಸೆ ಕೊಡಿ', 'Please give one dosa', 'Darshini breakfast.'],
         ['eradu-idli-beku', 'ಎರಡು ಇಡ್ಲಿ ಬೇಕು', 'I want two idlis', 'Common order.'],
         ['coffee-kodi', 'ಕಾಫಿ ಕೊಡಿ', 'Please give coffee', 'Counter request.'],
+        ['chahaa-kodi', 'ಚಹಾ ಕೊಡಿ', 'Please give tea', 'Counter request.'],
       ]),
       foodLesson('Ordering Food', [
         ['neeru-kodi', 'ನೀರು ಕೊಡಿ', 'Please give water', 'Universal request.'],
         ['chutney-swalpa', 'ಚಟ್ನಿ ಸ್ವಲ್ಪ', 'A little chutney', 'Food counter.'],
         ['sambar-beku', 'ಸಾಂಬಾರ್ ಬೇಕು', 'I want sambar', 'Extra serving.'],
+        ['anna-kodi', 'ಅನ್ನ ಕೊಡಿ', 'Please give rice', 'Meal request.'],
       ]),
       foodLesson('Restaurant Phrases', [
         ['khara-kammi', 'ಖಾರ ಕಡಿಮೆ', 'Less spicy', 'Ask before ordering.'],

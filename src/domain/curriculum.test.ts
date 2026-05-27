@@ -249,6 +249,32 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(directionPairs.answer).toContain('ನೇರವಾಗಿ ಹೋಗಿ=Go straight')
   })
 
+  it('teaches the Unit 4 food-ordering grammar and menu items named in the frontend spec', () => {
+    const unitFour = coreCurriculumUnits[3]
+    const darshiniBasics = unitFour.lessons.find((lesson) => lesson.title === 'Darshini Basics')!
+    const orderingFood = unitFour.lessons.find((lesson) => lesson.title === 'Ordering Food')!
+    const darshiniPairs = darshiniBasics.exercises.find((exercise) => exercise.type === 'matchPairs')!
+    const orderingPairs = orderingFood.exercises.find((exercise) => exercise.type === 'matchPairs')!
+
+    expect(unitFour.tips.map((tip) => tip.title)).toEqual([
+      'Kodi for polite requests',
+      'One item formula',
+      'Menu items',
+    ])
+    expect(unitFour.tips.flatMap((tip) => tip.examples)).toEqual(expect.arrayContaining([
+      'ಕಾಫಿ ಕೊಡಿ',
+      'ಒಂದು ದೋಸೆ ಕೊಡಿ',
+      'ಇಡ್ಲಿ',
+      'ದೋಸೆ',
+      'ಕಾಫಿ',
+      'ಚಹಾ',
+      'ಅನ್ನ',
+    ]))
+    expect(darshiniPairs.answer).toContain('ಒಂದು ದೋಸೆ ಕೊಡಿ=Please give one dosa')
+    expect(darshiniPairs.answer).toContain('ಚಹಾ ಕೊಡಿ=Please give tea')
+    expect(orderingPairs.answer).toContain('ಅನ್ನ ಕೊಡಿ=Please give rice')
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
