@@ -71,6 +71,7 @@ import {
   getScenarioMessages,
   hydrateConversationStore,
   serializeConversationStore,
+  trimConversationMessages,
   type ConversationStore,
 } from './services/conversationLog'
 import { applyLearnerStorage, collectLearnerStorage } from './services/learnerStore'
@@ -1889,9 +1890,10 @@ function App() {
       { id: `learner-${getNowMs()}`, speaker: 'learner', text, subtext },
       { id: `tutor-${getNowMs()}`, speaker: 'tutor', ...tutorReply },
     ]
-    setChatMessages(nextMessages)
+    const trimmedMessages = trimConversationMessages(nextMessages)
+    setChatMessages(trimmedMessages)
     setProgress((current) => recordChatMessageSent(current))
-    setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, nextMessages))
+    setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, trimmedMessages))
   }
 
   function selectChatScenario(scenarioId: string) {

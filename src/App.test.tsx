@@ -1365,6 +1365,36 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Kannada: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
   })
 
+  it('keeps only the latest 50 tutor chat messages for a scenario', async () => {
+    const user = userEvent.setup()
+    const messages = Array.from({ length: 50 }, (_, index) => ({
+      id: `auto-${index}`,
+      speaker: index % 2 === 0 ? 'tutor' : 'learner',
+      text: `auto message ${index}`,
+    }))
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:conversation-log', JSON.stringify({ 'auto-ride': messages }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+    expect(screen.getByText('auto message 0')).toBeInTheDocument()
+    expect(screen.getByText('auto message 49')).toBeInTheDocument()
+
+    await user.type(screen.getByPlaceholderText(/type in kannada/i), 'Majestic hogbeku')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    expect(await screen.findByText(/Add -ge for "to" before the destination/i)).toBeInTheDocument()
+    expect(screen.queryByText('auto message 0')).not.toBeInTheDocument()
+    expect(screen.queryByText('auto message 1')).not.toBeInTheDocument()
+    expect(screen.getByText('auto message 2')).toBeInTheDocument()
+
+    const savedConversation = JSON.parse(localStorage.getItem('kannadaos:conversation-log') ?? '{}')
+    expect(savedConversation['auto-ride']).toHaveLength(50)
+    expect(savedConversation['auto-ride'][0].id).toBe('auto-2')
+    expect(savedConversation['auto-ride'][49].text).toMatch(/Add -ge/)
+  })
+
   it('restores desktop learner data before syncing it back to the Electron store', async () => {
     const user = userEvent.setup()
     const loadLearnerData = vi.fn().mockResolvedValue({

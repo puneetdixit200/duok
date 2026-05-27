@@ -8,6 +8,7 @@ export interface PersistedConversationMessage {
 }
 
 export type ConversationStore = Record<string, PersistedConversationMessage[]>
+export const conversationMessageLimit = 50
 
 export function hydrateConversationStore(serialized: string | null): ConversationStore {
   if (!serialized) {
@@ -26,8 +27,9 @@ export function hydrateConversationStore(serialized: string | null): Conversatio
       }
 
       const validMessages = messages.filter(isPersistedMessage)
-      if (validMessages.length) {
-        store[scenarioId] = validMessages
+      const trimmedMessages = trimConversationMessages(validMessages)
+      if (trimmedMessages.length) {
+        store[scenarioId] = trimmedMessages
       }
 
       return store
@@ -46,15 +48,22 @@ export function getScenarioMessages(
   return messages?.length ? messages : fallbackMessages
 }
 
+export function trimConversationMessages(
+  messages: PersistedConversationMessage[],
+  limit = conversationMessageLimit,
+): PersistedConversationMessage[] {
+  return messages.slice(-limit)
+}
+
 export function appendScenarioMessages(
   store: ConversationStore,
   scenarioId: string,
   messages: PersistedConversationMessage[],
-  limit = 50,
+  limit = conversationMessageLimit,
 ): ConversationStore {
   return {
     ...store,
-    [scenarioId]: messages.slice(-limit),
+    [scenarioId]: trimConversationMessages(messages, limit),
   }
 }
 
