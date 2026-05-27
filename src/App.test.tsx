@@ -229,6 +229,24 @@ describe('KannadaOS desktop app', () => {
     const tipsDialog = screen.getByRole('dialog', { name: /Tips: Greetings & Basics/i })
     expect(tipsDialog).toBeInTheDocument()
     expect(within(tipsDialog).getAllByText(/^Universal polite greeting$/i).length).toBeGreaterThanOrEqual(1)
+    expect(within(tipsDialog).getByRole('button', { name: /Got it -> Start Lesson/i })).toBeInTheDocument()
+  })
+
+  it('shows grammar tips before starting the first untouched lesson in a unit', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Hello & Thanks, 0 crowns/i }))
+
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Greetings & Basics/i })
+    expect(tipsDialog).toBeInTheDocument()
+
+    await user.click(within(tipsDialog).getByRole('button', { name: /Got it -> Start Lesson/i }))
+
+    expect(screen.getByRole('heading', { name: /Translate this phrase/i })).toBeInTheDocument()
+    expect(localStorage.getItem('kannadaos:seen-unit-tips')).toContain(coreCurriculumUnits[0].id)
   })
 
   it('shows unit lesson progress and crown ratings in the Learn tab', async () => {
@@ -262,6 +280,7 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /learn/i }))
     await user.click(screen.getByRole('button', { name: /Vowels Part 1/i }))
+    await user.click(within(screen.getByRole('dialog', { name: /Tips: Kannada Script/i })).getByRole('button', { name: /Got it -> Start Lesson/i }))
 
     expect(screen.getByRole('heading', { name: /Which letter makes the "a" sound/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /ಅ/i }))
@@ -301,6 +320,7 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /learn/i }))
     await user.click(screen.getByRole('button', { name: /Vowels Part 1/i }))
+    await user.click(within(screen.getByRole('dialog', { name: /Tips: Kannada Script/i })).getByRole('button', { name: /Got it -> Start Lesson/i }))
 
     expect(screen.getByRole('button', { name: /^English: Sounds like aa\s+ಆ\s+Say: aa/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^English: Sounds like i\s+ಇ\s+Say: i/i })).toBeInTheDocument()

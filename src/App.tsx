@@ -164,6 +164,7 @@ const aiProviderKey = 'kannadaos:ai-provider'
 const pronunciationKey = 'kannadaos:pronunciation-history'
 const conversationKey = 'kannadaos:conversation-log'
 const aiExpansionKey = 'kannadaos:ai-expansion'
+const seenUnitTipsKey = 'kannadaos:seen-unit-tips'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
 const storyQuizXp = 5
@@ -1316,6 +1317,10 @@ function App() {
   const [selectedStoryAnswer, setSelectedStoryAnswer] = useState('')
   const [storyFeedback, setStoryFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [tipsUnitId, setTipsUnitId] = useState<string | null>(null)
+  const [pendingTipsLessonId, setPendingTipsLessonId] = useState<string | null>(null)
+  const [seenTipsUnitIds, setSeenTipsUnitIds] = useState<string[]>(() =>
+    hydrateStringList(localStorage.getItem(seenUnitTipsKey)),
+  )
   const [activeLessonId, setActiveLessonId] = useState(coreCurriculumUnits[0].lessons[0].id)
   const [lessonRunExercises, setLessonRunExercises] = useState<LessonExercise[]>(() => [
     ...lessonExercises,
@@ -1405,6 +1410,10 @@ function App() {
   }, [aiExpansionDeck])
 
   useEffect(() => {
+    localStorage.setItem(seenUnitTipsKey, JSON.stringify(seenTipsUnitIds))
+  }, [seenTipsUnitIds])
+
+  useEffect(() => {
     const bridge = window.kannadaOS
     if (!bridge?.loadLearnerData) {
       return
@@ -1427,6 +1436,7 @@ function App() {
           const nextAiProviderSettings = hydrateAiProviderSettings(localStorage.getItem(aiProviderKey))
           const nextConversationStore = hydrateConversationStore(localStorage.getItem(conversationKey))
           const nextAiExpansionDeck = hydrateAiExpansionDeck(localStorage.getItem(aiExpansionKey))
+          const nextSeenTipsUnitIds = hydrateStringList(localStorage.getItem(seenUnitTipsKey))
 
           setScreen(localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding')
           setProgress(nextProgress)
@@ -1442,6 +1452,7 @@ function App() {
           setPronunciationHistory(hydratePronunciationHistory(localStorage.getItem(pronunciationKey)))
           setConversationStore(nextConversationStore)
           setAiExpansionDeck(nextAiExpansionDeck)
+          setSeenTipsUnitIds(nextSeenTipsUnitIds)
           setChatMessages(
             getScenarioMessages(nextConversationStore, defaultChatScenario.id, [
               createOpeningMessage(defaultChatScenario),
@@ -1486,7 +1497,7 @@ function App() {
     return () => {
       active = false
     }
-  }, [aiProviderSettings, conversationStore, learnerProfile, learnerStoreReady, progress, pronunciationHistory, reminder, runtimeConfig, soundPreferences])
+  }, [aiExpansionDeck, aiProviderSettings, conversationStore, learnerProfile, learnerStoreReady, progress, pronunciationHistory, reminder, runtimeConfig, seenTipsUnitIds, soundPreferences])
 
   useEffect(() => {
     let active = true
@@ -1621,6 +1632,50 @@ function App() {
     setLessonWrongCount(0)
     resetExerciseInteraction()
     setScreen('lesson')
+  }
+
+  function closeUnitTips() {
+    setTipsUnitId(null)
+    setPendingTipsLessonId(null)
+  }
+
+  function openUnitTips(unit: CurriculumUnit, lessonId?: string) {
+    setTipsUnitId(unit.id)
+    setPendingTipsLessonId(lessonId ?? unit.lessons[0]?.id ?? null)
+  }
+
+  function markUnitTipsSeen(unitId: string) {
+    setSeenTipsUnitIds((currentUnitIds) =>
+      currentUnitIds.includes(unitId) ? currentUnitIds : [...currentUnitIds, unitId],
+    )
+  }
+
+  function shouldShowUnitTipsBeforeLesson(unit: CurriculumUnit, lesson: { id: string }, lessonIndex: number) {
+    if (!unit.tips.length || lessonIndex !== 0 || seenTipsUnitIds.includes(unit.id)) {
+      return false
+    }
+
+    return getLessonProgressSummary(progress, lesson.id).masteryLevel === 0
+  }
+
+  function openUnitLesson(unit: CurriculumUnit, lesson: { id: string }, lessonIndex: number) {
+    if (shouldShowUnitTipsBeforeLesson(unit, lesson, lessonIndex)) {
+      openUnitTips(unit, lesson.id)
+      return
+    }
+
+    openLesson(lesson.id)
+  }
+
+  function startTipsLesson(unit: CurriculumUnit) {
+    const lessonId = pendingTipsLessonId ?? unit.lessons[0]?.id
+    if (!lessonId || (!unit.optional && !isLessonUnlocked(lessonId, progress))) {
+      return
+    }
+
+    markUnitTipsSeen(unit.id)
+    closeUnitTips()
+    openLesson(lessonId)
   }
 
   function checkAnswer(exercise: LessonExercise, submittedAnswer = selectedAnswer, options: { timedOut?: boolean } = {}) {
@@ -1766,7 +1821,7 @@ function App() {
       if (event.key === 'Escape') {
         if (tipsUnitId) {
           event.preventDefault()
-          setTipsUnitId(null)
+          closeUnitTips()
           return
         }
 
@@ -3379,7 +3434,7 @@ function App() {
                     </div>
                     <small>{unitProgress.completedLessons}/{unitProgress.totalLessons} lessons</small>
                   </div>
-                  <button className="secondary-action compact-action" onClick={() => setTipsUnitId(unit.id)} type="button">
+                  <button className="secondary-action compact-action" onClick={() => openUnitTips(unit)} type="button">
                     Tips
                   </button>
                   <div className="lesson-dot-row">
@@ -3393,7 +3448,7 @@ function App() {
                           className={lessonProgress.completed ? 'lesson-dot done' : unlocked ? 'lesson-dot current' : 'lesson-dot locked'}
                           disabled={!unlocked}
                           key={lesson.id}
-                          onClick={() => openLesson(lesson.id)}
+                          onClick={() => openUnitLesson(unit, lesson, unitLessonIndex)}
                           type="button"
                         >
                           {lessonProgress.masteryLevel || (unlocked ? '•' : 'x')}
@@ -3413,7 +3468,7 @@ function App() {
                     <p className="eyebrow">grammar tips</p>
                     <h3 id="tips-modal-title">Tips: {activeTipsUnit.title}</h3>
                   </div>
-                  <button className="icon-button" onClick={() => setTipsUnitId(null)} type="button" aria-label="Close tips">
+                  <button className="icon-button" onClick={closeUnitTips} type="button" aria-label="Close tips">
                     x
                   </button>
                 </header>
@@ -3424,8 +3479,13 @@ function App() {
                     <ReadableExampleList examples={tip.examples} />
                   </article>
                 ))}
-                <button className="primary-action" onClick={() => openLesson(activeTipsUnit.lessons[0].id)} type="button">
-                  Start lesson
+                <button
+                  className="primary-action"
+                  disabled={Boolean(pendingTipsLessonId && !activeTipsUnit.optional && !isLessonUnlocked(pendingTipsLessonId, progress))}
+                  onClick={() => startTipsLesson(activeTipsUnit)}
+                  type="button"
+                >
+                  Got it -&gt; Start Lesson
                 </button>
               </div>
             </section>
@@ -4628,7 +4688,7 @@ function App() {
                       className={lessonProgress.completed ? 'lesson-dot done' : unlocked ? 'lesson-dot current' : 'lesson-dot locked'}
                       disabled={!unlocked}
                       key={lesson.id}
-                      onClick={() => openLesson(lesson.id)}
+                      onClick={() => openUnitLesson(unit, lesson, unitLessonIndex)}
                       type="button"
                     >
                       {lessonProgress.masteryLevel || (unlocked ? '•' : 'x')}
@@ -5242,6 +5302,23 @@ function hydrateAiExpansionDeck(serialized: string | null): GeneratedExercise[] 
     }
 
     return parsed.filter(isGeneratedExercise).slice(0, 8)
+  } catch {
+    return []
+  }
+}
+
+function hydrateStringList(serialized: string | null): string[] {
+  if (!serialized) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(serialized) as unknown
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed.filter((value): value is string => typeof value === 'string' && value.length > 0)
   } catch {
     return []
   }
