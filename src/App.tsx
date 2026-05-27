@@ -285,6 +285,11 @@ const kannadaWordGlossary: Record<string, ReadableSubtitle> = {
   'ಎಂಟು': { romanization: 'entu', english: 'eight' },
   'ಒಂಬತ್ತು': { romanization: 'ombattu', english: 'nine' },
   'ಹತ್ತು': { romanization: 'hattu', english: 'ten' },
+  'ರೂಪಾಯಿ': { romanization: 'rupayi', english: 'rupees' },
+  'ಬೆಲೆ': { romanization: 'bele', english: 'price' },
+  'ಜಾಸ್ತಿ': { romanization: 'jaasti', english: 'too much' },
+  'ಕಡಿಮೆ': { romanization: 'kadime', english: 'less' },
+  'ಮಾಡಿ': { romanization: 'maadi', english: 'please do' },
 }
 
 const independentVowels: Record<string, string> = {

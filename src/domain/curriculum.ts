@@ -357,14 +357,19 @@ const unitSeeds: UnitSeed[] = [
     description: 'Ask prices, understand small amounts, and pay for daily items.',
     tips: [
       {
-        title: 'Question word position',
-        body: 'ಎಷ್ಟು means how much or how many and can stand at the end of a short price question.',
-        examples: ['ಟಿಕೆಟ್ ಎಷ್ಟು?', 'ಕಾಫಿ ಎಷ್ಟು?'],
+        title: 'Kannada numbers',
+        body: 'Learn one through ten for tickets, small orders, prices, and stops.',
+        examples: ['ಒಂದು ಕಾಫಿ', 'ಹತ್ತು ರೂಪಾಯಿ'],
       },
       {
-        title: 'Beku for wants',
-        body: 'ಬೇಕು covers both want and need. It is one of the highest-value words for beginners.',
-        examples: ['ಎರಡು ಕಾಫಿ ಬೇಕು', 'ಬಿಲ್ ಬೇಕು'],
+        title: 'Price questions',
+        body: 'ಎಷ್ಟು ರೂಪಾಯಿ? means how many rupees and works for most quick price checks.',
+        examples: ['ಎಷ್ಟು ರೂಪಾಯಿ?', 'ಕಾಫಿ ಎಷ್ಟು?'],
+      },
+      {
+        title: 'Bargaining language',
+        body: 'ಜಾಸ್ತಿ means too much, and ಕಡಿಮೆ ಮಾಡಿ asks someone to reduce it.',
+        examples: ['ಜಾಸ್ತಿ', 'ಕಡಿಮೆ ಮಾಡಿ'],
       },
     ],
     lessons: [
@@ -383,11 +388,15 @@ const unitSeeds: UnitSeed[] = [
         ['hattu', 'ಹತ್ತು', 'ten', 'Ten rupees.'],
       ]),
       priceLesson('Asking Prices', 'Ask rates anywhere', 'prices', [
+        ['eshtu-rupayi', 'ಎಷ್ಟು ರೂಪಾಯಿ?', 'How many rupees?', 'Direct price question for markets and counters.'],
         ['idara-bele-eshtu', 'ಇದರ ಬೆಲೆ ಎಷ್ಟು?', 'What is its price?', 'Use at a store counter.'],
         ['ticket-eshtu', 'ಟಿಕೆಟ್ ಎಷ್ಟು?', 'How much is the ticket?', 'BMTC conductor phrase.'],
         ['coffee-eshtu', 'ಕಾಫಿ ಎಷ್ಟು?', 'How much is coffee?', 'Darshini phrase.'],
       ]),
       priceLesson('Bargaining', 'Reduce and settle prices', 'prices', [
+        ['jaasti', 'ಜಾಸ್ತಿ', 'too much', 'Use when a quoted price is too high.'],
+        ['kadime-maadi', 'ಕಡಿಮೆ ಮಾಡಿ', 'Please reduce it', 'Ask a seller to reduce the price.'],
+        ['swalpa-kadime-maadi', 'ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ', 'Please reduce a little', 'Polite bargaining at a market.'],
         ['upi-ideya', 'ಯುಪಿಐ ಇದೆಯಾ?', 'Do you have UPI?', 'Common payment question.'],
         ['change-ideya', 'ಚಿಲ್ಲರೆ ಇದೆಯಾ?', 'Do you have change?', 'Cash payment phrase.'],
         ['bill-kodi', 'ಬಿಲ್ ಕೊಡಿ', 'Please give the bill', 'Restaurant or shop phrase.'],

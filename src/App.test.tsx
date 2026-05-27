@@ -421,6 +421,28 @@ describe('KannadaOS desktop app', () => {
     }
   }, 30_000)
 
+  it('shows English subtitles for Unit 2 price and bargaining phrases', async () => {
+    const user = userEvent.setup()
+    const unlockedThroughBargaining = [
+      ...coreCurriculumUnits[0].lessons.slice(0, 3),
+      ...coreCurriculumUnits[1].lessons.slice(0, 3),
+    ].reduce(
+      (state, lesson, index) => completeLessonProgress(state, lesson.id, `2026-05-27T11:${String(index).padStart(2, '0')}:00.000Z`),
+      createInitialProgress(),
+    )
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(unlockedThroughBargaining))
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /^Learn unit \d+ lesson \d+: Bargaining, 0 crowns/i }))
+
+    expect(screen.getByRole('heading', { name: /Translate to Kannada/i })).toBeInTheDocument()
+    expect(screen.getByText('too much')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: too much\s+ಜಾಸ್ತಿ\s+Say: jaasti/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: Please reduce it\s+ಕಡಿಮೆ ಮಾಡಿ\s+Say: kadime maadi/i })).toBeInTheDocument()
+  })
+
   it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),

@@ -194,6 +194,37 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(getMatchedKannada(numbersSixToTen)).toEqual(['ಆರು', 'ಏಳು', 'ಎಂಟು', 'ಒಂಬತ್ತು', 'ಹತ್ತು'])
   })
 
+  it('teaches the Unit 2 price and bargaining phrases named in the frontend spec', () => {
+    const unitTwo = coreCurriculumUnits[1]
+    const askingPrices = unitTwo.lessons.find((lesson) => lesson.title === 'Asking Prices')!
+    const bargaining = unitTwo.lessons.find((lesson) => lesson.title === 'Bargaining')!
+    const bargainingPairs = bargaining.exercises.find((exercise) => exercise.type === 'matchPairs')!
+
+    expect(unitTwo.tips.map((tip) => tip.title)).toEqual([
+      'Kannada numbers',
+      'Price questions',
+      'Bargaining language',
+    ])
+    expect(unitTwo.tips.flatMap((tip) => tip.examples)).toEqual(expect.arrayContaining([
+      'ಎಷ್ಟು ರೂಪಾಯಿ?',
+      'ಜಾಸ್ತಿ',
+      'ಕಡಿಮೆ ಮಾಡಿ',
+    ]))
+    expect(askingPrices.exercises[0]).toEqual(expect.objectContaining({
+      type: 'translate',
+      kannada: 'ಎಷ್ಟು ರೂಪಾಯಿ?',
+      answer: 'How many rupees?',
+    }))
+    expect(bargaining.exercises[0]).toEqual(expect.objectContaining({
+      type: 'translate',
+      direction: 'enToKn',
+      english: 'too much',
+      answer: 'ಜಾಸ್ತಿ',
+    }))
+    expect(bargainingPairs.answer).toContain('ಜಾಸ್ತಿ=too much')
+    expect(bargainingPairs.answer).toContain('ಕಡಿಮೆ ಮಾಡಿ=Please reduce it')
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
