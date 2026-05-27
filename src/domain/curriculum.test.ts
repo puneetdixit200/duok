@@ -135,6 +135,38 @@ describe('KannadaOS level 1 curriculum', () => {
     }))
   })
 
+  it('mixes review lessons from earlier unit vocabulary instead of only review rows', () => {
+    const unitOneReview = coreCurriculumUnits[0].lessons[4]
+    const reviewVocabularyIds = new Set(unitOneReview.exercises.flatMap((exercise) => exercise.vocabularyIds))
+    const reviewMatchPairs = unitOneReview.exercises.find((exercise) => exercise.type === 'matchPairs')
+
+    expect(unitOneReview.exercises.map((exercise) => exercise.type)).toEqual([
+      'translate',
+      'arrange',
+      'fillBlank',
+      'listening',
+      'speaking',
+      'matchPairs',
+      'typeKannada',
+      'dialogue',
+    ])
+    expect(Array.from(reviewVocabularyIds)).toEqual(expect.arrayContaining([
+      'namaskara-saar',
+      'ticket-eshtu',
+      'unit-1-greetings-lesson-2-phrase-1',
+      'unit-1-greetings-lesson-3-phrase-2',
+      'unit-1-greetings-lesson-4-phrase-1',
+      'unit-1-greetings-lesson-5-phrase-1',
+    ]))
+    expect(reviewMatchPairs?.answer.split(';')).toHaveLength(4)
+    expect(getPhraseByVocabularyId('unit-1-greetings-lesson-2-phrase-1')).toMatchObject({
+      kannada: 'ಹೇಗಿದ್ದೀರಾ?',
+      transliteration: 'hegiddira',
+      english: 'How are you?',
+      context: 'ಹೇಗಿದ್ದೀರಾ? means "How are you?" in How Are You.',
+    })
+  })
+
   it('adds one or two distractor chips to generated arrange-word drills', () => {
     const generatedArrange = coreCurriculumUnits[0].lessons[1].exercises.find((exercise) => exercise.type === 'arrange')
     expect(generatedArrange).toBeDefined()

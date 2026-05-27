@@ -667,21 +667,7 @@ const scriptUnit: CurriculumUnit = buildScriptUnit()
 
 const allUnits = [...coreCurriculumUnits, scriptUnit]
 
-const allLessonPhraseMap = new Map<string, Phrase>(
-  allUnits.flatMap((unit) => unit.lessons.flatMap((lesson) => lesson.exercises)).flatMap((exercise) =>
-    exercise.vocabularyIds.map((id) => [
-      id,
-      {
-        id,
-        kannada: exercise.kannada || exercise.answer,
-        transliteration: exercise.transliteration ?? exercise.answer,
-        english: exercise.english ?? exercise.answer,
-        context: exercise.explanation,
-        skillTag: exercise.skillTag,
-      } satisfies Phrase,
-    ] as const),
-  ),
-)
+const allLessonPhraseMap = buildLessonPhraseMap(allUnits)
 
 export function getPhraseByVocabularyId(vocabularyId: string): Phrase | null {
   return (
@@ -1166,6 +1152,10 @@ export function transliterateLatinToKannada(value: string): string {
 }
 
 function buildCoreUnit(unitSeed: UnitSeed, unitIndex: number): CurriculumUnit {
+  const lessonPhrasesByIndex = unitSeed.lessons.map((lessonSeed, lessonIndex) =>
+    buildLessonPhrases(unitSeed, unitIndex, lessonSeed, lessonIndex),
+  )
+
   return {
     id: unitSeed.id,
     title: unitSeed.title,
@@ -1177,11 +1167,9 @@ function buildCoreUnit(unitSeed: UnitSeed, unitIndex: number): CurriculumUnit {
       const unitNumber = unitIndex + 1
       const lessonNumber = lessonIndex + 1
       const lessonId = `${unitSeed.id}-lesson-${lessonNumber}`
-      const phrases = lessonSeed.phrases.map((seed, phraseIndex) => ({
-        ...seed,
-        id: `${lessonId}-phrase-${phraseIndex + 1}`,
-        skillTag: lessonSeed.skillTag,
-      }))
+      const phrases = /\bReview$/.test(lessonSeed.title)
+        ? getReviewPhrasePool(lessonPhrasesByIndex, lessonIndex)
+        : lessonPhrasesByIndex[lessonIndex]
 
       return {
         id: lessonId,
@@ -1198,6 +1186,38 @@ function buildCoreUnit(unitSeed: UnitSeed, unitIndex: number): CurriculumUnit {
   }
 }
 
+function buildLessonPhrases(
+  unitSeed: UnitSeed,
+  unitIndex: number,
+  lessonSeed: LessonSeed,
+  lessonIndex: number,
+): Phrase[] {
+  if (unitIndex === 0 && lessonIndex === 0) {
+    return getBaseSurvivalReviewPhrases()
+  }
+
+  const lessonId = `${unitSeed.id}-lesson-${lessonIndex + 1}`
+  return lessonSeed.phrases.map((seed, phraseIndex) => ({
+    ...seed,
+    id: `${lessonId}-phrase-${phraseIndex + 1}`,
+    skillTag: lessonSeed.skillTag,
+  }))
+}
+
+function getBaseSurvivalReviewPhrases(): Phrase[] {
+  const phraseIds = Array.from(new Set(baseSurvivalExercises.flatMap((exercise) => exercise.vocabularyIds)))
+  return phraseIds
+    .map((phraseId) => survivalPhrases.find((phrase) => phrase.id === phraseId))
+    .filter((phrase): phrase is Phrase => phrase !== undefined)
+}
+
+function getReviewPhrasePool(lessonPhrasesByIndex: Phrase[][], reviewLessonIndex: number): Phrase[] {
+  return lessonPhrasesByIndex
+    .slice(0, reviewLessonIndex + 1)
+    .flat()
+    .filter((phrase, index, phrases) => phrases.findIndex((candidate) => candidate.id === phrase.id) === index)
+}
+
 function buildExercisesForLesson(
   unitNumber: number,
   lessonNumber: number,
@@ -1205,6 +1225,10 @@ function buildExercisesForLesson(
   lessonSeed: LessonSeed,
   phrases: Phrase[],
 ): LessonExercise[] {
+  if (/\bReview$/.test(lessonSeed.title)) {
+    return buildReviewExercisesForLesson(unitNumber, lessonNumber, lessonId, lessonSeed, phrases)
+  }
+
   const [first, second, third] = phrases
   const typeChoices = makeTypeOptions(first.english)
   const arrangeOptions = makeArrangeWordOptions(first, phrases)
@@ -1213,9 +1237,8 @@ function buildExercisesForLesson(
   const fillPrompt = fillParts.length > 1 ? `${fillParts.slice(0, -1).join(' ')} ___` : '___'
   const matchPairs = phrases.map((phrase) => `${phrase.kannada}=${phrase.english}`).join(';')
   const idPrefix = `${lessonId}-exercise`
-  const reviewLesson = /\bReview$/.test(lessonSeed.title)
   const translateExercise =
-    lessonNumber % 2 === 0 || reviewLesson
+    lessonNumber % 2 === 0
       ? reverseTranslateExercise(idPrefix, first, [first, second, third], lessonSeed.title)
       : exercise(idPrefix, 1, 'translate', `Translate for ${lessonSeed.title}:`, first, first.english, typeChoices, 2)
 
@@ -1263,7 +1286,84 @@ function buildExercisesForLesson(
     ], 3),
   ]
 
-  return reviewLesson ? exercises : exercises.slice(0, 6)
+  return exercises.slice(0, 6)
+}
+
+function buildReviewExercisesForLesson(
+  unitNumber: number,
+  lessonNumber: number,
+  lessonId: string,
+  lessonSeed: LessonSeed,
+  phrases: Phrase[],
+): LessonExercise[] {
+  const idPrefix = `${lessonId}-exercise`
+  const translatePhrase = getReviewPhrase(phrases, 0)
+  const arrangePhrase = getReviewPhrase(phrases, 3)
+  const fillPhrase = getReviewPhrase(phrases, 5)
+  const listeningPhrase = getReviewPhrase(phrases, 7)
+  const speakingPhrase = getReviewPhrase(phrases, 9)
+  const typePhrase = getReviewPhrase(phrases, 11)
+  const dialoguePhrase = getReviewPhrase(phrases, Math.max(0, phrases.length - 3))
+  const matchPhrases = selectReviewPhrases(phrases, 1, 4)
+  const fillParts = fillPhrase.kannada.split(/\s+/).filter(Boolean)
+  const fillAnswer = fillParts.at(-1) ?? fillPhrase.kannada
+  const fillPrompt = fillParts.length > 1 ? `${fillParts.slice(0, -1).join(' ')} ___` : '___'
+  const matchPairs = matchPhrases.map((phrase) => `${phrase.kannada}=${phrase.english}`).join(';')
+
+  return [
+    reverseTranslateExercise(idPrefix, translatePhrase, selectReviewPhrases(phrases, 0, 4), lessonSeed.title),
+    {
+      ...exercise(idPrefix, 2, 'arrange', 'Arrange the Kannada sentence:', arrangePhrase, arrangePhrase.kannada, makeArrangeWordOptions(arrangePhrase, phrases), 3),
+      english: arrangePhrase.english,
+    },
+    {
+      ...exercise(idPrefix, 3, 'fillBlank', 'Fill in the missing Kannada word:', fillPhrase, fillAnswer, [
+        fillAnswer,
+        ...selectReviewPhrases(phrases, 0, 3).map((phrase) => phrase.kannada),
+      ], 2),
+      kannada: fillPrompt,
+      english: fillPhrase.english,
+    },
+    exercise(idPrefix, 4, 'listening', 'Listen and pick the phrase:', listeningPhrase, listeningPhrase.kannada, [
+      listeningPhrase.kannada,
+      ...selectReviewPhrases(phrases, 2, 3).map((phrase) => phrase.kannada),
+    ], 3),
+    exercise(idPrefix, 5, 'speaking', 'Say this phrase:', speakingPhrase, speakingPhrase.transliteration, ['Record', 'Try Again'], 4),
+    {
+      ...exercise(idPrefix, 6, 'matchPairs', 'Match each Kannada phrase:', matchPhrases[0], matchPairs, [
+        ...matchPhrases.map((phrase) => phrase.kannada),
+        ...matchPhrases.map((phrase) => phrase.english),
+      ], 4),
+      kannada: matchPhrases.map((phrase) => phrase.kannada).join(', '),
+      vocabularyIds: matchPhrases.map((phrase) => phrase.id),
+    },
+    exercise(idPrefix, 7, 'typeKannada', 'Type this in Kannada script:', typePhrase, typePhrase.kannada, [
+      typePhrase.transliteration,
+      getReviewPhrase(phrases, 12).transliteration,
+      getReviewPhrase(phrases, 14).transliteration,
+    ], 4),
+    exercise(idPrefix, 8, 'dialogue', 'Choose the best reply in this conversation:', dialoguePhrase, dialoguePhrase.kannada, [
+      dialoguePhrase.kannada,
+      ...selectReviewPhrases(phrases, unitNumber + lessonNumber, 3).map((phrase) => phrase.kannada),
+    ], 3),
+  ]
+}
+
+function getReviewPhrase(phrases: Phrase[], index: number): Phrase {
+  return phrases[index % phrases.length]
+}
+
+function selectReviewPhrases(phrases: Phrase[], startIndex: number, count: number): Phrase[] {
+  const selected: Phrase[] = []
+
+  for (let offset = 0; selected.length < count && offset < phrases.length * 2; offset += 1) {
+    const phrase = getReviewPhrase(phrases, startIndex + offset)
+    if (!selected.some((selectedPhrase) => selectedPhrase.id === phrase.id)) {
+      selected.push(phrase)
+    }
+  }
+
+  return selected
 }
 
 function makeArrangeWordOptions(target: Phrase, lessonPhrases: Phrase[]): string[] {
@@ -1328,6 +1428,33 @@ function exercise(
     xp,
     vocabularyIds: [phrase.id],
   }
+}
+
+function buildLessonPhraseMap(units: CurriculumUnit[]): Map<string, Phrase> {
+  const phraseMap = new Map<string, Phrase>()
+
+  for (const unit of units) {
+    for (const lesson of unit.lessons) {
+      for (const exercise of lesson.exercises) {
+        for (const id of exercise.vocabularyIds) {
+          if (phraseMap.has(id)) {
+            continue
+          }
+
+          phraseMap.set(id, {
+            id,
+            kannada: exercise.kannada || exercise.answer,
+            transliteration: exercise.transliteration ?? exercise.answer,
+            english: exercise.english ?? exercise.answer,
+            context: exercise.explanation,
+            skillTag: exercise.skillTag,
+          })
+        }
+      }
+    }
+  }
+
+  return phraseMap
 }
 
 function phrase(id: string, kannada: string, english: string, context: string): PhraseSeed {
