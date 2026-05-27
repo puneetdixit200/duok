@@ -320,6 +320,11 @@ h2 {
   line-height: 1.35;
 }
 
+.ai-expansion-queue li {
+  display: grid;
+  gap: 3px;
+}
+
 .workspace {
   padding: 28px;
 }
@@ -600,9 +605,32 @@ h2 {
 }
 
 .answer-option {
+  display: grid;
+  align-items: center;
+  gap: 4px;
   min-height: 56px;
   padding: 10px 18px;
   text-align: left;
+}
+
+.word-bank .answer-option {
+  min-height: 86px;
+  justify-items: center;
+  text-align: center;
+}
+
+.word-bank .choice-text {
+  justify-items: center;
+  text-align: center;
+}
+
+.answer-option .romanization,
+.answer-option .english-subtitle {
+  font-size: 13px;
+}
+
+.answer-option .english-subtitle {
+  color: #f7f7fb;
 }
 
 .feedback {
@@ -928,6 +956,17 @@ h2 {
 
 .message p {
   margin-bottom: 6px;
+}
+
+.message .kannada-subtitles,
+.message-subtext {
+  justify-items: start;
+  text-align: left;
+}
+
+.message-subtext {
+  display: grid;
+  gap: 2px;
 }
 
 .message.learner {

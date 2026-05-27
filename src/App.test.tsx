@@ -173,10 +173,11 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
-    expect(screen.getByText(/namaskara saar hegiddira/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/namaskara saar hegiddira/i).length).toBeGreaterThanOrEqual(1)
     const wordBank = screen.getByLabelText(/Word bank/i)
-    expect(within(wordBank).getByRole('button', { name: /ನಮಸ್ಕಾರ.*namaskara/i })).toBeInTheDocument()
-    expect(within(wordBank).getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ.*hegiddira/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /ನಮಸ್ಕಾರ.*namaskara.*hello/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /ಸಾರ್.*saar.*sir/i })).toBeInTheDocument()
+    expect(within(wordBank).getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ.*hegiddira.*how are you/i })).toBeInTheDocument()
 
     await user.click(within(wordBank).getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
     await user.click(within(wordBank).getByRole('button', { name: /ಸಾರ್/i }))
@@ -621,6 +622,21 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getAllByText(/namaskara saar = Hello sir/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
   }, 30_000)
+
+  it('shows English subtitles for Kannada inside tutor chat messages', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+    await user.type(screen.getByPlaceholderText(/type in kannada/i), 'beda')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    const reply = screen.getByText(/Good\. ಬೇಡ is a clear way/i).closest('article')
+    expect(reply).not.toBeNull()
+    expect(within(reply!).getByText(/beda/i)).toBeInTheDocument()
+    expect(within(reply!).getByText('do not want')).toBeInTheDocument()
+  })
 
   it('renders practice flashcards, Bangalore scenarios, and profile stats', async () => {
     const user = userEvent.setup()

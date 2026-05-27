@@ -381,11 +381,32 @@ function ListeningChoiceText({ text, context, revealed }: { text: string; contex
   )
 }
 
+function ReadableStatusText({ text, context }: { text: string; context?: LessonExercise }) {
+  return (
+    <>
+      <span>{text}</span>
+      <SubtitleLines text={text} context={context} />
+    </>
+  )
+}
+
 function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSubtitle | null {
   if (!containsKannada(text)) {
     return null
   }
 
+  const segments = extractKannadaSegments(text)
+  const normalizedSegments = normalizeKannadaText(segments.join(' '))
+  const normalizedText = normalizeKannadaText(text)
+
+  if (segments.length > 0 && normalizedSegments && normalizedSegments !== normalizedText) {
+    return combineSubtitles(segments.map((segment) => getKannadaOnlySubtitle(segment, context)))
+  }
+
+  return getKannadaOnlySubtitle(text, context)
+}
+
+function getKannadaOnlySubtitle(text: string, context?: LessonExercise): ReadableSubtitle {
   const phrase = survivalPhrases.find((item) => normalizeKannadaText(item.kannada) === normalizeKannadaText(text))
   if (phrase) {
     return { romanization: phrase.transliteration, english: phrase.english }
@@ -410,6 +431,26 @@ function getKannadaSubtitle(text: string, context?: LessonExercise): ReadableSub
     romanization: romanizeKannadaWords(text),
     english: glossKannadaWords(text),
   }
+}
+
+function extractKannadaSegments(text: string): string[] {
+  const matches = text.match(/[\u0C80-\u0CFF][\u0C80-\u0CFF\u200c\u200d\s?!.,:;'"-]*/g) ?? []
+  return matches
+    .map((segment) => normalizeKannadaText(segment))
+    .filter((segment) => segment.length > 0)
+}
+
+function combineSubtitles(subtitles: ReadableSubtitle[]): ReadableSubtitle {
+  const romanization = subtitles
+    .map((subtitle) => subtitle.romanization)
+    .filter(Boolean)
+    .join(' / ')
+  const english = subtitles
+    .map((subtitle) => subtitle.english)
+    .filter(Boolean)
+    .join(' / ')
+
+  return { romanization, english }
 }
 
 function containsKannada(text: string): boolean {
@@ -2181,7 +2222,7 @@ function App() {
           <button className="secondary-action" onClick={() => setScreen('models')} type="button">
             Manage Models
           </button>
-          {generatedExercise && <p>{generatedExercise}</p>}
+          {generatedExercise && <p><ReadableStatusText text={generatedExercise} /></p>}
           {aiExpansionDeck.length > 0 && (
             <div className="ai-expansion-queue" aria-label="AI curriculum expansion">
               <strong>AI Expansion Queue</strong>
@@ -2191,7 +2232,8 @@ function App() {
               <ul>
                 {aiExpansionDeck.slice(0, 3).map((exercise, index) => (
                   <li key={`${exercise.prompt}-${index}`}>
-                    {exercise.prompt} · {exercise.kannada}
+                    <span>{exercise.prompt}</span>
+                    <ChoiceText text={exercise.kannada} />
                   </li>
                 ))}
               </ul>
@@ -2325,11 +2367,21 @@ function App() {
             {chatMessages.map((message) => (
               <article className={`message ${message.speaker}`} key={message.id}>
                 <p>{message.text}</p>
-                {message.subtext && <small>{message.subtext}</small>}
+                <SubtitleLines text={message.text} />
+                {message.subtext && (
+                  <small className="message-subtext">
+                    <span>{message.subtext}</span>
+                    <SubtitleLines text={message.subtext} />
+                  </small>
+                )}
               </article>
             ))}
           </div>
-          {voiceStatus && <p className="voice-status" role="status">{voiceStatus}</p>}
+          {voiceStatus && (
+            <p className="voice-status" role="status">
+              <ReadableStatusText text={voiceStatus} />
+            </p>
+          )}
           <div className="suggestion-row">
             {selectedScenario.usefulPhrases.map((phrase) => (
               <button key={phrase.id} onClick={() => setChatInput(phrase.kannada)} type="button">
@@ -2509,7 +2561,7 @@ function App() {
             </div>
             {pronunciationAudioStatus && (
               <p className="voice-status" role="status">
-                {pronunciationAudioStatus}
+                <ReadableStatusText text={pronunciationAudioStatus} />
               </p>
             )}
             {pronunciationResult && (
@@ -2521,12 +2573,15 @@ function App() {
                     ? `Problem syllables: ${pronunciationResult.problemParts.join(', ')}`
                     : 'No problem syllables'}
                 </span>
+                {pronunciationResult.problemParts.length > 0 && (
+                  <SubtitleLines text={pronunciationResult.problemParts.join(' ')} />
+                )}
                 <small>{pronunciationResult.tip}</small>
               </article>
             )}
             {latestPronunciationAttempt && (
               <p className="pronunciation-history">
-                Latest attempt: {latestPronunciationAttempt.transcript}
+                <ReadableStatusText text={`Latest attempt: ${latestPronunciationAttempt.transcript}`} />
               </p>
             )}
           </section>
@@ -3119,7 +3174,7 @@ function App() {
               </button>
             ))}
           </div>
-          {audioStatus && <p role="status">{audioStatus}</p>}
+          {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
         </>
       )
     }
@@ -3142,7 +3197,7 @@ function App() {
             >
               Play slow audio
             </button>
-            {audioStatus && <p role="status">{audioStatus}</p>}
+            {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
           </div>
           <div className="option-stack" aria-label="Listening choices">
             {exercise.options.map((option) => (
@@ -3196,7 +3251,7 @@ function App() {
                 <span>Tip: {speakingTip || 'Extend the aa sound in saar.'}</span>
               </div>
             )}
-            {audioStatus && <p role="status">{audioStatus}</p>}
+            {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
           </div>
         </>
       )
@@ -3232,7 +3287,7 @@ function App() {
           </label>
           <article className="keyboard-helper" aria-label="Kannada keyboard helper">
             <strong>Keyboard helper</strong>
-            <span>{typedAnswer ? convertedAnswer : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'}</span>
+            <ReadableStatusText text={typedAnswer ? convertedAnswer : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'} context={exercise} />
             <div className="suggestion-row compact">
               {exercise.options.map((option) => (
                 <button
@@ -3252,7 +3307,7 @@ function App() {
               ))}
             </div>
           </article>
-          {audioStatus && <p role="status">{audioStatus}</p>}
+          {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
         </>
       )
     }
@@ -3269,7 +3324,7 @@ function App() {
             </button>
           </div>
           {renderOptions(exercise)}
-          {audioStatus && <p role="status">{audioStatus}</p>}
+          {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
         </>
       )
     }
@@ -3317,7 +3372,7 @@ function App() {
             Listen
           </button>
         </div>
-        {audioStatus && <p role="status">{audioStatus}</p>}
+        {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}
         {renderOptions(exercise)}
       </>
     )
