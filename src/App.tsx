@@ -176,6 +176,7 @@ const seenUnitTipsKey = 'kannadaos:seen-unit-tips'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
 const storyQuizXp = 5
+const weakSkillPracticeLimit = 6
 const pronunciationPhrases = survivalPhrases.filter((phrase) =>
   ['namaskara-saar', 'ticket-eshtu', 'swalpa-adjust-maadi', 'majestic-ge-hogbeku', 'illi-nillisi'].includes(phrase.id),
 )
@@ -1242,6 +1243,42 @@ function getReminderStatusText(reminder: ReminderPreference): string {
   }
 
   return `Next reminder scheduled for ${formatReminderSchedule(getNextReminderDate(reminder.time))}.`
+}
+
+function getWeakSkillPracticeVocabularyIds(
+  weakSkills: Array<{ skillTag: string }>,
+  units: CurriculumUnit[],
+): string[] {
+  const weakTags = new Set(weakSkills.map((skill) => skill.skillTag))
+  const practiceIds: string[] = []
+  const seenIds = new Set<string>()
+
+  const addPracticeId = (vocabularyId: string) => {
+    if (seenIds.has(vocabularyId) || practiceIds.length >= weakSkillPracticeLimit) {
+      return
+    }
+
+    seenIds.add(vocabularyId)
+    practiceIds.push(vocabularyId)
+  }
+
+  for (const phrase of survivalPhrases) {
+    if (weakTags.has(phrase.skillTag)) {
+      addPracticeId(phrase.id)
+    }
+  }
+
+  for (const unit of units) {
+    for (const lesson of unit.lessons) {
+      for (const exercise of lesson.exercises) {
+        if (weakTags.has(exercise.skillTag)) {
+          exercise.vocabularyIds.forEach(addPracticeId)
+        }
+      }
+    }
+  }
+
+  return practiceIds
 }
 
 function App() {
@@ -3721,6 +3758,7 @@ function App() {
       const now = new Date().toISOString()
       const dueReviewIds = getDueReviewItems(progress, now)
       const weakSkillSummaries = getWeakSkillSummaries(progress)
+      const weakSkillPracticeIds = getWeakSkillPracticeVocabularyIds(weakSkillSummaries, allCurriculumUnits)
       const adaptiveDifficulty = getAdaptiveDifficulty(progress, now)
       const dueReviewPhrases = dueReviewIds
         .map((vocabularyId) => getPhraseByVocabularyId(vocabularyId))
@@ -3938,12 +3976,23 @@ function App() {
                 </button>
               </article>
               {weakSkillSummaries.length > 0 ? (
-                weakSkillSummaries.map((skill) => (
-                  <article className="accent-card purple" key={skill.skillTag}>
-                    <strong>{skill.label} needs review</strong>
-                    <p>{skill.mistakes} recent {skill.mistakes === 1 ? 'miss' : 'misses'} - {skill.priority} priority</p>
-                  </article>
-                ))
+                <article className="accent-card purple" aria-label="Weak areas">
+                  <strong>Weak Areas</strong>
+                  {weakSkillSummaries.map((skill) => (
+                    <p key={skill.skillTag}>
+                      <strong>{skill.label} needs review</strong>
+                      <span>{skill.mistakes} recent {skill.mistakes === 1 ? 'miss' : 'misses'} - {skill.priority} priority</span>
+                    </p>
+                  ))}
+                  <button
+                    className="secondary-action compact-action"
+                    disabled={!weakSkillPracticeIds.length}
+                    onClick={() => startReviewSession(weakSkillPracticeIds)}
+                    type="button"
+                  >
+                    Practice Weak Skills
+                  </button>
+                </article>
               ) : (
                 <article className="accent-card purple">
                   <strong>Pronunciation Practice</strong>

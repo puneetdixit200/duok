@@ -1957,6 +1957,13 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Greetings needs review/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByText(/Strength 20%/i).length).toBeGreaterThanOrEqual(1)
+
+    const weakAreas = screen.getByLabelText(/Weak areas/i)
+    await user.click(within(weakAreas).getByRole('button', { name: /Practice Weak Skills/i }))
+
+    const weakSkillSession = screen.getByRole('region', { name: /Review Session/i })
+    expect(within(weakSkillSession).getByText(/Choose the meaning/i)).toBeInTheDocument()
+    expect(within(weakSkillSession).getByText(/ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
   })
 
   it('shows English-readable subtitles in due review summaries', async () => {
