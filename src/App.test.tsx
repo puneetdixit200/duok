@@ -369,6 +369,58 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /^English: Sounds like ii\s+ಈ\s+Say: ii/i })).toBeInTheDocument()
   })
 
+  it('keeps English subtitles on every Unit 2 number match choice', async () => {
+    const user = userEvent.setup()
+    const firstThreeLessons = coreCurriculumUnits[0].lessons.slice(0, 3)
+    const progress = firstThreeLessons.reduce(
+      (state, lesson, index) => completeLessonProgress(state, lesson.id, `2026-05-27T10:0${index}:00.000Z`),
+      createInitialProgress(),
+    )
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+    vi.mocked(window.kannadaOS.transcribeRecordedAudio).mockResolvedValue({ ok: true, text: 'ಮೂರು' })
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /Numbers 1-5/i }))
+    await user.click(within(screen.getByRole('dialog', { name: /Tips: Numbers & Prices/i })).getByRole('button', { name: /Got it -> Start Lesson/i }))
+
+    await user.click(screen.getByRole('button', { name: /^one$/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /^English: one\s+ಒಂದು\s+Say: ondu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /^English: two\s+ಎರಡು\s+Say: eradu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /English: two/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /record phrase/i }))
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+    expect(await screen.findByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^Continue/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    const matchGrid = screen.getByLabelText(/Match pairs/i)
+    for (const [english, kannada, transliteration] of [
+      ['one', 'ಒಂದು', 'ondu'],
+      ['two', 'ಎರಡು', 'eradu'],
+      ['three', 'ಮೂರು', 'mooru'],
+      ['four', 'ನಾಲ್ಕು', 'naalku'],
+      ['five', 'ಐದು', 'aidu'],
+    ]) {
+      expect(within(matchGrid).getByRole('button', {
+        name: new RegExp(`^English: ${english}\\s+${kannada}\\s+Say: ${transliteration}`, 'i'),
+      })).toBeInTheDocument()
+    }
+  }, 30_000)
+
   it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),

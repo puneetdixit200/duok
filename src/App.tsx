@@ -275,6 +275,16 @@ const kannadaWordGlossary: Record<string, ReadableSubtitle> = {
   'ಆಯ್ತಾ': { romanization: 'aayta', english: 'done?' },
   'ಇಲ್ಲಿ': { romanization: 'illi', english: 'here' },
   'ನಿಲ್ಲಿಸಿ': { romanization: 'nillisi', english: 'stop' },
+  'ಒಂದು': { romanization: 'ondu', english: 'one' },
+  'ಎರಡು': { romanization: 'eradu', english: 'two' },
+  'ಮೂರು': { romanization: 'mooru', english: 'three' },
+  'ನಾಲ್ಕು': { romanization: 'naalku', english: 'four' },
+  'ಐದು': { romanization: 'aidu', english: 'five' },
+  'ಆರು': { romanization: 'aaru', english: 'six' },
+  'ಏಳು': { romanization: 'elu', english: 'seven' },
+  'ಎಂಟು': { romanization: 'entu', english: 'eight' },
+  'ಒಂಬತ್ತು': { romanization: 'ombattu', english: 'nine' },
+  'ಹತ್ತು': { romanization: 'hattu', english: 'ten' },
 }
 
 const independentVowels: Record<string, string> = {

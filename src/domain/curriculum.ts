@@ -372,10 +372,14 @@ const unitSeeds: UnitSeed[] = [
         ['ondu', 'ಒಂದು', 'one', 'One coffee or one ticket.'],
         ['eradu', 'ಎರಡು', 'two', 'Two idlis or two tickets.'],
         ['mooru', 'ಮೂರು', 'three', 'Three people or three plates.'],
+        ['naalku', 'ನಾಲ್ಕು', 'four', 'Four people or four stops.'],
+        ['aidu', 'ಐದು', 'five', 'Five rupees or five minutes.'],
       ]),
       priceLesson('Numbers 6-10', 'Count slightly larger groups', 'numbers', [
         ['aaru', 'ಆರು', 'six', 'Six rupees or six people.'],
         ['elu', 'ಏಳು', 'seven', 'Seven stops.'],
+        ['entu', 'ಎಂಟು', 'eight', 'Eight rupees or eight items.'],
+        ['ombattu', 'ಒಂಬತ್ತು', 'nine', 'Nine stops or nine rupees.'],
         ['hattu', 'ಹತ್ತು', 'ten', 'Ten rupees.'],
       ]),
       priceLesson('Asking Prices', 'Ask rates anywhere', 'prices', [

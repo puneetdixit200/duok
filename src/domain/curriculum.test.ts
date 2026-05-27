@@ -181,6 +181,19 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(generatedArrange.options.some((option) => !answerWords.includes(option))).toBe(true)
   })
 
+  it('covers every number word promised by the Unit 2 number lessons', () => {
+    const numbersOneToFive = coreCurriculumUnits[1].lessons.find((lesson) => lesson.title === 'Numbers 1-5')!
+    const numbersSixToTen = coreCurriculumUnits[1].lessons.find((lesson) => lesson.title === 'Numbers 6-10')!
+    const getMatchedKannada = (lesson: typeof numbersOneToFive) =>
+      lesson.exercises
+        .find((exercise) => exercise.type === 'matchPairs')!
+        .answer.split(';')
+        .map((pair) => pair.split('=')[0])
+
+    expect(getMatchedKannada(numbersOneToFive)).toEqual(['ಒಂದು', 'ಎರಡು', 'ಮೂರು', 'ನಾಲ್ಕು', 'ಐದು'])
+    expect(getMatchedKannada(numbersSixToTen)).toEqual(['ಆರು', 'ಏಳು', 'ಎಂಟು', 'ಒಂಬತ್ತು', 'ಹತ್ತು'])
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 
