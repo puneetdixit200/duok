@@ -163,6 +163,87 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/\+2 XP/i)).toBeInTheDocument()
   })
 
+  it('plays bundled sound effects for lesson feedback and completion', async () => {
+    const user = userEvent.setup()
+    const play = vi.fn().mockResolvedValue(undefined)
+    const AudioMock = vi.fn(function mockAudio(this: { play: typeof play }) {
+      this.play = play
+    })
+    vi.stubGlobal('Audio', AudioMock)
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    expect(AudioMock).toHaveBeenCalledWith('./sounds/correct.wav')
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: /ಸಾರ್/i }))
+    await user.click(screen.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ticket eshtu/i }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /record phrase/i }))
+    await user.click(screen.getByRole('button', { name: /stop recording/i }))
+    expect(await screen.findByText(/Score: 100%/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /check/i }))
+    await user.click(screen.getByRole('button', { name: /next exercise/i }))
+
+    await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello' }))
+    await user.click(screen.getByRole('button', { name: /ಧನ್ಯವಾದ/i }))
+    await user.click(screen.getByRole('button', { name: 'Thank you' }))
+    await user.click(screen.getByRole('button', { name: /ಹೋಗು/i }))
+    await user.click(screen.getByRole('button', { name: 'Go' }))
+    await user.click(screen.getByRole('button', { name: /ಬಾ/i }))
+    await user.click(screen.getByRole('button', { name: 'Come' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
+    expect(AudioMock).toHaveBeenCalledWith('./sounds/lesson-complete.wav')
+  }, 30_000)
+
+  it('plays the wrong-answer sound and respects the sound effects toggle', async () => {
+    const user = userEvent.setup()
+    const play = vi.fn().mockResolvedValue(undefined)
+    const AudioMock = vi.fn(function mockAudio(this: { play: typeof play }) {
+      this.play = play
+    })
+    vi.stubGlobal('Audio', AudioMock)
+    const { unmount } = render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(AudioMock).toHaveBeenCalledWith('./sounds/wrong.wav')
+
+    unmount()
+    localStorage.clear()
+    vi.clearAllMocks()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:sound-prefs', '{"soundEffects":false,"autoPlayAudio":true}')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Hello sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(AudioMock).not.toHaveBeenCalled()
+  })
+
   it('shows English-readable subtitles for Kannada exercise text and choices', async () => {
     const user = userEvent.setup()
     render(<App />)

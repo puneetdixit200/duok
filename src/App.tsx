@@ -59,6 +59,7 @@ import {
   type LocalRuntimeSummary,
 } from './services/localRuntime'
 import { scorePronunciation, type PronunciationScoreResult } from './services/pronunciation'
+import { playSoundEffect, type SoundEffectName } from './services/soundEffects'
 import { encodePcmWav, startVoiceCapture, type RecordedAudio, type VoiceCaptureSession } from './services/voiceCapture'
 import { buildExportSnapshot, serializeExportSnapshot } from './services/exportSnapshot'
 import {
@@ -1177,6 +1178,7 @@ function App() {
     const completesPerfectLesson = completesLesson && nextWrongCount === 0
     const lessonDurationMs = completesLesson ? getNowMs() - lessonStartedAtMs : 0
     setFeedback(correct ? 'correct' : 'wrong')
+    playAppSound(correct ? 'correct' : 'wrong')
 
     if (correct) {
       setTotalLessonXp((current) => current + exercise.xp)
@@ -1206,6 +1208,7 @@ function App() {
     )
 
     if (completesLesson) {
+      playAppSound('lessonComplete')
       setCompletedLessonDurationMs(lessonDurationMs)
       setLessonIndex(lessonRunExercises.length)
       setSelectedAnswer('')
@@ -1572,7 +1575,12 @@ function App() {
   }
 
   function claimQuestReward(quest: DailyQuest) {
+    playAppSound('gemEarn')
     setProgress((current) => claimDailyQuestReward(current, quest, new Date().toISOString()))
+  }
+
+  function playAppSound(name: SoundEffectName) {
+    playSoundEffect(name, soundPreferences.soundEffects)
   }
 
   function rateFlashcard(vocabularyId: string, rating: ReviewRating) {
@@ -1603,6 +1611,7 @@ function App() {
     const now = new Date().toISOString()
     const reviewExerciseId = `review-${phrase.id}`
     setReviewFeedback(correct ? 'correct' : 'wrong')
+    playAppSound(correct ? 'correct' : 'wrong')
 
     if (correct) {
       setReviewCorrectCount((current) => current + 1)
@@ -2050,6 +2059,7 @@ function App() {
     if (selectedStoryAnswer === activeStory.quiz.answer) {
       setStoryFeedback('correct')
       setStoryMode('complete')
+      playAppSound('lessonComplete')
       setProgress((current) =>
         applyExerciseResult(current, {
           exerciseId: `story-${activeStory.id}`,
@@ -2066,6 +2076,7 @@ function App() {
     }
 
     setStoryFeedback('wrong')
+    playAppSound('wrong')
   }
 
   if (screen === 'onboarding') {
@@ -2872,7 +2883,14 @@ function App() {
           )}
           <div className="review-layout">
             <div className="flashcard-stack">
-              <button className="flashcard" onClick={() => setFlashcardBack((value) => !value)} type="button">
+              <button
+                className="flashcard"
+                onClick={() => {
+                  playAppSound('flip')
+                  setFlashcardBack((value) => !value)
+                }}
+                type="button"
+              >
                 <span lang="kn">{card.kannada}</span>
                 <small className="romanization">{card.transliteration}</small>
                 {!flashcardBack && <small className="english-subtitle">{card.english}</small>}
