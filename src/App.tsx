@@ -825,6 +825,30 @@ function getLessonProgressSegmentState(
   return 'upcoming'
 }
 
+function getFeedbackAnswerSummary(exercise: LessonExercise): string {
+  if (exercise.kannada && exercise.answer && !containsKannada(exercise.answer)) {
+    return `${exercise.kannada} = ${exercise.answer}`
+  }
+
+  if (exercise.answer && exercise.english) {
+    return `${exercise.answer} = ${exercise.english}`
+  }
+
+  return `Correct answer: ${exercise.answer}`
+}
+
+function getFeedbackAriaLabel(feedback: 'correct' | 'wrong' | 'almost'): string {
+  if (feedback === 'correct') {
+    return 'Correct feedback'
+  }
+
+  if (feedback === 'wrong') {
+    return 'Wrong answer feedback'
+  }
+
+  return 'Almost correct feedback'
+}
+
 function evaluateTypedKannadaAnswer(typedAnswer: string, expectedAnswer: string) {
   const typed = normalizeKannadaAnswer(typedAnswer)
   const expected = normalizeKannadaAnswer(expectedAnswer)
@@ -2402,31 +2426,46 @@ function App() {
                     : 'feedback wrong'
               }
               role="status"
+              aria-label={getFeedbackAriaLabel(feedback)}
             >
-              <strong>
-                {feedback === 'correct'
-                  ? 'Correct'
-                  : feedback === 'almost'
-                    ? `Almost! Check: ${almostTypingDistance}`
-                    : 'Try again'}
-              </strong>
-              <span>
-                {feedback === 'correct'
-                  ? `+${activeExercise.xp} XP`
-                  : feedback === 'almost'
-                    ? 'Fix the Kannada spelling and try again.'
-                    : activeExercise.explanation}
-              </span>
+              {feedback === 'correct' && (
+                <>
+                  <div className="feedback-header">
+                    <strong>Correct!</strong>
+                    <span>+{activeExercise.xp} XP</span>
+                  </div>
+                  <p>{getFeedbackAnswerSummary(activeExercise)}</p>
+                  <p>{activeExercise.explanation}</p>
+                </>
+              )}
+              {feedback === 'wrong' && (
+                <>
+                  <div className="feedback-header">
+                    <strong>Not quite.</strong>
+                    <span>❤️ -1</span>
+                  </div>
+                  <p>Correct answer: {activeExercise.answer}</p>
+                  <p>{activeExercise.explanation}</p>
+                </>
+              )}
+              {feedback === 'almost' && (
+                <>
+                  <div className="feedback-header">
+                    <strong>Almost! Check: {almostTypingDistance}</strong>
+                  </div>
+                  <p>Fix the Kannada spelling and try again.</p>
+                </>
+              )}
             </div>
           )}
           {feedback === 'correct' && (
             <button className="secondary-action" onClick={goToNextExercise} type="button">
-              Next Exercise
+              Continue → Next Exercise
             </button>
           )}
           {feedback === 'wrong' && (
             <button className="secondary-action" onClick={goToNextExercise} type="button">
-              Continue. This question will return.
+              Got it → This question will return.
             </button>
           )}
         </section>

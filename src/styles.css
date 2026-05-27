@@ -768,9 +768,21 @@ h2 {
 }
 
 .feedback {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.feedback-header {
   display: flex;
   justify-content: space-between;
-  padding: 16px;
+  gap: 12px;
+}
+
+.feedback p {
+  margin: 0;
+  color: #f7f7fb;
+  font-weight: 700;
 }
 
 .feedback.correct {

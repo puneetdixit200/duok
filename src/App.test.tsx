@@ -264,8 +264,29 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: 'Hello sir' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
 
-    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+    const feedbackPanel = screen.getByRole('status', { name: /Correct feedback/i })
+    expect(within(feedbackPanel).getByText('Correct!')).toBeInTheDocument()
     expect(screen.getByText(/\+2 XP/i)).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('ನಮಸ್ಕಾರ ಸಾರ್ = Hello sir')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText(/respectful hello used across Bangalore/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument()
+  })
+
+  it('shows spec wrong-answer feedback with heart loss and the correct answer', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /Continue: Greetings/i }))
+    await user.click(screen.getByRole('button', { name: 'Goodbye sir' }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    const feedbackPanel = screen.getByRole('status', { name: /Wrong answer feedback/i })
+    expect(within(feedbackPanel).getByText('Not quite.')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('❤️ -1')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('Correct answer: Hello sir')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText(/respectful hello used across Bangalore/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Got it/i })).toBeInTheDocument()
   })
 
   it('reintroduces a missed lesson exercise after two more exercises', async () => {
