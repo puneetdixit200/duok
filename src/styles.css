@@ -1294,6 +1294,77 @@ h2 {
   gap: 8px;
 }
 
+.scenario-detail-panel {
+  gap: 18px;
+}
+
+.scenario-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(300px, 1.2fr);
+  gap: 14px;
+}
+
+.scenario-detail-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #30304d;
+  background: #202037;
+}
+
+.scenario-detail-card h3,
+.scenario-detail-card p {
+  margin: 0;
+}
+
+.scenario-phrase-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #3b3b5f;
+  background: #24243d;
+}
+
+.scenario-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dialogue-practice-card {
+  grid-column: 1 / -1;
+}
+
+.dialogue-practice-card fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dialogue-practice-card legend {
+  margin-bottom: 6px;
+  color: #ffbc8a;
+  font-weight: 900;
+}
+
+.dialogue-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #3b3b5f;
+  background: #1b1b31;
+}
+
+.dialogue-option .romanization,
+.dialogue-option .english-subtitle {
+  grid-column: 2;
+}
+
 .story-grid {
   grid-template-columns: repeat(2, minmax(260px, 1fr));
   margin-top: 18px;
@@ -1822,6 +1893,7 @@ h2 {
   .level-map.expanded,
   .daily-quest-grid,
   .scenario-grid,
+  .scenario-detail-grid,
   .scenario-picker,
   .persona-picker,
   .model-grid,
@@ -1858,6 +1930,7 @@ h2 {
   .level-map.expanded,
   .daily-quest-grid,
   .scenario-grid,
+  .scenario-detail-grid,
   .scenario-picker,
   .persona-picker,
   .model-grid,

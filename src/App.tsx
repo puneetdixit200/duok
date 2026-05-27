@@ -146,7 +146,7 @@ const aiExpansionKey = 'kannadaos:ai-expansion'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
 const pronunciationPhrases = survivalPhrases.filter((phrase) =>
-  ['namaskara-saar', 'ticket-eshtu', 'swalpa-adjust-maadi'].includes(phrase.id),
+  ['namaskara-saar', 'ticket-eshtu', 'swalpa-adjust-maadi', 'majestic-ge-hogbeku', 'illi-nillisi'].includes(phrase.id),
 )
 const defaultReminderPreference: ReminderPreference = {
   enabled: false,
@@ -855,6 +855,9 @@ function App() {
   const [almostTypingDistance, setAlmostTypingDistance] = useState<number | null>(null)
   const [chatInput, setChatInput] = useState('')
   const [selectedScenarioId, setSelectedScenarioId] = useState(defaultChatScenario.id)
+  const [activeBangaloreScenarioId, setActiveBangaloreScenarioId] = useState<string | null>(null)
+  const [scenarioDialogueAnswer, setScenarioDialogueAnswer] = useState('')
+  const [scenarioDialogueFeedback, setScenarioDialogueFeedback] = useState('')
   const [selectedTutorPersonaId, setSelectedTutorPersonaId] = useState(defaultTutorPersona.id)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
     ...getScenarioMessages(
@@ -907,6 +910,9 @@ function App() {
   const activeStory = stories.find((story) => story.id === selectedStoryId) ?? stories[0]
   const selectedScenario =
     bangaloreScenarios.find((scenario) => scenario.id === selectedScenarioId) ?? defaultChatScenario
+  const activeBangaloreScenario = activeBangaloreScenarioId
+    ? bangaloreScenarios.find((scenario) => scenario.id === activeBangaloreScenarioId) ?? null
+    : null
   const selectedTutorPersona =
     tutorPersonas.find((persona) => persona.id === selectedTutorPersonaId) ?? defaultTutorPersona
   const activePronunciationPhrase =
@@ -1472,6 +1478,58 @@ function App() {
 
   function toggleScenarioChecklist(scenarioId: string, item: string) {
     setProgress((current) => toggleScenarioChecklistItem(current, scenarioId, item))
+  }
+
+  function openBangaloreScenario(scenarioId: string) {
+    setActiveBangaloreScenarioId(scenarioId)
+    setScenarioDialogueAnswer('')
+    setScenarioDialogueFeedback('')
+    setAudioStatus('')
+  }
+
+  async function playScenarioPhraseAudio(phrase: Phrase) {
+    const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
+    if (!synthesizeNativeSpeech || !runtimeConfig.piperVoicePath.trim() || !runtimeConfig.piperBinaryPath.trim()) {
+      setAudioStatus(`Playing scenario audio: ${phrase.transliteration}`)
+      return
+    }
+
+    setAudioStatus('Scenario Piper synthesis running...')
+    const result = await synthesizeNativeSpeech({
+      runtimeConfig,
+      text: phrase.kannada,
+    })
+
+    if (result.ok) {
+      if (result.audioUrl) {
+        try {
+          const audio = new Audio(result.audioUrl)
+          await audio.play()
+        } catch {
+          setAudioStatus(`Scenario Piper audio ready: ${result.audioPath} (playback unavailable)`)
+          return
+        }
+      }
+
+      setAudioStatus(`Scenario Piper audio ready: ${result.audioPath}`)
+      return
+    }
+
+    setAudioStatus(result.error ?? 'Scenario Piper synthesis failed.')
+  }
+
+  function practiceScenarioPhrase(phrase: Phrase) {
+    selectPronunciationPhrase(phrase.id)
+    setTab('practice')
+  }
+
+  function checkScenarioDialogue(scenario: Scenario) {
+    const correctAnswer = scenario.usefulPhrases[0]?.kannada ?? ''
+    setScenarioDialogueFeedback(
+      scenarioDialogueAnswer === correctAnswer
+        ? `Good reply for ${scenario.title}.`
+        : 'Try the destination phrase first.',
+    )
   }
 
   async function recordVoiceInput() {
@@ -3131,29 +3189,50 @@ function App() {
     }
 
     if (tab === 'blr') {
-      return (
-        <section className="panel" aria-labelledby="blr-title">
-          <header className="section-header">
-            <div>
-              <p className="eyebrow">Bangalore Mode</p>
-              <h2 id="blr-title">Slang of the Day</h2>
-            </div>
-            <span className="metric-pill">swalpa adjust maadi</span>
-          </header>
-          <article className="blr-hero">
-            <h3>Swalpa adjust maadi</h3>
-            <p>Please adjust a little. Use it in crowds, shared autos, queues, and PG life.</p>
-          </article>
-          <div className="scenario-grid">
-            {bangaloreScenarios.map((scenario) => (
-              <article className="scenario-card" key={scenario.id}>
-                <span>{scenario.icon}</span>
-                <strong>{scenario.title}</strong>
-                <small>{scenario.difficulty}</small>
-                <p>{scenario.situation}</p>
+      if (activeBangaloreScenario) {
+        const scenario = activeBangaloreScenario
+        const checkedItems = progress.scenarioChecklist[scenario.id] ?? []
+        const correctReply = scenario.usefulPhrases[0]
+        const dialogueOptions = [
+          correctReply,
+          {
+            id: `${scenario.id}-name-distractor`,
+            kannada: 'ನನ್ನ ಹೆಸರು ರಾಹುಲ್',
+            transliteration: 'nanna hesaru Rahul',
+            english: 'My name is Rahul',
+            context: 'A polite introduction, but not the answer to this scenario.',
+            skillTag: 'introductions',
+          },
+          {
+            id: `${scenario.id}-lunch-distractor`,
+            kannada: 'ಊಟ ಆಯ್ತಾ?',
+            transliteration: 'oota aayta?',
+            english: 'Did you eat?',
+            context: 'Useful small talk, but not the answer to this scenario.',
+            skillTag: 'culture',
+          },
+        ]
+
+        return (
+          <section className="panel scenario-detail-panel" aria-labelledby="blr-title">
+            <header className="section-header">
+              <div>
+                <p className="eyebrow">Bangalore Mode</p>
+                <h2 id="blr-title">{scenario.icon} {scenario.title}</h2>
+              </div>
+              <button className="secondary-action compact-action" onClick={() => setActiveBangaloreScenarioId(null)} type="button">
+                Back
+              </button>
+            </header>
+            <article className="scenario-detail-card">
+              <p>{`Situation: ${scenario.situation}`}</p>
+            </article>
+            <section className="scenario-detail-grid">
+              <article className="scenario-detail-card">
+                <h3>Checklist</h3>
                 <ul className="scenario-checklist" aria-label={`${scenario.title} checklist`}>
                   {scenario.checklist.map((item) => {
-                    const checked = (progress.scenarioChecklist[scenario.id] ?? []).includes(item)
+                    const checked = checkedItems.includes(item)
                     return (
                       <li key={item}>
                         <label>
@@ -3168,38 +3247,120 @@ function App() {
                     )
                   })}
                 </ul>
+              </article>
+              <article className="scenario-detail-card">
+                <h3>Useful Phrases</h3>
                 <div className="scenario-phrase-list" aria-label={`${scenario.title} useful phrases`}>
                   {scenario.usefulPhrases.map((phrase) => (
-                    <button
-                      className="selector-chip compact"
-                      key={phrase.id}
-                      onClick={() => {
-                        selectChatScenario(scenario.id)
-                        setChatInput(phrase.kannada)
-                        setTab('chat')
-                      }}
-                      type="button"
-                    >
+                    <div className="scenario-phrase-row" key={phrase.id}>
                       <strong lang="kn">{phrase.kannada}</strong>
                       <span className="kannada-subtitles">
                         <small className="romanization">{phrase.transliteration}</small>
                         <small className="english-subtitle">{phrase.english}</small>
                       </span>
-                    </button>
+                      <div className="scenario-action-row">
+                        <button className="mini-button" onClick={() => void playScenarioPhraseAudio(phrase)} type="button">
+                          Play {phrase.transliteration}
+                        </button>
+                        <button className="mini-button" onClick={() => practiceScenarioPhrase(phrase)} type="button">
+                          Practice {phrase.transliteration}
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
+                {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
+              </article>
+              <article className="scenario-detail-card dialogue-practice-card">
+                <h3>Dialogue Practice</h3>
+                <p>{`Driver: ${scenario.openingLine.kannada}`}</p>
+                <span className="kannada-subtitles">
+                  <small className="romanization">{scenario.openingLine.transliteration}</small>
+                  <small className="english-subtitle">{scenario.openingLine.english}</small>
+                </span>
+                <fieldset>
+                  <legend>Your reply</legend>
+                  {dialogueOptions.map((option) => (
+                    <label className="dialogue-option" key={option.id}>
+                      <input
+                        checked={scenarioDialogueAnswer === option.kannada}
+                        name={`${scenario.id}-dialogue-reply`}
+                        onChange={() => {
+                          setScenarioDialogueAnswer(option.kannada)
+                          setScenarioDialogueFeedback('')
+                        }}
+                        type="radio"
+                      />
+                      <span lang="kn">{option.kannada}</span>
+                      <small className="romanization">{option.transliteration}</small>
+                      <small className="english-subtitle">{option.english}</small>
+                    </label>
+                  ))}
+                </fieldset>
                 <button
                   className="secondary-action"
-                  onClick={() => {
-                    selectChatScenario(scenario.id)
-                    setTab('chat')
-                  }}
+                  disabled={!scenarioDialogueAnswer}
+                  onClick={() => checkScenarioDialogue(scenario)}
                   type="button"
                 >
-                  Open {scenario.title} in chat
+                  Check Dialogue
                 </button>
+                {scenarioDialogueFeedback && <p role="status">{scenarioDialogueFeedback}</p>}
               </article>
-            ))}
+            </section>
+            <button
+              className="primary-action"
+              onClick={() => {
+                selectChatScenario(scenario.id)
+                setTab('chat')
+              }}
+              type="button"
+            >
+              Open in Chat
+            </button>
+          </section>
+        )
+      }
+
+      return (
+        <section className="panel" aria-labelledby="blr-title">
+          <header className="section-header">
+            <div>
+              <p className="eyebrow">Bangalore Mode</p>
+              <h2 id="blr-title">Slang of the Day</h2>
+            </div>
+            <span className="metric-pill">swalpa adjust maadi</span>
+          </header>
+          <article className="blr-hero">
+            <h3>Swalpa adjust maadi</h3>
+            <p>Please adjust a little. Use it in crowds, shared autos, queues, and PG life.</p>
+          </article>
+          <div className="scenario-grid">
+            {bangaloreScenarios.map((scenario) => {
+              const checkedCount = (progress.scenarioChecklist[scenario.id] ?? []).length
+              return (
+                <article className="scenario-card" key={scenario.id}>
+                  <span>{scenario.icon}</span>
+                  <strong>{scenario.title}</strong>
+                  <small>{scenario.difficulty}</small>
+                  <p>{scenario.situation}</p>
+                  <small>Checklist: {checkedCount}/{scenario.checklist.length}</small>
+                  <button className="secondary-action" onClick={() => openBangaloreScenario(scenario.id)} type="button">
+                    Start {scenario.title}
+                  </button>
+                  <button
+                    className="secondary-action compact-action"
+                    onClick={() => {
+                      selectChatScenario(scenario.id)
+                      setTab('chat')
+                    }}
+                    type="button"
+                  >
+                    Open {scenario.title} in chat
+                  </button>
+                </article>
+              )
+            })}
           </div>
         </section>
       )
@@ -4048,12 +4209,29 @@ function formatDueReviewSummary(dueReviewIds: string[], progress: ProgressState)
 
   return dueReviewIds
     .map((vocabularyId) => {
-      const phrase = survivalPhrases.find((item) => item.id === vocabularyId)
-      const label = phrase?.kannada ?? vocabularyId.split(':').at(-1) ?? vocabularyId
+      const label = formatReadableReviewLabel(vocabularyId)
       const strength = Math.round((progress.reviewQueue[vocabularyId]?.strength ?? 0) * 100)
       return `${label} - Strength ${strength}%`
     })
     .join(', ')
+}
+
+function formatReadableReviewLabel(vocabularyId: string) {
+  const phrase = survivalPhrases.find((item) => item.id === vocabularyId)
+
+  if (phrase) {
+    return `${phrase.kannada} - ${phrase.transliteration} - ${phrase.english}`
+  }
+
+  const fallbackLabel = vocabularyId.split(':').at(-1) ?? vocabularyId
+  const subtitle = getKannadaSubtitle(fallbackLabel)
+
+  if (subtitle) {
+    const english = hasDistinctEnglishSubtitle(subtitle) ? ` - ${subtitle.english}` : ''
+    return `${fallbackLabel} - ${subtitle.romanization}${english}`
+  }
+
+  return fallbackLabel
 }
 
 function formatFlashcardNextReview(

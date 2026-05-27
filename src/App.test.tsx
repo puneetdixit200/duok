@@ -197,7 +197,7 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /practice/i }))
 
-    expect(screen.getByRole('button', { name: /ಹೋಗಬೇಕು.*hogbeku.*need to go/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^ಹೋಗಬೇಕು.*hogbeku.*need to go/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /stories/i }))
     await user.click(screen.getByRole('button', { name: /read first day in bangalore/i }))
@@ -562,6 +562,7 @@ describe('KannadaOS desktop app', () => {
 
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /blr/i }))
+    await user.click(screen.getByRole('button', { name: /start bmtc bus/i }))
     await user.click(screen.getByRole('checkbox', { name: /Ask the fare/i }))
 
     expect(screen.getByRole('checkbox', { name: /Ask the fare/i })).toBeChecked()
@@ -681,12 +682,12 @@ describe('KannadaOS desktop app', () => {
 
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /practice/i }))
-    const flashcard = screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i })
+    const flashcard = screen.getByRole('button', { name: /^ಹೋಗಬೇಕು/i })
     expect(within(flashcard).getByText(/Context: Core travel word for autos, buses, and directions/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^Play Audio$/i }))
     expect(screen.getByText(/Playing flashcard audio: hogbeku/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
-    expect(screen.getByText(/need to go/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /^ಹೋಗಬೇಕು/i }))
+    expect(within(flashcard).getByText(/^need to go$/i)).toBeInTheDocument()
     expect(screen.getByText(/Skill: Verbs/i)).toBeInTheDocument()
     expect(screen.getByText(/Leitner Box: 1/i)).toBeInTheDocument()
     expect(screen.getByText(/Next review: Not scheduled/i)).toBeInTheDocument()
@@ -697,8 +698,10 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /blr/i }))
     expect(screen.getByText(/Slang of the Day/i)).toBeInTheDocument()
     expect(screen.getAllByText(/Auto Ride/i).length).toBeGreaterThanOrEqual(1)
+    await user.click(screen.getByRole('button', { name: /start bmtc bus/i }))
     expect(screen.getByText(/Ask the fare/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ticket eshtu/i).length).toBeGreaterThanOrEqual(1)
+    await user.click(screen.getByRole('button', { name: /back/i }))
     await user.click(screen.getByRole('button', { name: /open auto ride in chat/i }))
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
 
@@ -706,6 +709,31 @@ describe('KannadaOS desktop app', () => {
     const stats = screen.getByTestId('profile-stats')
     expect(within(stats).getByText(/XP/i)).toBeInTheDocument()
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
+  })
+
+  it('opens Bangalore scenario details with phrase controls and dialogue practice', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await completeOnboarding(user)
+    await user.click(screen.getByRole('button', { name: /blr/i }))
+    await user.click(screen.getByRole('button', { name: /start auto ride/i }))
+
+    expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+    expect(screen.getByText(/Situation: You are negotiating an auto from Indiranagar to Majestic/i)).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /Confirm meter/i })).toBeInTheDocument()
+    expect(screen.getByText(/Driver: ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /play majestic-ge hogbeku/i }))
+    expect(screen.getByText(/Playing scenario audio: Majestic-ge hogbeku/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: /I need to go to Majestic/i }))
+    await user.click(screen.getByRole('button', { name: /check dialogue/i }))
+    expect(screen.getByText(/Good reply for Auto Ride/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /practice majestic-ge hogbeku/i }))
+    expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
+    expect(screen.getByText(/Pronunciation Lab/i)).toBeInTheDocument()
   })
 
   it('shows unlocked achievements and learner-owned stats in profile', async () => {
@@ -969,6 +997,31 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Greetings needs review/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByText(/Strength 20%/i).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows English-readable subtitles in due review summaries', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      reviewQueue: {
+        hogbeku: {
+          vocabularyId: 'hogbeku',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+      },
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    const dueReviewCard = screen.getByText(/Due Review Queue/i).closest('article')
+    expect(dueReviewCard).not.toBeNull()
+    expect(within(dueReviewCard as HTMLElement).getByText(/ಹೋಗಬೇಕು - hogbeku - need to go - Strength 20%/i)).toBeInTheDocument()
   })
 
   it('runs due review items as a heart-safe mini session', async () => {
