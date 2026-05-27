@@ -138,6 +138,17 @@ interface ExportStatus {
 
 type LearnerStoreStatus = 'loading' | 'saving' | 'synced' | 'browser' | 'error'
 type WebSpeechResult = 'played' | 'unavailable'
+type ReviewExerciseKind = 'translate' | 'fillBlank' | 'typeKannada'
+
+interface ReviewMiniExercise {
+  vocabularyId: string
+  kind: ReviewExerciseKind
+  phrase: Phrase
+  prompt: string
+  displayText: string
+  answer: string
+  options: string[]
+}
 
 const progressKey = 'kannadaos:progress'
 const onboardedKey = 'kannadaos:onboarded'
@@ -851,6 +862,71 @@ function buildReviewOptions(phrase: Phrase): string[] {
   return [phrase.english, ...distractors].slice(0, 4)
 }
 
+function buildReviewMiniExercise(phrase: Phrase, index: number): ReviewMiniExercise {
+  const kind = getReviewExerciseKind(index)
+
+  if (kind === 'fillBlank') {
+    const blank = getReviewFillBlank(phrase)
+    return {
+      vocabularyId: phrase.id,
+      kind,
+      phrase,
+      prompt: `Complete the Kannada phrase for "${phrase.english}"`,
+      displayText: blank.displayText,
+      answer: blank.answer,
+      options: buildReviewKannadaOptions(blank.answer),
+    }
+  }
+
+  if (kind === 'typeKannada') {
+    return {
+      vocabularyId: phrase.id,
+      kind,
+      phrase,
+      prompt: `Type the Kannada for "${phrase.english}"`,
+      displayText: phrase.english,
+      answer: phrase.kannada,
+      options: [],
+    }
+  }
+
+  return {
+    vocabularyId: phrase.id,
+    kind,
+    phrase,
+    prompt: 'Choose the meaning',
+    displayText: phrase.kannada,
+    answer: phrase.english,
+    options: buildReviewOptions(phrase),
+  }
+}
+
+function getReviewExerciseKind(index: number): ReviewExerciseKind {
+  return ['translate', 'fillBlank', 'typeKannada'][index % 3] as ReviewExerciseKind
+}
+
+function getReviewFillBlank(phrase: Phrase): { displayText: string; answer: string } {
+  const words = phrase.kannada.split(/\s+/).filter(Boolean)
+
+  if (words.length <= 1) {
+    return { displayText: '___', answer: phrase.kannada }
+  }
+
+  const answer = words[words.length - 1]
+  return {
+    displayText: `${words.slice(0, -1).join(' ')} ___`,
+    answer,
+  }
+}
+
+function buildReviewKannadaOptions(answer: string): string[] {
+  const distractors = survivalPhrases
+    .map((phrase) => getReviewFillBlank(phrase).answer)
+    .filter((option, index, options) => option !== answer && options.indexOf(option) === index)
+
+  return [answer, ...distractors].slice(0, 4)
+}
+
 function applyStartingLevelPlacement(
   progress: ProgressState,
   startingLevel: string,
@@ -1098,6 +1174,7 @@ function App() {
   const [reviewSessionIds, setReviewSessionIds] = useState<string[]>([])
   const [reviewIndex, setReviewIndex] = useState(0)
   const [reviewSelectedAnswer, setReviewSelectedAnswer] = useState('')
+  const [reviewTypedAnswer, setReviewTypedAnswer] = useState('')
   const [reviewFeedback, setReviewFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [reviewCorrectCount, setReviewCorrectCount] = useState(0)
   const [ollamaStatus, setOllamaStatus] = useState<'checking' | 'online' | 'offline'>('checking')
@@ -1943,18 +2020,22 @@ function App() {
     setReviewSessionIds(reviewableIds)
     setReviewIndex(0)
     setReviewSelectedAnswer('')
+    setReviewTypedAnswer('')
     setReviewFeedback(null)
     setReviewCorrectCount(0)
   }
 
-  function checkReviewAnswer(phrase: Phrase) {
+  function checkReviewAnswer(reviewExercise: ReviewMiniExercise) {
     if (reviewFeedback || !reviewSelectedAnswer) {
       return
     }
 
-    const correct = reviewSelectedAnswer === phrase.english
+    const correct =
+      reviewExercise.kind === 'translate'
+        ? reviewSelectedAnswer === reviewExercise.answer
+        : normalizeKannadaAnswer(reviewSelectedAnswer) === normalizeKannadaAnswer(reviewExercise.answer)
     const now = new Date().toISOString()
-    const reviewExerciseId = `review-${phrase.id}`
+    const reviewExerciseId = `review-${reviewExercise.vocabularyId}`
     setReviewFeedback(correct ? 'correct' : 'wrong')
     playAppSound(correct ? 'correct' : 'wrong')
 
@@ -1963,7 +2044,7 @@ function App() {
     }
 
     setProgress((current) => {
-      const ratedProgress = rateReviewItem(current, phrase.id, correct ? 'easy' : 'hard', now)
+      const ratedProgress = rateReviewItem(current, reviewExercise.vocabularyId, correct ? 'easy' : 'hard', now)
 
       if (!correct) {
         return ratedProgress
@@ -1989,6 +2070,7 @@ function App() {
     }
 
     setReviewSelectedAnswer('')
+    setReviewTypedAnswer('')
     setReviewFeedback(null)
   }
 
@@ -1996,6 +2078,7 @@ function App() {
     setReviewSessionIds([])
     setReviewIndex(0)
     setReviewSelectedAnswer('')
+    setReviewTypedAnswer('')
     setReviewFeedback(null)
     setReviewCorrectCount(0)
   }
@@ -3259,8 +3342,8 @@ function App() {
       const card = dueReviewPhrases[0] ?? survivalPhrases.find((phrase) => phrase.id === 'hogbeku')!
       const cardReview = progress.reviewQueue[card.id]
       const activeReviewPhrase = getPhraseByVocabularyId(reviewSessionIds[reviewIndex] ?? '')
+      const activeReviewExercise = activeReviewPhrase ? buildReviewMiniExercise(activeReviewPhrase, reviewIndex) : null
       const reviewComplete = reviewSessionIds.length > 0 && reviewIndex >= reviewSessionIds.length
-      const reviewOptions = activeReviewPhrase ? buildReviewOptions(activeReviewPhrase) : []
       return (
         <section className="panel" aria-labelledby="practice-title">
           <header className="section-header">
@@ -3284,7 +3367,7 @@ function App() {
                     Back to Practice
                   </button>
                 </article>
-              ) : activeReviewPhrase ? (
+              ) : activeReviewExercise ? (
                 <>
                   <header className="runtime-header compact-header">
                     <div>
@@ -3300,40 +3383,69 @@ function App() {
                     <span style={{ width: `${Math.max(12, ((reviewIndex + 1) / reviewSessionIds.length) * 100)}%` }} />
                   </div>
                   <div className="phrase-card review-card">
-                    <small>Choose the meaning</small>
-                    <KannadaStrong
-                      ariaLabel={formatReadablePhrase({
-                        kannada: activeReviewPhrase.kannada,
-                        transliteration: activeReviewPhrase.transliteration,
-                        english: activeReviewPhrase.english,
-                        context: activeReviewPhrase.context,
-                      })}
-                      text={activeReviewPhrase.kannada}
-                      subtitle={{ english: activeReviewPhrase.english, romanization: activeReviewPhrase.transliteration }}
-                    />
+                    <small>{activeReviewExercise.prompt}</small>
+                    {activeReviewExercise.kind === 'translate' ? (
+                      <KannadaStrong
+                        ariaLabel={formatReadablePhrase({
+                          kannada: activeReviewExercise.phrase.kannada,
+                          transliteration: activeReviewExercise.phrase.transliteration,
+                          english: activeReviewExercise.phrase.english,
+                          context: activeReviewExercise.phrase.context,
+                        })}
+                        text={activeReviewExercise.phrase.kannada}
+                        subtitle={{ english: activeReviewExercise.phrase.english, romanization: activeReviewExercise.phrase.transliteration }}
+                      />
+                    ) : activeReviewExercise.kind === 'fillBlank' ? (
+                      <strong>
+                        <ReadableStatusText text={activeReviewExercise.displayText} />
+                      </strong>
+                    ) : (
+                      <strong className="review-english-prompt">{activeReviewExercise.displayText}</strong>
+                    )}
                     <span className="kannada-subtitles">
-                      <small className="romanization">{activeReviewPhrase.transliteration}</small>
-                      <small className="english-subtitle">{activeReviewPhrase.english}</small>
-                      <small>{activeReviewPhrase.context}</small>
+                      <small className="romanization">{activeReviewExercise.phrase.transliteration}</small>
+                      <small className="english-subtitle">{activeReviewExercise.phrase.english}</small>
+                      <small>{activeReviewExercise.phrase.context}</small>
                     </span>
                   </div>
-                  <div className="option-stack review-session-options" aria-label="Review answers">
-                    {reviewOptions.map((option) => (
-                      <button
-                        className={reviewSelectedAnswer === option ? 'answer-option selected' : 'answer-option'}
+                  {activeReviewExercise.kind === 'typeKannada' ? (
+                    <label className="transcript-field typing-helper">
+                      <span>Review Kannada typing answer</span>
+                      <input
+                        aria-label="Review Kannada typing answer"
                         disabled={reviewFeedback !== null}
-                        key={option}
-                        onClick={() => setReviewSelectedAnswer(option)}
-                        type="button"
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
+                        onChange={(event) => {
+                          setReviewTypedAnswer(event.target.value)
+                          setReviewSelectedAnswer(transliterateLatinToKannada(event.target.value))
+                        }}
+                        placeholder={`Type ${activeReviewExercise.phrase.transliteration}`}
+                        value={reviewTypedAnswer}
+                      />
+                      <small>
+                        <ReadableStatusText
+                          text={reviewTypedAnswer ? transliterateLatinToKannada(reviewTypedAnswer) : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'}
+                        />
+                      </small>
+                    </label>
+                  ) : (
+                    <div className="option-stack review-session-options" aria-label="Review answers">
+                      {activeReviewExercise.options.map((option) => (
+                        <button
+                          className={reviewSelectedAnswer === option ? 'answer-option selected' : 'answer-option'}
+                          disabled={reviewFeedback !== null}
+                          key={option}
+                          onClick={() => setReviewSelectedAnswer(option)}
+                          type="button"
+                        >
+                          <ChoiceText text={option} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <button
                     className="primary-action"
                     disabled={!reviewSelectedAnswer || reviewFeedback !== null}
-                    onClick={() => checkReviewAnswer(activeReviewPhrase)}
+                    onClick={() => checkReviewAnswer(activeReviewExercise)}
                     type="button"
                   >
                     Check Review
@@ -3341,7 +3453,11 @@ function App() {
                   {reviewFeedback && (
                     <div className={reviewFeedback === 'correct' ? 'feedback correct' : 'feedback wrong'} role="status">
                       <strong>{reviewFeedback === 'correct' ? 'Correct' : 'Try again'}</strong>
-                      <span>{reviewFeedback === 'correct' ? '+1 XP' : 'No hearts lost. This word will return soon.'}</span>
+                      <span>
+                        {reviewFeedback === 'correct'
+                          ? '+1 XP'
+                          : `Correct answer: ${activeReviewExercise.answer}. No hearts lost. This word will return soon.`}
+                      </span>
                     </div>
                   )}
                   {reviewFeedback && (

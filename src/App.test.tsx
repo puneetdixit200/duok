@@ -1844,13 +1844,27 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /practice/i }))
     await user.click(screen.getByRole('button', { name: /Start Review/i }))
 
-    for (const answer of ['Thank you', 'need to go', 'Hello sir']) {
-      const reviewSession = screen.getByRole('region', { name: /Review Session/i })
-      await user.click(within(reviewSession).getByRole('button', { name: new RegExp(answer, 'i') }))
-      await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
-      expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
-      await user.click(within(reviewSession).getByRole('button', { name: /Next Review|Finish Review/i }))
-    }
+    let reviewSession = screen.getByRole('region', { name: /Review Session/i })
+    expect(within(reviewSession).getByText(/Choose the meaning/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /Thank you/i }))
+    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+    expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /Next Review/i }))
+
+    reviewSession = screen.getByRole('region', { name: /Review Session/i })
+    expect(within(reviewSession).getByText(/Complete the Kannada phrase/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /ಹೋಗಬೇಕು/i }))
+    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+    expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /Next Review/i }))
+
+    reviewSession = screen.getByRole('region', { name: /Review Session/i })
+    expect(within(reviewSession).getByText(/Type the Kannada for "Hello sir"/i)).toBeInTheDocument()
+    await user.type(within(reviewSession).getByLabelText(/Review Kannada typing answer/i), 'namaskara saar')
+    expect(within(reviewSession).getByText(/ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+    expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
+    await user.click(within(reviewSession).getByRole('button', { name: /Finish Review/i }))
 
     expect(screen.getByRole('heading', { name: /Review Complete/i })).toBeInTheDocument()
 
