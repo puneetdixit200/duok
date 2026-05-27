@@ -539,6 +539,26 @@ describe('KannadaOS desktop app', () => {
     expect(within(tipsDialog).getByText(/^English: Please explain again$/i)).toBeInTheDocument()
   })
 
+  it('shows English subtitles for Unit 8 emergency tips', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+
+    const emergencyUnit = screen.getByText(/Unit 8: Emergencies & Help/i).closest('article')
+    expect(emergencyUnit).not.toBeNull()
+    await user.click(within(emergencyUnit!).getByRole('button', { name: /^Tips$/i }))
+
+    const tipsDialog = screen.getByRole('dialog', { name: /Tips: Emergencies & Help/i })
+    expect(within(tipsDialog).getAllByText(/^English: Please help$/i)).toHaveLength(2)
+    expect(within(tipsDialog).getByText(/^English: immediately help please do$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getAllByText(/^English: Where is the hospital\?$/i)).toHaveLength(2)
+    expect(within(tipsDialog).getByText(/^English: Where is the doctor\?$/i)).toBeInTheDocument()
+    expect(within(tipsDialog).getAllByText(/^English: police$/i).length).toBeGreaterThanOrEqual(1)
+    expect(within(tipsDialog).getByText(/^English: Please call the police$/i)).toBeInTheDocument()
+  })
+
   it('shows navigation badges for active streak and due practice reviews', async () => {
     const progress = {
       ...createInitialProgress(),
@@ -1849,8 +1869,7 @@ describe('KannadaOS desktop app', () => {
 
     render(<App />)
 
-    await screen.findByRole('heading', { name: /KannadaOS/i })
-    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
+    await user.click(await screen.findByRole('button', { name: /^Profile$/i }))
 
     expect(screen.getByLabelText('42 XP')).toBeInTheDocument()
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()

@@ -357,6 +357,32 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(requestPairs.answer).toContain('ನಾಳೆ ಕಳುಸ್ತೀನಿ=I will send tomorrow')
   })
 
+  it('teaches the Unit 8 emergency phrases named in the frontend spec', () => {
+    const unitEight = coreCurriculumUnits[7]
+    const askingForHelp = unitEight.lessons.find((lesson) => lesson.title === 'Asking for Help')!
+    const healthDoctor = unitEight.lessons.find((lesson) => lesson.title === 'Health & Doctor')!
+    const helpPairs = askingForHelp.exercises.find((exercise) => exercise.type === 'matchPairs')!
+    const healthPairs = healthDoctor.exercises.find((exercise) => exercise.type === 'matchPairs')!
+
+    expect(unitEight.tips.map((tip) => tip.title)).toEqual([
+      'Sahaaya maadi',
+      'Hospital location',
+      'Police',
+    ])
+    expect(unitEight.tips.flatMap((tip) => tip.examples)).toEqual(expect.arrayContaining([
+      'ಸಹಾಯ ಮಾಡಿ',
+      'ತಕ್ಷಣ ಸಹಾಯ ಮಾಡಿ',
+      'ಆಸ್ಪತ್ರೆ ಎಲ್ಲಿ?',
+      'ಡಾಕ್ಟರ್ ಎಲ್ಲಿ?',
+      'ಪೋಲೀಸ್',
+      'ಪೋಲೀಸ್‌ಗೆ ಕಾಲ್ ಮಾಡಿ',
+    ]))
+    expect(helpPairs.answer).toContain('ಸಹಾಯ ಮಾಡಿ=Please help')
+    expect(helpPairs.answer).toContain('ಪೋಲೀಸ್=Police')
+    expect(helpPairs.answer).toContain('ಪೋಲೀಸ್‌ಗೆ ಕಾಲ್ ಮಾಡಿ=Please call the police')
+    expect(healthPairs.answer).toContain('ಆಸ್ಪತ್ರೆ ಎಲ್ಲಿ?=Where is the hospital?')
+  })
+
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {
     const scriptUnit = getScriptCurriculumUnit()
 

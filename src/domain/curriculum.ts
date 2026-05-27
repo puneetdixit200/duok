@@ -670,23 +670,31 @@ const unitSeeds: UnitSeed[] = [
     description: 'Ask for help, explain symptoms, and handle urgent travel or health needs.',
     tips: [
       {
-        title: 'Urgency words',
-        body: 'ತಕ್ಷಣ means immediately and ಸಹಾಯ means help. Learn them as safety anchors.',
-        examples: ['ತಕ್ಷಣ ಸಹಾಯ ಬೇಕು', 'ಡಾಕ್ಟರ್ ಬೇಕು'],
+        title: 'Sahaaya maadi',
+        body: 'ಸಹಾಯ ಮಾಡಿ means please help, the clearest first line in an emergency.',
+        examples: ['ಸಹಾಯ ಮಾಡಿ', 'ತಕ್ಷಣ ಸಹಾಯ ಮಾಡಿ'],
       },
       {
-        title: 'Body and health',
-        body: 'Keep health sentences short. Clear phrases matter more than grammar in emergencies.',
-        examples: ['ನನಗೆ ಜ್ವರ ಇದೆ', 'ನೋವು ಇದೆ'],
+        title: 'Hospital location',
+        body: 'ಆಸ್ಪತ್ರೆ ಎಲ್ಲಿ? means where is the hospital, useful for urgent directions.',
+        examples: ['ಆಸ್ಪತ್ರೆ ಎಲ್ಲಿ?', 'ಡಾಕ್ಟರ್ ಎಲ್ಲಿ?'],
+      },
+      {
+        title: 'Police',
+        body: 'ಪೋಲೀಸ್ means police. Use it as a safety anchor when asking others to call.',
+        examples: ['ಪೋಲೀಸ್', 'ಪೋಲೀಸ್‌ಗೆ ಕಾಲ್ ಮಾಡಿ'],
       },
     ],
     lessons: [
       emergencyLesson('Asking for Help', [
+        ['sahaya-maadi', 'ಸಹಾಯ ಮಾಡಿ', 'Please help', 'Emergency first line.'],
         ['sahaya-beku', 'ಸಹಾಯ ಬೇಕು', 'I need help', 'Emergency anchor.'],
-        ['police-ge-call-maadi', 'ಪೊಲೀಸ್‌ಗೆ ಕಾಲ್ ಮಾಡಿ', 'Please call the police', 'Safety.'],
+        ['police-ge-call-maadi', 'ಪೋಲೀಸ್‌ಗೆ ಕಾಲ್ ಮಾಡಿ', 'Please call the police', 'Safety.'],
+        ['poliis', 'ಪೋಲೀಸ್', 'Police', 'Safety word.'],
         ['ambulance-beku', 'ಆಂಬುಲೆನ್ಸ್ ಬೇಕು', 'Need an ambulance', 'Medical emergency.'],
       ]),
       emergencyLesson('Health & Doctor', [
+        ['aaspatre-elli', 'ಆಸ್ಪತ್ರೆ ಎಲ್ಲಿ?', 'Where is the hospital?', 'Emergency directions.'],
         ['doctor-elli', 'ಡಾಕ್ಟರ್ ಎಲ್ಲಿ?', 'Where is the doctor?', 'Clinic.'],
         ['appointment-beku', 'ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬೇಕು', 'I need an appointment', 'Hospital desk.'],
         ['medicine-kodi', 'ಮೆಡಿಸಿನ್ ಕೊಡಿ', 'Please give medicine', 'Pharmacy.'],
@@ -2134,6 +2142,14 @@ function getTransliterationLookup(): Map<string, string> {
 
   for (const phrase of survivalPhrases) {
     addTransliterationPair(lookup, phrase.transliteration, phrase.kannada)
+  }
+
+  for (const unitSeed of unitSeeds) {
+    for (const lessonSeed of unitSeed.lessons) {
+      for (const phraseSeed of lessonSeed.phrases) {
+        addTransliterationPair(lookup, phraseSeed.transliteration, phraseSeed.kannada)
+      }
+    }
   }
 
   for (const unit of allUnits) {
