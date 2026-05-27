@@ -106,7 +106,8 @@ async function main() {
 
     await page.getByRole('button', { name: /blr/i }).click()
     await page.getByText('Auto Ride', { exact: true }).waitFor()
-    await page.getByRole('button', { name: /^me$/i }).click()
+    await page.getByRole('button', { name: /^profile$/i }).click()
+    await page.getByRole('heading', { name: /Profile/i }).waitFor()
     await page.getByText(/Level 4 Learner/i).waitFor()
     await page.getByLabel('23 XP').waitFor()
     await page.getByText(/Story Starter/i).waitFor()
@@ -198,7 +199,8 @@ async function main() {
       console.log('Ollama live smoke: unavailable, offline fallback visible')
     }
 
-    await page.getByRole('button', { name: /^me$/i }).click()
+    await page.getByRole('button', { name: /^profile$/i }).click()
+    await page.getByRole('heading', { name: /Profile/i }).waitFor()
     page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: /reset all progress/i }).click()
     await page.getByText(/Progress reset. Your AI model paths and hosted AI keys were kept./i).waitFor()

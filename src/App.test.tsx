@@ -209,13 +209,13 @@ describe('KannadaOS desktop app', () => {
 
     const navigation = screen.getByLabelText(/Primary navigation/i)
     for (const [icon, label] of [
-      ['🏠', 'Dashboard'],
+      ['🏠', 'Home'],
       ['📚', 'Learn'],
       ['🔄', 'Practice'],
       ['📖', 'Stories'],
       ['💬', 'Chat'],
       ['🏙️', 'BLR'],
-      ['👤', 'Me'],
+      ['👤', 'Profile'],
     ]) {
       const button = within(navigation).getByRole('button', { name: new RegExp(label, 'i') })
       expect(button).toHaveTextContent(icon)
@@ -379,7 +379,7 @@ describe('KannadaOS desktop app', () => {
     await renderApp()
 
     const navigation = screen.getByLabelText(/Primary navigation/i)
-    expect(within(navigation).getByRole('button', { name: /Dashboard.*streak active/i })).toBeInTheDocument()
+    expect(within(navigation).getByRole('button', { name: /Home.*streak active/i })).toBeInTheDocument()
     expect(within(navigation).getByRole('button', { name: /Practice.*2 due reviews/i })).toBeInTheDocument()
     expect(within(navigation).getByRole('button', { name: /^Chat$/i })).toBeInTheDocument()
   })
@@ -920,13 +920,13 @@ describe('KannadaOS desktop app', () => {
     const navigation = screen.getByLabelText(/Primary navigation/i)
     const navButtons = within(navigation).getAllByRole('button').slice(0, 7)
     expect(navButtons.map((button) => button.getAttribute('aria-label'))).toEqual([
-      'Dashboard',
+      'Home',
       'Learn',
       'Practice',
       'Stories',
       'Chat',
       'BLR',
-      'Me',
+      'Profile',
     ])
     expect(navButtons.map((button) => button.getAttribute('aria-keyshortcuts'))).toEqual([
       'Meta+1 Control+1',
@@ -954,10 +954,10 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
 
     await pressShortcut('6')
-    expect(screen.getByRole('heading', { name: /Slang of the Day/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Bangalore Mode/i })).toBeInTheDocument()
 
     await pressShortcut('7')
-    expect(screen.getByRole('heading', { name: /Rahul/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Profile/i })).toBeInTheDocument()
   })
 
   it('closes app-level dialogs and detail panels with Escape', async () => {
@@ -1654,7 +1654,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await screen.findByRole('heading', { name: /KannadaOS/i })
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
 
     expect(screen.getByLabelText('42 XP')).toBeInTheDocument()
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
@@ -1729,6 +1729,8 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Strength 40%/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /blr/i }))
+    expect(screen.getByRole('heading', { name: /Bangalore Mode/i })).toBeInTheDocument()
+    expect(screen.getByText(/Practice real daily-life conversations/i)).toBeInTheDocument()
     expect(screen.getByText(/Slang of the Day/i)).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /BMTC Bus beginner scenario icon/i })).toBeInTheDocument()
     expect(screen.getAllByText(/Auto Ride/i).length).toBeGreaterThanOrEqual(1)
@@ -1740,7 +1742,8 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^English: I need to go to Majestic/i })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
+    expect(screen.getByRole('heading', { name: /Profile/i })).toBeInTheDocument()
     const stats = screen.getByTestId('profile-stats')
     expect(within(stats).getByText(/XP/i)).toBeInTheDocument()
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
@@ -1869,7 +1872,7 @@ describe('KannadaOS desktop app', () => {
     )
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
 
     const stats = screen.getByTestId('profile-stats')
     expect(within(stats).getByLabelText('92 XP')).toBeInTheDocument()
@@ -1956,7 +1959,7 @@ describe('KannadaOS desktop app', () => {
     )
 
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
     await user.click(screen.getByRole('button', { name: /reset all progress/i }))
 
     const stats = screen.getByTestId('profile-stats')
@@ -1992,7 +1995,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     const { unmount } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
 
     expect(screen.getByRole('heading', { name: /Daily Reminder/i })).toBeInTheDocument()
     expect(screen.getByText(/Reminder Off/i)).toBeInTheDocument()
@@ -2008,7 +2011,7 @@ describe('KannadaOS desktop app', () => {
 
     unmount()
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
 
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
@@ -2044,7 +2047,7 @@ describe('KannadaOS desktop app', () => {
 
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
     await user.click(screen.getByRole('button', { name: /export data/i }))
 
     expect(screen.getByText(/Export ready: 2 activities, 1 practiced word, 1 pronunciation attempt/i)).toBeInTheDocument()
@@ -2776,7 +2779,7 @@ describe('KannadaOS desktop app', () => {
     render(<App />)
 
     await completeOnboarding(user)
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
 
     expect(screen.getByRole('heading', { name: /Setting up your AI Teacher/i })).toBeInTheDocument()
@@ -2829,7 +2832,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     const { unmount } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
     await user.selectOptions(screen.getByLabelText(/active ai provider/i), 'openrouter')
     await user.type(screen.getByLabelText(/OpenRouter API key/i), 'sk-or-test')
@@ -2849,7 +2852,7 @@ describe('KannadaOS desktop app', () => {
 
     unmount()
     render(<App />)
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
 
     expect(screen.getByLabelText(/active ai provider/i)).toHaveValue('openrouter')
@@ -2965,7 +2968,7 @@ describe('KannadaOS desktop app', () => {
     localStorage.setItem('kannadaos:onboarded', 'true')
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /^Me$/i }))
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
     await user.click(screen.getByRole('button', { name: /manage ai models/i }))
 
     expect(screen.getByRole('heading', { name: /On-device Runtime/i })).toBeInTheDocument()

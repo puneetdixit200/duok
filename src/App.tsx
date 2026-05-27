@@ -222,13 +222,13 @@ const replayAudioShortcuts = 'Meta+R Control+R'
 const lessonReplayAudioShortcuts = `Space ${replayAudioShortcuts}`
 const microphoneShortcuts = 'Meta+M Control+M'
 const navigationItems: Array<{ id: Tab; icon: string; label: string }> = [
-  { id: 'home', icon: '🏠', label: 'Dashboard' },
+  { id: 'home', icon: '🏠', label: 'Home' },
   { id: 'learn', icon: '📚', label: 'Learn' },
   { id: 'practice', icon: '🔄', label: 'Practice' },
   { id: 'stories', icon: '📖', label: 'Stories' },
   { id: 'chat', icon: '💬', label: 'Chat' },
   { id: 'blr', icon: '🏙️', label: 'BLR' },
-  { id: 'me', icon: '👤', label: 'Me' },
+  { id: 'me', icon: '👤', label: 'Profile' },
 ]
 
 interface ReadableSubtitle {
@@ -4637,11 +4637,13 @@ function App() {
           <header className="section-header">
             <div>
               <p className="eyebrow">Bangalore Mode</p>
-              <h2 id="blr-title">Slang of the Day</h2>
+              <h2 id="blr-title">Bangalore Mode</h2>
+              <p>Practice real daily-life conversations.</p>
             </div>
             <span className="metric-pill">swalpa adjust maadi</span>
           </header>
           <article className="blr-hero">
+            <p className="eyebrow">Slang of the Day</p>
             <h3>Swalpa adjust maadi</h3>
             <p>Please adjust a little. Use it in crowds, shared autos, queues, and PG life.</p>
           </article>
@@ -4688,8 +4690,8 @@ function App() {
           <header className="profile-header">
             <div className="avatar">R</div>
             <div>
-              <h2 id="profile-title">Rahul</h2>
-              <p>Level {learnerLevel} Learner</p>
+              <h2 id="profile-title">Profile</h2>
+              <p>Rahul - Level {learnerLevel} Learner</p>
               <strong>{progress.streakDays} day streak</strong>
             </div>
           </header>
