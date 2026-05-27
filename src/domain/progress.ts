@@ -100,6 +100,10 @@ const heartRegenerationIntervalMs = 4 * 60 * 60 * 1000
 const practiceHeartRefillThreshold = 3
 export const bangaloreScenarioChecklistXp = 10
 export const bonusStoryUnlockCost = 75
+const streakMilestones = [
+  { days: 7, gems: 50 },
+  { days: 30, gems: 200 },
+] as const
 
 export function createInitialProgress(): ProgressState {
   return {
@@ -132,6 +136,8 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
   const earnedXp = result.correct ? result.xp : 0
   const baseDailyXp = isSamePracticeDate ? state.dailyXp : 0
   const baseTodayActivityIds = isSamePracticeDate ? state.todayActivityIds : []
+  const nextStreakDays = shouldStartOrContinueStreak ? Math.max(1, state.streakDays + 1) : state.streakDays
+  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
   const reviewQueue = { ...state.reviewQueue }
 
   for (const vocabularyId of result.vocabularyIds) {
@@ -153,13 +159,14 @@ export function applyExerciseResult(state: ProgressState, result: ExerciseResult
     ...state,
     xp: state.xp + earnedXp,
     dailyXp: baseDailyXp + earnedXp,
+    gems: state.gems + streakRewards.gems,
     hearts: result.correct ? state.hearts : Math.max(0, state.hearts - 1),
     lastHeartLostAt: result.correct ? state.lastHeartLostAt : result.now,
-    streakDays: shouldStartOrContinueStreak ? Math.max(1, state.streakDays + 1) : state.streakDays,
+    streakDays: nextStreakDays,
     lastPracticeDate: practiceDate,
     completedExerciseIds: state.completedExerciseIds.includes(result.exerciseId)
-      ? state.completedExerciseIds
-      : [...state.completedExerciseIds, result.exerciseId],
+      ? [...state.completedExerciseIds, ...streakRewards.activityIds]
+      : [...state.completedExerciseIds, result.exerciseId, ...streakRewards.activityIds],
     todayActivityIds: baseTodayActivityIds.includes(result.exerciseId)
       ? baseTodayActivityIds
       : [...baseTodayActivityIds, result.exerciseId],
@@ -409,18 +416,21 @@ export function recordPracticeActivity(state: ProgressState, result: PracticeAct
     Math.floor(baseTodayActivityIds.length / practiceHeartRefillThreshold) <
       Math.floor(todayActivityIds.length / practiceHeartRefillThreshold)
   const hearts = shouldRestoreHeart ? Math.min(maxHearts, state.hearts + 1) : state.hearts
+  const nextStreakDays = isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1)
+  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
 
   return {
     ...state,
     xp: state.xp + result.xp,
     dailyXp: baseDailyXp + result.xp,
+    gems: state.gems + streakRewards.gems,
     hearts,
     lastHeartLostAt: hearts >= maxHearts ? null : state.lastHeartLostAt,
-    streakDays: isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1),
+    streakDays: nextStreakDays,
     lastPracticeDate: practiceDate,
     completedExerciseIds: state.completedExerciseIds.includes(result.activityId)
-      ? state.completedExerciseIds
-      : [...state.completedExerciseIds, result.activityId],
+      ? [...state.completedExerciseIds, ...streakRewards.activityIds]
+      : [...state.completedExerciseIds, result.activityId, ...streakRewards.activityIds],
     todayActivityIds,
   }
 }
@@ -465,14 +475,17 @@ export function toggleScenarioChecklistItem(
   const isSamePracticeDate = state.lastPracticeDate === practiceDate
   const baseDailyXp = isSamePracticeDate ? state.dailyXp : 0
   const baseTodayActivityIds = isSamePracticeDate ? state.todayActivityIds : []
+  const nextStreakDays = isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1)
+  const streakRewards = getNewStreakMilestoneRewards(state.completedExerciseIds, nextStreakDays)
 
   return {
     ...state,
     xp: state.xp + bangaloreScenarioChecklistXp,
     dailyXp: baseDailyXp + bangaloreScenarioChecklistXp,
-    streakDays: isSamePracticeDate ? state.streakDays : Math.max(1, state.streakDays + 1),
+    gems: state.gems + streakRewards.gems,
+    streakDays: nextStreakDays,
     lastPracticeDate: practiceDate,
-    completedExerciseIds: [...state.completedExerciseIds, activityId],
+    completedExerciseIds: [...state.completedExerciseIds, activityId, ...streakRewards.activityIds],
     todayActivityIds: baseTodayActivityIds.includes(activityId)
       ? baseTodayActivityIds
       : [...baseTodayActivityIds, activityId],
@@ -710,6 +723,28 @@ function hydrateStringList(value: unknown): string[] {
 
 function isScenarioChecklistComplete(completedItems: string[], scenarioItems: string[]): boolean {
   return scenarioItems.length > 0 && scenarioItems.every((item) => completedItems.includes(item))
+}
+
+function getNewStreakMilestoneRewards(
+  completedExerciseIds: string[],
+  streakDays: number,
+): { gems: number; activityIds: string[] } {
+  const activityIds: string[] = []
+  let gems = 0
+
+  for (const milestone of streakMilestones) {
+    const activityId = getStreakMilestoneActivityId(milestone.days)
+    if (streakDays >= milestone.days && !completedExerciseIds.includes(activityId)) {
+      activityIds.push(activityId)
+      gems += milestone.gems
+    }
+  }
+
+  return { gems, activityIds }
+}
+
+function getStreakMilestoneActivityId(days: number): string {
+  return `streak-milestone-${days}`
 }
 
 function getLeitnerIntervalDays(box: number): number {

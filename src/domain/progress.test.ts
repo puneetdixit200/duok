@@ -66,6 +66,50 @@ describe('learner progress', () => {
     expect(nextDay.completedExerciseIds).toEqual(['survival-translate-1', 'survival-arrange-1'])
   })
 
+  it('awards streak milestone gems once at 7 and 30 practice days', () => {
+    let progress = {
+      ...createInitialProgress(),
+      gems: 10,
+      streakDays: 6,
+      lastPracticeDate: '2026-05-22',
+    }
+
+    progress = applyExerciseResult(progress, {
+      exerciseId: 'streak-day-7',
+      correct: true,
+      skillTag: 'greetings',
+      xp: 2,
+      vocabularyIds: [],
+      now: '2026-05-23T09:00:00.000Z',
+    })
+
+    expect(progress.streakDays).toBe(7)
+    expect(progress.gems).toBe(60)
+    expect(progress.completedExerciseIds).toContain('streak-milestone-7')
+
+    const sameDayPractice = recordPracticeActivity(progress, {
+      activityId: 'same-day-review',
+      xp: 1,
+      now: '2026-05-23T12:00:00.000Z',
+    })
+    expect(sameDayPractice.gems).toBe(60)
+    expect(sameDayPractice.completedExerciseIds.filter((id) => id === 'streak-milestone-7')).toHaveLength(1)
+
+    const day30Progress = recordPracticeActivity({
+      ...sameDayPractice,
+      streakDays: 29,
+      lastPracticeDate: '2026-06-14',
+    }, {
+      activityId: 'streak-day-30',
+      xp: 1,
+      now: '2026-06-15T09:00:00.000Z',
+    })
+
+    expect(day30Progress.streakDays).toBe(30)
+    expect(day30Progress.gems).toBe(260)
+    expect(day30Progress.completedExerciseIds).toContain('streak-milestone-30')
+  })
+
   it('tracks weak areas, removes a heart, and schedules review for incorrect answers', () => {
     const progress = applyExerciseResult(createInitialProgress(), {
       exerciseId: 'survival-fill-1',

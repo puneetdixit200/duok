@@ -1257,7 +1257,9 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
     expect(screen.getByText(/Situation: You are negotiating an auto from Indiranagar to Majestic/i)).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: /Confirm meter/i })).toBeInTheDocument()
-    expect(screen.getByText(/Driver: ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Driver: ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/Driver says/i)).toBeInTheDocument()
+    expect(screen.getByText('English: Sir, where do you need to go?')).toBeInTheDocument()
     expect(screen.getAllByText('English: I need to go to Majestic').length).toBeGreaterThanOrEqual(2)
     expect(screen.getByRole('radio', { name: /^English: I need to go to Majestic/i })).toBeInTheDocument()
 

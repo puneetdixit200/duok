@@ -3619,7 +3619,7 @@ function App() {
               </article>
               <article className="scenario-detail-card dialogue-practice-card">
                 <h3>Dialogue Practice</h3>
-                <p>{`Driver: ${scenario.openingLine.kannada}`}</p>
+                <p>Driver says</p>
                 <EnglishFirstKannadaText phrase={scenario.openingLine} />
                 <fieldset>
                   <legend>Your reply</legend>
