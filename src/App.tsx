@@ -2725,7 +2725,16 @@ function App() {
                 <small className="romanization">{card.transliteration}</small>
                 {!flashcardBack && <small className="english-subtitle">{card.english}</small>}
                 <strong>{flashcardBack ? card.english : card.transliteration}</strong>
-                {flashcardBack ? <small>{card.context}</small> : <small>Tap to flip</small>}
+                {flashcardBack ? (
+                  <>
+                    <small>{card.context}</small>
+                    <small>Skill: {formatSkillTagLabel(card.skillTag)}</small>
+                    <small>Leitner Box: {cardReview?.leitnerBox ?? 1}</small>
+                    <small>Next review: {formatFlashcardNextReview(cardReview, now)}</small>
+                  </>
+                ) : (
+                  <small>Tap to flip</small>
+                )}
               </button>
               <div className="review-rating-row" aria-label="Flashcard rating">
                 {[
@@ -3979,6 +3988,36 @@ function formatDueReviewSummary(dueReviewIds: string[], progress: ProgressState)
       return `${label} - Strength ${strength}%`
     })
     .join(', ')
+}
+
+function formatFlashcardNextReview(
+  review: ProgressState['reviewQueue'][string] | undefined,
+  now: string,
+): string {
+  if (!review?.dueAt) {
+    return 'Not scheduled'
+  }
+
+  const dueTime = new Date(review.dueAt).getTime()
+  const nowTime = new Date(now).getTime()
+
+  if (!Number.isFinite(dueTime) || !Number.isFinite(nowTime)) {
+    return 'Not scheduled'
+  }
+
+  const daysUntilDue = Math.ceil((dueTime - nowTime) / (24 * 60 * 60 * 1000))
+
+  if (daysUntilDue <= 0) {
+    return 'Due now'
+  }
+
+  return `${daysUntilDue} ${daysUntilDue === 1 ? 'day' : 'days'}`
+}
+
+function formatSkillTagLabel(skillTag: string): string {
+  return skillTag
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 function formatLearnerStoreStatus(status: LearnerStoreStatus) {
