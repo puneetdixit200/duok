@@ -2061,6 +2061,11 @@ function App() {
       }
 
       if (isEditableShortcutTarget(event.target)) {
+        if (event.key === 'Enter' && shouldHandleEditableEnterShortcut()) {
+          event.preventDefault()
+          checkActiveShortcut()
+        }
+
         return
       }
 
@@ -2117,6 +2122,10 @@ function App() {
     tipsUnitId,
     voiceCaptureSession,
   ])
+
+  function shouldHandleEditableEnterShortcut(): boolean {
+    return screen === 'lesson' || (screen === 'app' && tab === 'practice')
+  }
 
   function replayActiveAudioShortcut(): boolean {
     if (screen === 'lesson' && activeExercise) {

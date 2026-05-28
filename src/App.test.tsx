@@ -1106,9 +1106,10 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Almost! Check:/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Lesson hearts/i)).toHaveTextContent('❤️ 5')
 
-    await user.clear(screen.getByLabelText(/Kannada typing answer/i))
-    await user.type(screen.getByLabelText(/Kannada typing answer/i), 'ನಿಮ್ಮ ಹೆಸರು ಏನು?')
-    await user.click(screen.getByRole('button', { name: /check/i }))
+    const typingInput = screen.getByLabelText(/Kannada typing answer/i)
+    await user.clear(typingInput)
+    await user.type(typingInput, 'ನಿಮ್ಮ ಹೆಸರು ಏನು?')
+    fireEvent.keyDown(typingInput, { key: 'Enter' })
 
     expect(screen.getByText(/Correct/i)).toBeInTheDocument()
   }, 30_000)
@@ -2607,9 +2608,10 @@ describe('KannadaOS desktop app', () => {
 
     reviewSession = screen.getByRole('region', { name: /Review Session/i })
     expect(within(reviewSession).getByText(/Type the Kannada for "Hello sir"/i)).toBeInTheDocument()
-    await user.type(within(reviewSession).getByLabelText(/Review Kannada typing answer/i), 'namaskara saar')
+    const reviewTypingInput = within(reviewSession).getByLabelText(/Review Kannada typing answer/i)
+    await user.type(reviewTypingInput, 'namaskara saar')
     expect(within(reviewSession).getByText(/ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
-    await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
+    fireEvent.keyDown(reviewTypingInput, { key: 'Enter' })
     expect(within(reviewSession).getByText(/Correct/i)).toBeInTheDocument()
     await user.click(within(reviewSession).getByRole('button', { name: /Finish Review/i }))
 
