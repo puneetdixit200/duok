@@ -2154,7 +2154,10 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /practice/i }))
     const flashcard = screen.getByRole('button', { name: /^English: need to go\s+ಹೋಗಬೇಕು\s+Say: hogbeku/i })
+    const flashcardStack = flashcard.closest('.flashcard-stack') as HTMLElement
     expect(within(flashcard).getByText(/Context: Core travel word for autos, buses, and directions/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Flashcard rating/i)).not.toBeInTheDocument()
+    expect(within(flashcardStack).queryByText(/Strength 20%/i)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^Play Audio$/i }))
     expect(screen.getByText(/Playing flashcard audio: hogbeku/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /^English: need to go\s+ಹೋಗಬೇಕು\s+Say: hogbeku/i }))
@@ -2169,7 +2172,9 @@ describe('KannadaOS desktop app', () => {
     expect(within(ratingRow).getByRole('button', { name: /^Okay$/i })).toHaveTextContent('🤷Okay')
     expect(within(ratingRow).getByRole('button', { name: /^Easy$/i })).toHaveTextContent('✅Easy')
     await user.click(screen.getByRole('button', { name: /^Easy$/i }))
-    expect(screen.getByText(/Strength 40%/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Flashcard rating/i)).not.toBeInTheDocument()
+    await user.click(flashcard)
+    expect(within(flashcardStack).getByText(/Strength 40%/i)).toBeInTheDocument()
 
     const pronunciationShortcut = screen.getByLabelText(/Pronunciation Lab shortcut/i)
     expect(within(pronunciationShortcut).getByRole('button', { name: /Open Pronunciation Lab/i })).toBeInTheDocument()

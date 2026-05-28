@@ -4466,27 +4466,31 @@ function App() {
                 Play Audio
               </button>
               {isFlashcardAudioStatus(audioStatus) && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
-              <div className="review-rating-row" aria-label="Flashcard rating">
-                {[
-                  ['hard', 'Hard', '❌'],
-                  ['okay', 'Okay', '🤷'],
-                  ['easy', 'Easy', '✅'],
-                ].map(([rating, label, icon]) => (
-                  <button
-                    aria-label={label}
-                    className="secondary-action compact-action rating-action"
-                    key={rating}
-                    onClick={() => rateFlashcard(card.id, rating as ReviewRating)}
-                    type="button"
-                  >
-                    <span aria-hidden="true">{icon}</span>
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-              <small className="review-strength">
-                Strength {Math.round((cardReview?.strength ?? 0.2) * 100)}%
-              </small>
+              {flashcardBack && (
+                <>
+                  <div className="review-rating-row" aria-label="Flashcard rating">
+                    {[
+                      ['hard', 'Hard', '❌'],
+                      ['okay', 'Okay', '🤷'],
+                      ['easy', 'Easy', '✅'],
+                    ].map(([rating, label, icon]) => (
+                      <button
+                        aria-label={label}
+                        className="secondary-action compact-action rating-action"
+                        key={rating}
+                        onClick={() => rateFlashcard(card.id, rating as ReviewRating)}
+                        type="button"
+                      >
+                        <span aria-hidden="true">{icon}</span>
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <small className="review-strength">
+                    Strength {Math.round((cardReview?.strength ?? 0.2) * 100)}%
+                  </small>
+                </>
+              )}
             </div>
             <div className="practice-stack">
               <article className="accent-card saffron">
