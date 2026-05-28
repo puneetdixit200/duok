@@ -1843,7 +1843,7 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       symbol: symbols[0],
       answer: symbols[0].transliteration,
       options: makeScriptSoundOptions(symbols[0], symbols),
-      xp: 3,
+      xp: 4,
     }),
     scriptExercise({
       lessonId,
@@ -1873,7 +1873,7 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       symbol: getScriptSymbolAt(symbols, 4),
       answer: getScriptSymbolAt(symbols, 4).transliteration,
       options: makeScriptSoundOptions(getScriptSymbolAt(symbols, 4), symbols),
-      xp: 3,
+      xp: 4,
     }),
     scriptExercise({
       lessonId,
@@ -1890,15 +1890,16 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
 
   for (let index = exercises.length; index < targetCount; index += 1) {
     const symbol = getScriptSymbolAt(symbols, index)
+    const type = index % 2 === 0 ? 'translate' : 'listening'
     exercises.push(scriptExercise({
       lessonId,
       index: index + 1,
-      type: index % 2 === 0 ? 'translate' : 'listening',
-      prompt: index % 2 === 0 ? `Which ${symbolLabel} makes the "${symbol.transliteration}" sound?` : `Which ${symbolLabel} did you hear?`,
+      type,
+      prompt: type === 'translate' ? `Which ${symbolLabel} makes the "${symbol.transliteration}" sound?` : `Which ${symbolLabel} did you hear?`,
       symbol,
       answer: symbol.kannada,
       options: makeScriptLetterOptions(symbol, symbols),
-      xp: 2,
+      xp: type === 'translate' ? 2 : 3,
     }))
   }
 

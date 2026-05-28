@@ -586,6 +586,26 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(new Set(getAllLessonExercises([scriptUnit]).flatMap((exercise) => exercise.vocabularyIds)).size).toBeGreaterThanOrEqual(49)
   })
 
+  it('keeps exercise XP aligned with the frontend spec reward table', () => {
+    const expectedXpByType = {
+      translate: 2,
+      arrange: 3,
+      fillBlank: 2,
+      listening: 3,
+      speaking: 4,
+      typeKannada: 4,
+      dialogue: 3,
+    } as const
+
+    for (const exercise of getAllLessonExercises([...coreCurriculumUnits, getScriptCurriculumUnit()])) {
+      if (exercise.type === 'matchPairs') {
+        expect(exercise.xp, exercise.id).toBe(exercise.answer.split(';').filter(Boolean).length)
+      } else {
+        expect(exercise.xp, exercise.id).toBe(expectedXpByType[exercise.type])
+      }
+    }
+  })
+
   it('builds Kannada Script Academy lessons from script-specific drill types', () => {
     const scriptUnit = getScriptCurriculumUnit()
     const vowelsPartOne = scriptUnit.lessons.find((lesson) => lesson.title === 'Vowels Part 1')!
