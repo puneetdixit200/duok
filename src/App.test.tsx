@@ -1455,7 +1455,9 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     expect(screen.getByText('dialogue')).toBeInTheDocument()
-    expect(screen.getByText(/Reply to the line/i)).toBeInTheDocument()
+    expect(screen.getByText(/Complete the conversation/i)).toBeInTheDocument()
+    expect(screen.getByText(/Speaker says/i)).toBeInTheDocument()
+    expect(screen.getByText(/You reply/i)).toBeInTheDocument()
     expect(screen.getAllByLabelText(/^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira$/i).length).toBeGreaterThanOrEqual(1)
 
     const correctReply = screen.getByRole('button', {

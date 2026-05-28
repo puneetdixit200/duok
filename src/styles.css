@@ -2787,7 +2787,33 @@ h2 {
 }
 
 .dialogue-card {
+  justify-items: stretch;
   border-color: var(--color-accent-gold);
+}
+
+.dialogue-line,
+.dialogue-reply-prompt {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.dialogue-line > span,
+.dialogue-reply-prompt small {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.dialogue-reply-prompt {
+  margin-top: -4px;
+  text-align: center;
+}
+
+.dialogue-reply-prompt strong {
+  color: var(--color-accent-gold);
+  font-size: 1.125rem;
 }
 
 @keyframes pop {

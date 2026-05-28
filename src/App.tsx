@@ -5134,7 +5134,6 @@ function App() {
     }
 
     const nextLesson = getNextAvailableLesson(coreCurriculumUnits, progress) ?? coreCurriculumUnits[0].lessons[0]
-    const unlockedUnitIds = new Set(getUnlockedCurriculumUnits(allCurriculumUnits, progress).map((unit) => unit.id))
     const nextUnit =
       coreCurriculumUnits.find((unit) => unit.lessons.some((lesson) => lesson.id === nextLesson.id)) ??
       coreCurriculumUnits[0]
@@ -5349,40 +5348,6 @@ function App() {
               Chat
             </button>
           </div>
-        </section>
-        <section className="level-map expanded" aria-label="Curriculum map">
-          {allCurriculumUnits.map((unit, mapUnitIndex) => (
-            <article
-              className={unlockedUnitIds.has(unit.id) ? 'map-node unit-node current' : 'map-node unit-node locked'}
-              key={unit.id}
-            >
-              {unit.optional ? (
-                <ReadableKannadaMark className="script-unit-mark" english="Kannada letter a" text="ಅ" transliteration="a" />
-              ) : (
-                <span>{unlockedUnitIds.has(unit.id) ? '★' : 'lock'}</span>
-              )}
-              <strong>{unit.optional ? `Optional: ${unit.title}` : unit.title}</strong>
-              <small>{unit.description}</small>
-              <div className="lesson-dot-row">
-                {unit.lessons.map((lesson, unitLessonIndex) => {
-                  const lessonProgress = getLessonProgressSummary(progress, lesson.id)
-                  const unlocked = unit.optional || isLessonUnlocked(lesson.id, progress)
-                  return (
-                    <button
-                      aria-label={`Curriculum ${mapUnitIndex + 1} lesson ${unitLessonIndex + 1} ${lessonProgress.masteryLevel} crowns`}
-                      className={lessonProgress.completed ? 'lesson-dot done' : unlocked ? 'lesson-dot current' : 'lesson-dot locked'}
-                      disabled={!unlocked}
-                      key={lesson.id}
-                      onClick={() => openUnitLesson(unit, lesson, unitLessonIndex)}
-                      type="button"
-                    >
-                      {lessonProgress.masteryLevel || (unlocked ? '•' : 'x')}
-                    </button>
-                  )
-                })}
-              </div>
-            </article>
-          ))}
         </section>
       </section>
     )
@@ -5634,12 +5599,19 @@ function App() {
       return (
         <>
           <div className="phrase-card dialogue-card">
-            <small>Reply to the line</small>
-            <KannadaStrong text={exercise.kannada} context={exercise} />
-            <SubtitleLines text={exercise.kannada} context={exercise} />
+            <small>Complete the conversation</small>
+            <div className="dialogue-line">
+              <span>Speaker says</span>
+              <KannadaStrong text={exercise.kannada} context={exercise} />
+              <SubtitleLines text={exercise.kannada} context={exercise} />
+            </div>
             <button aria-keyshortcuts={lessonReplayAudioShortcuts} className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
             </button>
+          </div>
+          <div className="dialogue-reply-prompt">
+            <strong>You reply</strong>
+            <small>Pick the best response for this situation.</small>
           </div>
           {renderOptions(exercise)}
           {audioStatus && <p role="status"><ReadableStatusText text={audioStatus} context={exercise} /></p>}

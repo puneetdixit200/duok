@@ -84,6 +84,12 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toContain('.lesson-crown-rating')
   })
 
+  it('styles dialogue exercises as readable conversation turns', () => {
+    expect(styles).toMatch(/\.dialogue-card\s*{[^}]*justify-items:\s*stretch/s)
+    expect(styles).toContain('.dialogue-line')
+    expect(styles).toContain('.dialogue-reply-prompt')
+  })
+
   it('uses scalable text sizing without viewport-based font scaling', () => {
     expect(styles).not.toMatch(/font-size:\s*[^;]*(?:px|vw)/)
     expect(styles).toMatch(/\.phrase-card strong\s*{[^}]*font-size:\s*2\.5rem/s)
