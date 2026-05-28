@@ -83,6 +83,11 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    expect(screen.getByText('English: Hello')).toBeInTheDocument()
+    expect(screen.getByText('ನಮಸ್ಕಾರ!')).toBeInTheDocument()
+    expect(screen.getByText('Say: namaskara')).toBeInTheDocument()
+    expect(screen.getByText(/Learn Kannada the Bangalore way/i)).toBeInTheDocument()
+
     await user.click(screen.getByRole('button', { name: /get started/i }))
     await user.click(screen.getByRole('button', { name: /moved to bangalore/i }))
     await user.click(screen.getByRole('button', { name: /zero/i }))

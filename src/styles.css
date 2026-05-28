@@ -101,6 +101,38 @@ button:disabled {
   margin-bottom: 18px;
 }
 
+.welcome-phrase {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.welcome-phrase > span[aria-hidden='true'] {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.welcome-phrase .readable-phrase {
+  gap: 4px;
+}
+
+.welcome-phrase .readable-phrase-english {
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.welcome-phrase .readable-phrase [lang='kn'] {
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.welcome-phrase .readable-phrase .romanization,
+.welcome-phrase .readable-phrase-context {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
 .mark-subtitles {
   display: grid;
   justify-items: center;

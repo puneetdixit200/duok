@@ -84,6 +84,12 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toContain('.lesson-crown-rating')
   })
 
+  it('styles the English-readable onboarding welcome phrase', () => {
+    expect(styles).toMatch(/\.welcome-phrase\s*{[^}]*display:\s*flex/s)
+    expect(styles).toMatch(/\.welcome-phrase \.readable-phrase-english\s*{[^}]*font-size:\s*1\.5rem/s)
+    expect(styles).toMatch(/\.welcome-phrase \.readable-phrase \[lang='kn'\]\s*{[^}]*font-size:\s*1\.25rem/s)
+  })
+
   it('styles profile achievement trophy and state rows', () => {
     expect(styles).toMatch(/\.achievement-card-header\s*{[^}]*display:\s*grid/s)
     expect(styles).toMatch(/\.achievement-trophy\s*{[^}]*font-size:\s*1\.25rem/s)

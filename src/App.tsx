@@ -3322,6 +3322,18 @@ function App() {
           {onboardingStep === 'welcome' && (
             <>
               <p className="eyebrow">Offline Kannada AI teacher</p>
+              <div className="welcome-phrase">
+                <span aria-hidden="true">🇮🇳</span>
+                <EnglishFirstKannadaText
+                  phrase={{
+                    english: 'Hello',
+                    kannada: 'ನಮಸ್ಕಾರ!',
+                    transliteration: 'namaskara',
+                    context: 'Learn Kannada the Bangalore way.',
+                  }}
+                  showContext
+                />
+              </div>
               <h1 id="onboarding-title">KannadaOS</h1>
               <p className="lead">
                 Real Bangalore Kannada for buses, autos, darshinis, offices, and daily life.
