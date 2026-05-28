@@ -191,6 +191,7 @@ const defaultReminderPreference: ReminderPreference = {
   time: '7:30 PM',
   permission: 'default',
 }
+const reminderTimeOptions = ['7:30 PM', '8:30 PM', '9:30 PM'] as const
 const defaultLearnerProfile: LearnerProfile = {
   motivation: 'moved-to-bangalore',
   startingLevel: 'zero',
@@ -4965,22 +4966,24 @@ function App() {
                       : 'Alerts waiting for permission'}
                 </small>
               </div>
-              <div className="reminder-actions">
+              <div className="reminder-actions reminder-time-action">
                 <SettingsSwitch
                   checked={reminder.enabled}
                   label="Daily Reminders"
                   onClick={toggleDailyReminder}
                 />
-                {['7:30 PM', '8:30 PM', '9:30 PM'].map((time) => (
-                  <button
-                    className={reminder.time === time ? 'selector-chip compact active' : 'selector-chip compact'}
-                    key={time}
-                    onClick={() => setReminderTime(time)}
-                    type="button"
+                <label className="settings-select-field">
+                  <span>Reminder Time</span>
+                  <select
+                    aria-label="Reminder Time"
+                    onChange={(event) => setReminderTime(event.target.value)}
+                    value={reminder.time}
                   >
-                    {time}
-                  </button>
-                ))}
+                    {reminderTimeOptions.map((time) => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </label>
                 <button className="secondary-action" onClick={() => void allowReminderAlerts()} type="button">
                   Allow Reminder Alerts
                 </button>

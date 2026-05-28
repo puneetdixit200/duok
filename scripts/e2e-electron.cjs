@@ -112,7 +112,7 @@ async function main() {
     await page.getByText(/Story Starter/i).waitFor()
     await page.getByText(/6\/6 lesson exercises/i).waitFor()
     await page.getByRole('switch', { name: /Daily Reminders: Off/i }).click()
-    await page.getByRole('button', { name: /8:30 PM/i }).click()
+    await page.getByRole('combobox', { name: /Reminder Time/i }).selectOption('8:30 PM')
     await page.getByRole('button', { name: /allow reminder alerts/i }).click()
     await page.getByText(/Reminder On - 8:30 PM/i).waitFor()
     await page.getByText(/Alerts allowed/i).waitFor()

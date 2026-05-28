@@ -2162,6 +2162,10 @@ h2 {
   justify-content: end;
 }
 
+.reminder-actions.reminder-time-action {
+  grid-template-columns: minmax(180px, 240px) minmax(180px, 240px) minmax(180px, 240px);
+}
+
 .reminder-actions.goal-action {
   grid-template-columns: minmax(220px, 360px);
   justify-content: end;

@@ -2346,6 +2346,10 @@ describe('KannadaOS desktop app', () => {
     const settings = screen.getByRole('region', { name: /^Settings$/i })
     expect(within(settings).getByRole('heading', { name: /^Daily Reminders$/i })).toBeInTheDocument()
     expect(within(settings).getByRole('switch', { name: /Daily Reminders: Off/i })).toHaveAttribute('aria-checked', 'false')
+    const reminderTimeSelect = within(settings).getByRole('combobox', { name: /^Reminder Time$/i })
+    expect(reminderTimeSelect).toHaveValue('7:30 PM')
+    expect(within(reminderTimeSelect).getByRole('option', { name: /^8:30 PM$/i })).toBeInTheDocument()
+    expect(within(reminderTimeSelect).getByRole('option', { name: /^9:30 PM$/i })).toBeInTheDocument()
     expect(within(settings).getByRole('heading', { name: /^Daily XP Goal$/i })).toBeInTheDocument()
     expect(within(settings).getByText(/Regular - 10 min \/ day - 10 XP/i)).toBeInTheDocument()
     const dailyGoalSelect = within(settings).getByRole('combobox', { name: /^Daily XP Goal$/i })
@@ -2468,7 +2472,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Reminder Off/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('switch', { name: /Daily Reminders: Off/i }))
-    await user.click(screen.getByRole('button', { name: /8:30 PM/i }))
+    await user.selectOptions(screen.getByRole('combobox', { name: /^Reminder Time$/i }), '8:30 PM')
     await user.click(screen.getByRole('button', { name: /allow reminder alerts/i }))
 
     expect(NotificationMock.requestPermission).toHaveBeenCalledOnce()
@@ -2483,6 +2487,7 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: /Daily Reminders: On/i })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('combobox', { name: /^Reminder Time$/i })).toHaveValue('8:30 PM')
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(/Next reminder scheduled for/i)
   })
