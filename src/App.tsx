@@ -4071,6 +4071,7 @@ function App() {
             <button
               aria-keyshortcuts={microphoneShortcuts}
               aria-label={recordingTarget === 'chat' ? 'Stop recording' : 'Record voice'}
+              aria-pressed={recordingTarget === 'chat'}
               className={recordingTarget === 'chat' ? 'voice-action recording' : 'voice-action'}
               onClick={recordVoiceInput}
               title={recordingTarget === 'chat' ? 'Stop recording' : 'Record voice'}

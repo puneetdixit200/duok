@@ -2032,7 +2032,9 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Put the destination first/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /record voice/i }))
-    expect(screen.getByRole('button', { name: /stop recording/i })).toBeInTheDocument()
+    const activeVoiceButton = screen.getByRole('button', { name: /stop recording/i })
+    expect(activeVoiceButton).toHaveClass('recording')
+    expect(activeVoiceButton).toHaveAttribute('aria-pressed', 'true')
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
 
     expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()

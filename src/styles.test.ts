@@ -52,6 +52,7 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/\.flashcard:hover\s*{[^}]*transform:\s*rotateY/s)
     expect(styles).toMatch(/\.speaker-button\s*{[^}]*animation:\s*pulseGlow/s)
     expect(styles).toMatch(/\.speaker-button\.recording\s*{[^}]*animation:\s*recordingPulse/s)
+    expect(styles).toMatch(/\.voice-action\.recording\s*{[^}]*animation:\s*recordingPulse/s)
     expect(styles).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/)
   })
 
