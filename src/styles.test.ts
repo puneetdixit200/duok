@@ -60,6 +60,13 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/:focus-visible\s*{[^}]*outline-offset:\s*3px/s)
   })
 
+  it('styles dashboard progress and empty-heart states from the frontend spec', () => {
+    expect(styles).toMatch(/\.daily-progress-ring\s*{[^}]*background:\s*conic-gradient\(var\(--color-primary\)/s)
+    expect(styles).toMatch(/\.daily-progress-track span\s*{[^}]*background:\s*linear-gradient\(90deg,\s*var\(--color-primary\)/s)
+    expect(styles).toMatch(/\.top-counters \.heart-counter\s*{[^}]*color:\s*var\(--color-error\)/s)
+    expect(styles).toMatch(/\.top-counters \.heart-counter\.empty\s*{[^}]*opacity:\s*0\.56/s)
+  })
+
   it('uses scalable text sizing without viewport-based font scaling', () => {
     expect(styles).not.toMatch(/font-size:\s*[^;]*(?:px|vw)/)
     expect(styles).toMatch(/\.phrase-card strong\s*{[^}]*font-size:\s*2\.5rem/s)

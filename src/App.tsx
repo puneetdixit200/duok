@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   bangaloreScenarios,
   coreCurriculumUnits,
@@ -4999,6 +4999,10 @@ function App() {
       coreCurriculumUnits[0]
     const dailyGoalXp = learnerProfile.dailyGoalXp
     const dailyQuests = getDailyQuests(progress, new Date().toISOString(), dailyGoalXp)
+    const cappedDailyXp = Math.min(dailyGoalXp, progress.dailyXp)
+    const dailyProgressPercent = Math.min(100, Math.round((cappedDailyXp / Math.max(1, dailyGoalXp)) * 100))
+    const dailyProgressStyle = { '--daily-progress-percent': `${dailyProgressPercent}%` } as CSSProperties
+    const heartCounterClass = progress.hearts <= 0 ? 'resource-counter heart-counter empty' : 'resource-counter heart-counter'
     const nextHeartRecoveryText = progress.hearts < maxHearts
       ? formatNextHeartRecovery(progress.lastHeartLostAt)
       : null
@@ -5012,7 +5016,12 @@ function App() {
           </div>
           <div className="top-counters" aria-label="resources">
             <span>{formatStreakCounter(progress.streakDays)}</span>
-            <span aria-label="Hearts">❤️ {progress.hearts}</span>
+            <span
+              aria-label={progress.hearts <= 0 ? 'Hearts: 0, empty' : `Hearts: ${progress.hearts}`}
+              className={heartCounterClass}
+            >
+              ❤️ {progress.hearts}
+            </span>
             <span
               aria-label="Gems"
               className={claimedQuestId ? 'resource-counter gem-counter rolling' : 'resource-counter gem-counter'}
@@ -5022,13 +5031,33 @@ function App() {
             </span>
           </div>
         </header>
-        <section className="streak-banner">
-          <div>
+        <section className="daily-progress-card" aria-label="Daily Progress">
+          <div className="daily-progress-copy">
+            <p className="eyebrow">Daily Progress</p>
             <strong>{formatStreakCounter(progress.streakDays)}</strong>
             <p>Keep it up. {Math.max(0, dailyGoalXp - progress.dailyXp)} XP to hit today&apos;s goal.</p>
+            <div
+              aria-label={`Daily progress track: ${cappedDailyXp} of ${dailyGoalXp} XP`}
+              aria-valuemax={dailyGoalXp}
+              aria-valuemin={0}
+              aria-valuenow={cappedDailyXp}
+              className="daily-progress-track"
+              role="progressbar"
+            >
+              <span style={{ width: `${dailyProgressPercent}%` }} />
+            </div>
           </div>
-          <div className="ring" aria-label={`${progress.dailyXp} of ${dailyGoalXp} XP`}>
-            {Math.min(dailyGoalXp, progress.dailyXp)}/{dailyGoalXp}
+          <div
+            aria-label={`XP ring: ${cappedDailyXp} of ${dailyGoalXp} XP, ${dailyProgressPercent}% complete`}
+            aria-valuemax={dailyGoalXp}
+            aria-valuemin={0}
+            aria-valuenow={cappedDailyXp}
+            className="daily-progress-ring"
+            role="progressbar"
+            style={dailyProgressStyle}
+          >
+            <span>{cappedDailyXp}/{dailyGoalXp}</span>
+            <small>XP</small>
           </div>
         </section>
         {progress.hearts <= 0 && (

@@ -100,10 +100,37 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getAllByText(/^Universal polite greeting$/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/^English: Hello sir$/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByLabelText(/Daily quests/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/0 of 20 XP/i)).toHaveTextContent('0/20')
+    expect(screen.getByRole('progressbar', { name: /XP ring: 0 of 20 XP/i })).toHaveTextContent('0/20')
     expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"dailyGoalXp":20')
     expect(localStorage.getItem('kannadaos:sound-prefs')).toContain('"autoPlayAudio":true')
     expect(screen.getByRole('button', { name: /learn/i })).toBeInTheDocument()
+  })
+
+  it('renders the dashboard daily progress ring, track, and empty heart state', async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:learner-profile', JSON.stringify({
+      motivation: 'moved-to-bangalore',
+      startingLevel: 'zero',
+      dailyGoalXp: 20,
+      onboardedAt: '2026-05-27T08:00:00.000Z',
+    }))
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      dailyXp: 12,
+      hearts: 0,
+      lastPracticeDate: today,
+      lastHeartLostAt: new Date().toISOString(),
+    }))
+
+    await renderApp()
+
+    const dailyProgress = screen.getByRole('region', { name: /Daily Progress/i })
+    expect(within(dailyProgress).getByText(/^Daily Progress$/i)).toBeInTheDocument()
+    expect(within(dailyProgress).getByRole('progressbar', { name: /XP ring: 12 of 20 XP, 60% complete/i })).toHaveTextContent('12/20')
+    expect(within(dailyProgress).getByRole('progressbar', { name: /Daily progress track: 12 of 20 XP/i })).toHaveAttribute('aria-valuenow', '12')
+    expect(within(dailyProgress).getByRole('progressbar', { name: /Daily progress track: 12 of 20 XP/i })).toHaveAttribute('aria-valuemax', '20')
+    expect(screen.getByLabelText(/Hearts: 0, empty/i)).toHaveClass('empty')
   })
 
   it('offers every spec onboarding motivation and starting-level choice', async () => {
