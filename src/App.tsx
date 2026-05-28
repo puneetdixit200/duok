@@ -7,7 +7,6 @@ import {
   getPhraseByVocabularyId,
   getScriptCurriculumUnit,
   getStoryLockState,
-  getLevelOneCurriculum,
   getLessonById,
   getUnlockedCurriculumUnits,
   isLessonUnlocked,
@@ -1419,7 +1418,6 @@ function getWeakSkillPracticeVocabularyIds(
 }
 
 function App() {
-  const curriculum = useMemo(() => getLevelOneCurriculum(), [])
   const allCurriculumUnits = useMemo(() => [getScriptCurriculumUnit(), ...coreCurriculumUnits], [])
   const [screen, setScreen] = useState<Screen>(() =>
     localStorage.getItem(onboardedKey) === 'true' ? 'app' : 'onboarding',
@@ -5131,6 +5129,12 @@ function App() {
     const nextUnit =
       coreCurriculumUnits.find((unit) => unit.lessons.some((lesson) => lesson.id === nextLesson.id)) ??
       coreCurriculumUnits[0]
+    const nextUnitIndex = coreCurriculumUnits.findIndex((unit) => unit.id === nextUnit.id)
+    const nextLessonIndex = nextUnit.lessons.findIndex((lesson) => lesson.id === nextLesson.id)
+    const nextLessonProgress = getLessonProgressSummary(progress, nextLesson.id)
+    const nextLessonMastery = formatCrownRating(nextLessonProgress.masteryLevel)
+    const nextUnitNumber = nextUnitIndex >= 0 ? nextUnitIndex + 1 : 1
+    const nextLessonNumber = nextLessonIndex >= 0 ? nextLessonIndex + 1 : 1
     const dailyGoalXp = learnerProfile.dailyGoalXp
     const dailyQuests = getDailyQuests(progress, new Date().toISOString(), dailyGoalXp)
     const cappedDailyXp = Math.min(dailyGoalXp, progress.dailyXp)
@@ -5229,11 +5233,18 @@ function App() {
           type="button"
         >
           <span>Continue: {nextLesson.title}</span>
+          <small>{nextLesson.objective}</small>
           <small>
-            {nextUnit.title} - {nextLesson.objective} - {curriculum.phrases.length} survival phrases loaded
+            Lesson {nextLessonNumber} of {nextUnit.lessons.length} - Unit {nextUnitNumber} - {nextLessonMastery} mastery
           </small>
-          <i>
-            <b style={{ width: `${Math.max(12, getLessonProgressSummary(progress, nextLesson.id).masteryLevel * 20)}%` }} />
+          <i
+            aria-label={`${nextLesson.title} mastery: ${nextLessonProgress.masteryLevel} of 5 crowns`}
+            aria-valuemax={5}
+            aria-valuemin={0}
+            aria-valuenow={nextLessonProgress.masteryLevel}
+            role="progressbar"
+          >
+            <b style={{ width: `${Math.max(12, nextLessonProgress.masteryLevel * 20)}%` }} />
           </i>
         </button>
         <section className="tips-card" aria-labelledby="unit-tips-title">

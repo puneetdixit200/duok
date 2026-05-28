@@ -93,7 +93,12 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /KannadaOS/i })).toBeInTheDocument()
     expect(screen.getByText(/Learn Kannada/i)).toBeInTheDocument()
     expect(screen.getAllByText(/🔥 Start a streak!/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByRole('button', { name: /Continue: Hello & Thanks/i })).toBeInTheDocument()
+    const continueCard = screen.getByRole('button', { name: /Continue: Hello & Thanks/i })
+    expect(continueCard).toBeInTheDocument()
+    expect(within(continueCard).getByText(/^Greet, thank, and close a simple conversation\.$/i)).toBeInTheDocument()
+    expect(within(continueCard).getByText(/Lesson 1 of 5 - Unit 1 - ☆☆☆☆☆ mastery/i)).toBeInTheDocument()
+    expect(within(continueCard).getByRole('progressbar', { name: /Hello & Thanks mastery: 0 of 5 crowns/i }))
+      .toHaveAttribute('aria-valuenow', '0')
     expect(screen.getByRole('heading', { name: /Greetings & Basics/i })).toBeInTheDocument()
     expect(screen.getAllByText(/^Universal polite greeting$/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/^English: Hello sir$/i).length).toBeGreaterThanOrEqual(1)
@@ -102,6 +107,21 @@ describe('KannadaOS desktop app', () => {
     expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"dailyGoalXp":20')
     expect(localStorage.getItem('kannadaos:sound-prefs')).toContain('"autoPlayAudio":true')
     expect(screen.getByRole('button', { name: /learn/i })).toBeInTheDocument()
+  })
+
+  it('shows continue card lesson position, unit number, and mastery', async () => {
+    const firstLesson = coreCurriculumUnits[0].lessons[0]
+    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+
+    render(<App />)
+
+    const continueCard = screen.getByRole('button', { name: /Continue: How Are You/i })
+    expect(within(continueCard).getByText(/^Ask how someone is and answer politely\.$/i)).toBeInTheDocument()
+    expect(within(continueCard).getByText(/Lesson 2 of 5 - Unit 1 - ☆☆☆☆☆ mastery/i)).toBeInTheDocument()
+    expect(within(continueCard).getByRole('progressbar', { name: /How Are You mastery: 0 of 5 crowns/i }))
+      .toHaveAttribute('aria-valuenow', '0')
   })
 
   it('renders the dashboard daily progress ring, track, and empty heart state', async () => {
