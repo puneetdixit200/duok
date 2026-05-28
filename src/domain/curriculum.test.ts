@@ -579,7 +579,7 @@ describe('KannadaOS level 1 curriculum', () => {
     ])
     expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'consonant').length).toBeGreaterThanOrEqual(34)
     expect(scriptUnit.scriptSymbols.filter((symbol) => symbol.kind === 'combination').map((symbol) => symbol.kannada)).toEqual([
-      'ಕಾ', 'ಕಿ', 'ಕೀ', 'ಕು', 'ಕೂ', 'ಕೆ', 'ಕೇ', 'ಕೈ', 'ಕೊ', 'ಕೋ', 'ಕೌ',
+      'ಾ', 'ಿ', 'ೀ', 'ು', 'ೂ', 'ೆ', 'ೇ', 'ೈ', 'ೊ', 'ೋ', 'ೌ',
     ])
     expect([...coreCurriculumUnits, scriptUnit].reduce((total, unit) => total + unit.lessons.length, 0)).toBe(49)
     expect(getAllLessonExercises([...coreCurriculumUnits, scriptUnit])).toHaveLength(332)
@@ -602,6 +602,25 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(new Set(vowelsPartTwo.exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBe(6)
     expect(new Set(labialsAndOthers.exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBe(10)
     expect(new Set(vowelSigns.exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBe(10)
+    expect(vowelSigns.exercises).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'translate',
+        prompt: 'Which vowel sign makes the "aa" sound?',
+        answer: 'ಾ',
+        options: expect.arrayContaining(['ಾ', 'ಿ', 'ೀ', 'ು']),
+      }),
+      expect.objectContaining({
+        type: 'listening',
+        prompt: 'Which vowel sign did you hear?',
+        answer: 'ಿ',
+        transliteration: 'i',
+      }),
+      expect.objectContaining({
+        type: 'matchPairs',
+        prompt: 'Match script to sound:',
+        answer: expect.stringContaining('ಾ=aa'),
+      }),
+    ]))
     expect(vowelsPartOne.exercises).toEqual(expect.arrayContaining([
       expect.objectContaining({
         type: 'translate',

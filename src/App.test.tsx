@@ -554,6 +554,32 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /^English: Sounds like ii\s+ಈ\s+Say: ii/i })).toBeInTheDocument()
   })
 
+  it('teaches standalone matra signs in the Vowel Signs script lesson', async () => {
+    const user = userEvent.setup()
+    const scriptUnit = getScriptCurriculumUnit()
+    const progress = scriptUnit.lessons.slice(0, 7).reduce(
+      (state, lesson, index) => completeLessonProgress(state, lesson.id, `2026-05-27T09:0${index}:00.000Z`),
+      createInitialProgress(),
+    )
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+    localStorage.setItem('kannadaos:seen-unit-tips', JSON.stringify([scriptUnit.id]))
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /learn/i }))
+    await user.click(screen.getByRole('button', { name: /Vowel Signs/i }))
+
+    expect(screen.getByRole('heading', { name: /Which vowel sign makes the "aa" sound/i })).toBeInTheDocument()
+    const aaSign = /^English: Sounds like aa\s+ಾ\s+Say: aa$/i
+    expect(screen.getByRole('button', { name: aaSign })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^English: Sounds like i\s+ಿ\s+Say: i$/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: aaSign }))
+    await user.click(screen.getByRole('button', { name: /check/i }))
+
+    expect(screen.getByText(/Correct/i)).toBeInTheDocument()
+  })
+
   it('keeps English subtitles on every Unit 2 number match choice', async () => {
     const user = userEvent.setup()
     const firstThreeLessons = coreCurriculumUnits[0].lessons.slice(0, 3)

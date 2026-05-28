@@ -1731,8 +1731,8 @@ function buildScriptUnit(): CurriculumUnit {
       ['ವ', 'va'], ['ಶ', 'sha'], ['ಷ', 'ssa'], ['ಸ', 'sa'], ['ಹ', 'ha'], ['ಳ', 'la'],
     ].map(([kannada, transliteration]) => scriptSymbol('consonant', kannada, transliteration)),
     ...[
-      ['ಕಾ', 'kaa'], ['ಕಿ', 'ki'], ['ಕೀ', 'kii'], ['ಕು', 'ku'], ['ಕೂ', 'kuu'], ['ಕೆ', 'ke'], ['ಕೇ', 'kee'],
-      ['ಕೈ', 'kai'], ['ಕೊ', 'ko'], ['ಕೋ', 'koo'], ['ಕೌ', 'kau'],
+      ['ಾ', 'aa'], ['ಿ', 'i'], ['ೀ', 'ii'], ['ು', 'u'], ['ೂ', 'uu'], ['ೆ', 'e'], ['ೇ', 'ee'],
+      ['ೈ', 'ai'], ['ೊ', 'o'], ['ೋ', 'oo'], ['ೌ', 'au'],
     ].map(([kannada, transliteration]) => scriptSymbol('combination', kannada, transliteration)),
   ]
   const vowels = scriptSymbols.filter((symbol) => symbol.kind === 'vowel')
@@ -1801,13 +1801,14 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
     )
   }
 
+  const symbolLabel = title === 'Vowel Signs' ? 'vowel sign' : 'letter'
   const targetCount = title === 'Consonants: Labials + Others' || title === 'Vowel Signs' ? 10 : 8
   const exercises: LessonExercise[] = [
     scriptExercise({
       lessonId,
       index: 1,
       type: 'translate',
-      prompt: `Which letter makes the "${symbols[0].transliteration}" sound?`,
+      prompt: `Which ${symbolLabel} makes the "${symbols[0].transliteration}" sound?`,
       symbol: symbols[0],
       answer: symbols[0].kannada,
       options: makeScriptLetterOptions(symbols[0], symbols),
@@ -1817,7 +1818,7 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       lessonId,
       index: 2,
       type: 'listening',
-      prompt: 'Which letter did you hear?',
+      prompt: `Which ${symbolLabel} did you hear?`,
       symbol: symbols[1] ?? symbols[0],
       answer: (symbols[1] ?? symbols[0]).kannada,
       options: makeScriptLetterOptions(symbols[1] ?? symbols[0], symbols),
@@ -1848,7 +1849,7 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       lessonId,
       index: 5,
       type: 'translate',
-      prompt: `Which letter makes the "${(symbols[2] ?? symbols[0]).transliteration}" sound?`,
+      prompt: `Which ${symbolLabel} makes the "${(symbols[2] ?? symbols[0]).transliteration}" sound?`,
       symbol: symbols[2] ?? symbols[0],
       answer: (symbols[2] ?? symbols[0]).kannada,
       options: makeScriptLetterOptions(symbols[2] ?? symbols[0], symbols),
@@ -1858,7 +1859,7 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       lessonId,
       index: 6,
       type: 'listening',
-      prompt: 'Which letter did you hear?',
+      prompt: `Which ${symbolLabel} did you hear?`,
       symbol: symbols[3] ?? symbols[0],
       answer: (symbols[3] ?? symbols[0]).kannada,
       options: makeScriptLetterOptions(symbols[3] ?? symbols[0], symbols),
@@ -1893,7 +1894,7 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       lessonId,
       index: index + 1,
       type: index % 2 === 0 ? 'translate' : 'listening',
-      prompt: index % 2 === 0 ? `Which letter makes the "${symbol.transliteration}" sound?` : 'Which letter did you hear?',
+      prompt: index % 2 === 0 ? `Which ${symbolLabel} makes the "${symbol.transliteration}" sound?` : `Which ${symbolLabel} did you hear?`,
       symbol,
       answer: symbol.kannada,
       options: makeScriptLetterOptions(symbol, symbols),
