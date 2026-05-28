@@ -2340,21 +2340,31 @@ function App() {
 
   async function generateAiExercise() {
     const weakArea = Object.keys(progress.weakAreas)[0] ?? 'verbs'
-    const result =
-      aiProviderSettings.activeProvider === 'openrouter' || aiProviderSettings.activeProvider === 'nvidia'
-        ? await generateExerciseWithHostedProvider({
-            hostedChatCompletion: window.kannadaOS?.generateHostedChat,
-            providerSettings: aiProviderSettings,
-            weakArea,
-          })
-        : aiProviderSettings.activeProvider === 'ollama'
-          ? await generateExerciseWithOllama({ weakArea })
-          : await generateExerciseWithLocalPreference(weakArea)
+    const result = await generateExerciseWithPreferredProvider(weakArea)
 
     setGeneratedExercise(formatGeneratedExerciseStatus(result.source, result.exercise))
     setLatestGeneratedExercise(result.exercise)
     setLatestGeneratedExerciseSource(result.source)
     setAiExpansionDeck((current) => [result.exercise, ...current].slice(0, 8))
+  }
+
+  async function generateExerciseWithPreferredProvider(weakArea: string) {
+    if (aiProviderSettings.activeProvider === 'openrouter' || aiProviderSettings.activeProvider === 'nvidia') {
+      return generateExerciseWithHostedProvider({
+        hostedChatCompletion: window.kannadaOS?.generateHostedChat,
+        providerSettings: aiProviderSettings,
+        weakArea,
+      })
+    }
+
+    if (aiProviderSettings.activeProvider === 'ollama') {
+      const ollamaResult = await generateExerciseWithOllama({ weakArea })
+      return ollamaResult.source === 'ollama'
+        ? ollamaResult
+        : generateExerciseWithHostedFallback(weakArea, ollamaResult)
+    }
+
+    return generateExerciseWithLocalPreference(weakArea)
   }
 
   async function generateExerciseWithLocalPreference(weakArea: string) {
@@ -2373,7 +2383,31 @@ function App() {
         })
       : null
 
-    return nativeResult?.source === 'native' ? nativeResult : generateExerciseWithOllama({ weakArea })
+    if (nativeResult?.source === 'native') {
+      return nativeResult
+    }
+
+    const ollamaResult = await generateExerciseWithOllama({ weakArea })
+    return ollamaResult.source === 'ollama'
+      ? ollamaResult
+      : generateExerciseWithHostedFallback(weakArea, ollamaResult)
+  }
+
+  async function generateExerciseWithHostedFallback(
+    weakArea: string,
+    fallbackResult: Awaited<ReturnType<typeof generateExerciseWithOllama>>,
+  ) {
+    const hostedFallbackSettings = getConfiguredHostedExerciseFallbackSettings(aiProviderSettings)
+
+    if (!hostedFallbackSettings) {
+      return fallbackResult
+    }
+
+    return generateExerciseWithHostedProvider({
+      hostedChatCompletion: window.kannadaOS?.generateHostedChat,
+      providerSettings: hostedFallbackSettings,
+      weakArea,
+    })
   }
 
   async function sendChatMessage() {
@@ -5633,6 +5667,20 @@ function formatDailyGoalLabel(goal: number): string {
 
 function formatStreakCounter(streakDays: number): string {
   return streakDays > 0 ? `🔥 ${streakDays}-day streak` : '🔥 Start a streak!'
+}
+
+function getConfiguredHostedExerciseFallbackSettings(settings: AiProviderSettings): AiProviderSettings | null {
+  const openRouterSettings: AiProviderSettings = { ...settings, activeProvider: 'openrouter' }
+  if (isHostedProviderConfigured(openRouterSettings)) {
+    return openRouterSettings
+  }
+
+  const nvidiaSettings: AiProviderSettings = { ...settings, activeProvider: 'nvidia' }
+  if (isHostedProviderConfigured(nvidiaSettings)) {
+    return nvidiaSettings
+  }
+
+  return null
 }
 
 function formatLessonDuration(durationMs: number): string {

@@ -2111,6 +2111,72 @@ describe('KannadaOS desktop app', () => {
     })
   })
 
+  it('falls back from local and Ollama exercise generation to configured hosted AI', async () => {
+    const user = userEvent.setup()
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === 'http://localhost:11434/api/tags') {
+        return { ok: false, json: async () => ({}) }
+      }
+
+      if (url === 'http://localhost:11434/api/generate') {
+        return { ok: false, status: 503, json: async () => ({}) }
+      }
+
+      if (url === 'https://openrouter.ai/api/v1/chat/completions') {
+        return {
+          ok: true,
+          json: async () => ({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    type: 'translate',
+                    prompt: 'Hosted fallback drill',
+                    kannada: 'ನಿಧಾನವಾಗಿ ಹೇಳಿ',
+                    transliteration: 'nidhanavagi heli',
+                    english: 'Please speak slowly',
+                    answer: 'Please speak slowly',
+                    options: ['Please speak slowly', 'Thank you'],
+                    explanation: 'Use this when a conversation is too fast.',
+                  }),
+                },
+              },
+            ],
+          }),
+        }
+      }
+
+      return { ok: false, status: 404, json: async () => ({}) }
+    }) as unknown as typeof fetch
+
+    vi.stubGlobal('fetch', fetchImpl)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:ai-provider', JSON.stringify({
+      activeProvider: 'local',
+      openRouterApiKey: 'sk-or-fallback',
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+    const aiPracticeCard = screen.getByLabelText(/AI practice exercise/i)
+    await user.click(within(aiPracticeCard).getByRole('button', { name: /Generate Practice Exercise/i }))
+
+    expect((await within(aiPracticeCard).findAllByText(/OpenRouter: Hosted fallback drill/i)).length).toBeGreaterThanOrEqual(1)
+    expect(within(aiPracticeCard).getByText('English: Please speak slowly')).toBeInTheDocument()
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'http://localhost:11434/api/generate',
+      expect.objectContaining({ method: 'POST' }),
+    )
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://openrouter.ai/api/v1/chat/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer sk-or-fallback' }),
+      }),
+    )
+  })
+
   it('opens Bangalore scenario details with phrase controls and dialogue practice', async () => {
     const user = userEvent.setup()
     render(<App />)
