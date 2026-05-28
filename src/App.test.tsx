@@ -2382,6 +2382,9 @@ describe('KannadaOS desktop app', () => {
     expect(within(stats).getByLabelText('4h 23m Time')).toBeInTheDocument()
     const achievements = screen.getByLabelText('Achievements')
     expect(within(achievements).getByText('Getting Started')).toBeInTheDocument()
+    const gettingStarted = within(achievements).getByLabelText(/Getting Started: Unlocked - 6\/6 lesson exercises/i)
+    expect(within(gettingStarted).getByText('🏆')).toBeInTheDocument()
+    expect(within(gettingStarted).getByText('✅ Unlocked')).toBeInTheDocument()
     expect(within(achievements).getByText(/6\/6 lesson exercises/i)).toBeInTheDocument()
     expect(within(achievements).getByText('One Week')).toBeInTheDocument()
     expect(within(achievements).getByText(/7\/7 streak days/i)).toBeInTheDocument()
@@ -2399,6 +2402,19 @@ describe('KannadaOS desktop app', () => {
     expect(within(achievements).getByText(/1 unit mastered/i)).toBeInTheDocument()
     expect(within(achievements).getByText('Perfect Lesson')).toBeInTheDocument()
     expect(within(achievements).getByText(/1 perfect lesson/i)).toBeInTheDocument()
+  })
+
+  it('shows locked achievement cards with trophy and checkbox state', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /^Profile$/i }))
+
+    const achievements = screen.getByLabelText('Achievements')
+    const firstWord = within(achievements).getByLabelText(/First Word: Locked - 0 activities/i)
+    expect(within(firstWord).getByText('🏆')).toBeInTheDocument()
+    expect(within(firstWord).getByText('⬜ Locked')).toBeInTheDocument()
   })
 
   it('renders the frontend spec profile settings rows', async () => {

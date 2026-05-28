@@ -5007,11 +5007,17 @@ function App() {
           <div className="achievement-grid" aria-label="Achievements">
             {achievementSummaries.map((achievement) => (
               <article
+                aria-label={`${achievement.name}: ${achievement.unlocked ? 'Unlocked' : 'Locked'} - ${achievement.progressLabel}`}
                 className={achievement.unlocked ? 'achievement-card unlocked' : 'achievement-card'}
                 key={achievement.code}
               >
-                <strong>{achievement.name}</strong>
-                <span>{achievement.unlocked ? 'Unlocked' : 'Locked'}</span>
+                <div className="achievement-card-header">
+                  <span className="achievement-trophy" aria-hidden="true">🏆</span>
+                  <strong>{achievement.name}</strong>
+                  <span className={achievement.unlocked ? 'achievement-state unlocked' : 'achievement-state'}>
+                    {achievement.unlocked ? '✅ Unlocked' : '⬜ Locked'}
+                  </span>
+                </div>
                 <small>{achievement.description}</small>
                 <p>{achievement.progressLabel}</p>
               </article>

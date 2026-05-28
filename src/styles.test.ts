@@ -84,6 +84,12 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toContain('.lesson-crown-rating')
   })
 
+  it('styles profile achievement trophy and state rows', () => {
+    expect(styles).toMatch(/\.achievement-card-header\s*{[^}]*display:\s*grid/s)
+    expect(styles).toMatch(/\.achievement-trophy\s*{[^}]*font-size:\s*1\.25rem/s)
+    expect(styles).toMatch(/\.achievement-state\.unlocked\s*{[^}]*color:\s*var\(--color-primary\)/s)
+  })
+
   it('styles dialogue exercises as readable conversation turns', () => {
     expect(styles).toMatch(/\.dialogue-card\s*{[^}]*justify-items:\s*stretch/s)
     expect(styles).toContain('.dialogue-line')

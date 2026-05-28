@@ -2268,6 +2268,29 @@ h2 {
   background: rgba(255, 107, 44, 0.12);
 }
 
+.achievement-card-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 8px;
+  align-items: center;
+}
+
+.achievement-trophy {
+  grid-row: span 2;
+  font-size: 1.25rem;
+}
+
+.achievement-state {
+  grid-column: 2;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 900;
+}
+
+.achievement-state.unlocked {
+  color: var(--color-primary);
+}
+
 .achievement-card small,
 .achievement-card p {
   margin: 0;
