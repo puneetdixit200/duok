@@ -2467,8 +2467,10 @@ function App() {
         providerSettings: aiProviderSettings,
         learnerText: text,
         scenarioTitle: selectedScenario.title,
+        scenarioSituation: selectedScenario.situation,
         personaName: selectedTutorPersona.name,
         personaStyle: selectedTutorPersona.style,
+        correctionStyle: selectedTutorPersona.correctionStyle,
         usefulPhrases: selectedScenario.usefulPhrases.map((phrase) => `${phrase.kannada} = ${phrase.transliteration} = ${phrase.english}`),
       })
 
@@ -2490,6 +2492,7 @@ function App() {
       const ollamaReply = await generateTutorReplyWithOllama({
         learnerText: text,
         scenarioTitle: selectedScenario.title,
+        scenarioSituation: selectedScenario.situation,
         personaName: selectedTutorPersona.name,
         personaStyle: selectedTutorPersona.style,
         correctionStyle: selectedTutorPersona.correctionStyle,

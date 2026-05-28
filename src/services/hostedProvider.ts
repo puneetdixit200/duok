@@ -43,8 +43,10 @@ interface GenerateHostedTutorOptions {
   providerSettings: AiProviderSettings
   learnerText: string
   scenarioTitle: string
+  scenarioSituation: string
   personaName: string
   personaStyle: string
+  correctionStyle: string
   usefulPhrases: string[]
 }
 
@@ -140,8 +142,10 @@ export async function generateTutorReplyWithHostedProvider({
   providerSettings,
   learnerText,
   scenarioTitle,
+  scenarioSituation,
   personaName,
   personaStyle,
+  correctionStyle,
   usefulPhrases,
 }: GenerateHostedTutorOptions): Promise<HostedChatResult> {
   const connection = getHostedProviderConnection(providerSettings)
@@ -162,14 +166,14 @@ export async function generateTutorReplyWithHostedProvider({
       [
         {
           role: 'system',
-          content: [
-            'You are the KannadaOS tutor.',
-            'Reply in one or two short sentences.',
-            'Use English plus a small amount of Kannada, and include romanization when useful.',
-            `Persona: ${personaName}. ${personaStyle}`,
-            `Scenario: ${scenarioTitle}.`,
-            `Useful phrases: ${usefulPhrases.join(' / ')}`,
-          ].join('\n'),
+          content: buildHostedTutorPrompt({
+            scenarioTitle,
+            scenarioSituation,
+            personaName,
+            personaStyle,
+            correctionStyle,
+            usefulPhrases,
+          }),
         },
         { role: 'user', content: learnerText },
       ],
@@ -184,6 +188,30 @@ export async function generateTutorReplyWithHostedProvider({
       error: error instanceof Error ? error.message : `${connection.label} request failed.`,
     }
   }
+}
+
+export function buildHostedTutorPrompt({
+  scenarioTitle,
+  scenarioSituation,
+  personaName,
+  personaStyle,
+  correctionStyle,
+  usefulPhrases,
+}: Omit<GenerateHostedTutorOptions, 'fetchImpl' | 'hostedChatCompletion' | 'providerSettings' | 'learnerText'>): string {
+  return [
+    `You are ${personaName}, a Kannada language tutor for someone learning Bangalore Kannada.`,
+    `Style: ${personaStyle}`,
+    `Correction approach: ${correctionStyle}`,
+    `Scenario: ${scenarioTitle}. ${scenarioSituation}`,
+    `Useful phrases: ${usefulPhrases.join(' / ')}`,
+    'Rules:',
+    '1. Reply in English first, with Kannada phrases when useful.',
+    '2. Always include transliteration for Kannada text.',
+    '3. Keep replies under 3 sentences.',
+    `4. If the learner made a mistake, correct it ${correctionStyle}.`,
+    '5. Suggest what to say next with a Kannada phrase.',
+    '6. Stay in the scenario context.',
+  ].join('\n')
 }
 
 export function hydrateAiProviderSettings(serialized: string | null): AiProviderSettings {

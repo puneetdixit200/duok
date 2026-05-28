@@ -100,6 +100,7 @@ describe('Ollama exercise generation', () => {
       model: 'llama3.1:8b',
       learnerText: 'meter please',
       scenarioTitle: 'Auto Ride',
+      scenarioSituation: 'You are negotiating an auto from Indiranagar to Majestic.',
       personaName: 'Friendly Anna',
       personaStyle: 'Casual and patient',
       correctionStyle: 'Gentle: Nice try!',
@@ -116,7 +117,10 @@ describe('Ollama exercise generation', () => {
       stream: false,
       prompt: expect.stringContaining('Learner said: "meter please"'),
     })
-    expect(JSON.parse(String(fetchImpl.mock.calls[0][1]?.body)).prompt).toContain('Always include a Kannada phrase')
+    const prompt = JSON.parse(String(fetchImpl.mock.calls[0][1]?.body)).prompt
+    expect(prompt).toContain('Scenario: Auto Ride. You are negotiating an auto from Indiranagar to Majestic.')
+    expect(prompt).toContain('If the learner made a mistake, correct it Gentle: Nice try!.')
+    expect(prompt).toContain('Always include a Kannada phrase')
   })
 
   it('falls back from Ollama tutor replies when the local model is unavailable', async () => {
@@ -131,6 +135,7 @@ describe('Ollama exercise generation', () => {
         fetchImpl,
         learnerText: 'hello',
         scenarioTitle: 'Auto Ride',
+        scenarioSituation: 'You are negotiating an auto from Indiranagar to Majestic.',
         personaName: 'Friendly Anna',
         personaStyle: 'Patient',
         correctionStyle: 'Gentle',

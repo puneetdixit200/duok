@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  buildHostedTutorPrompt,
   defaultAiProviderSettings,
   generateExerciseWithHostedProvider,
   generateTutorReplyWithHostedProvider,
@@ -134,8 +135,10 @@ describe('hosted AI provider routing', () => {
       },
       learnerText: 'Majestic hogbeku',
       scenarioTitle: 'Auto Ride',
+      scenarioSituation: 'You are negotiating an auto from Indiranagar to Majestic.',
       personaName: 'Bangalore Buddy',
       personaStyle: 'Friendly and practical',
+      correctionStyle: 'Gentle: Nice try! You can also say...',
       usefulPhrases: ['Majestic-ge hogbeku'],
     })
 
@@ -143,9 +146,34 @@ describe('hosted AI provider routing', () => {
     expect(result.text).toBe('Tutor: ಹೇಳಿ, where do you want to go?')
     expect(JSON.parse(String(fetchImpl.mock.calls[0][1]?.body)).messages).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          role: 'system',
+          content: expect.stringContaining('Correction approach: Gentle: Nice try! You can also say...'),
+        }),
+        expect.objectContaining({
+          role: 'system',
+          content: expect.stringContaining('You are negotiating an auto from Indiranagar to Majestic.'),
+        }),
         expect.objectContaining({ role: 'user', content: expect.stringContaining('Majestic hogbeku') }),
       ]),
     )
+  })
+
+  it('builds the frontend spec hosted tutor prompt with correction and scenario rules', () => {
+    const prompt = buildHostedTutorPrompt({
+      scenarioTitle: 'Auto Ride',
+      scenarioSituation: 'You are negotiating an auto from Indiranagar to Majestic.',
+      personaName: 'Friendly Anna',
+      personaStyle: 'Casual, Bangalore slang, patient',
+      correctionStyle: 'Gentle: Nice try! You can also say...',
+      usefulPhrases: ['ಮೀಟರ್ ಹಾಕಿ = miitar haaki = Put the meter'],
+    })
+
+    expect(prompt).toContain('You are Friendly Anna')
+    expect(prompt).toContain('Correction approach: Gentle: Nice try! You can also say...')
+    expect(prompt).toContain('Scenario: Auto Ride. You are negotiating an auto from Indiranagar to Majestic.')
+    expect(prompt).toContain('Always include transliteration for Kannada text')
+    expect(prompt).toContain('Suggest what to say next with a Kannada phrase')
   })
 
   it('hydrates provider settings and redacts keys for exported learner snapshots', () => {

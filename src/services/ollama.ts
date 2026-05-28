@@ -22,6 +22,7 @@ interface GenerateTutorOptions {
   baseUrl?: string
   learnerText: string
   scenarioTitle: string
+  scenarioSituation: string
   personaName: string
   personaStyle: string
   correctionStyle: string
@@ -91,6 +92,7 @@ export async function generateTutorReplyWithOllama({
   baseUrl = 'http://localhost:11434',
   learnerText,
   scenarioTitle,
+  scenarioSituation,
   personaName,
   personaStyle,
   correctionStyle,
@@ -106,6 +108,7 @@ export async function generateTutorReplyWithOllama({
         prompt: buildTutorReplyPrompt({
           learnerText,
           scenarioTitle,
+          scenarioSituation,
           personaName,
           personaStyle,
           correctionStyle,
@@ -168,6 +171,7 @@ export function buildExercisePrompt(weakArea: string, context: ExercisePromptCon
 export function buildTutorReplyPrompt({
   learnerText,
   scenarioTitle,
+  scenarioSituation,
   personaName,
   personaStyle,
   correctionStyle,
@@ -177,11 +181,13 @@ export function buildTutorReplyPrompt({
     `You are ${personaName}, a Kannada tutor for KannadaOS.`,
     `Persona style: ${personaStyle}`,
     `Correction style: ${correctionStyle}`,
-    `Scenario: ${scenarioTitle}`,
+    `Scenario: ${scenarioTitle}. ${scenarioSituation}`,
     `Learner said: "${learnerText}"`,
     `Useful phrases: ${usefulPhrases.join(' / ')}`,
     'Reply in English first, with Kannada phrases when useful.',
     'Always include a Kannada phrase, romanized "Say:" text, and English meaning.',
+    `If the learner made a mistake, correct it ${correctionStyle}.`,
+    'Suggest what to say next with a Kannada phrase.',
     'Keep the reply under 3 sentences and stay in the scenario.',
   ].join('\n')
 }
