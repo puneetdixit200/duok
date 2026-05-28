@@ -2162,6 +2162,55 @@ h2 {
   justify-content: end;
 }
 
+.settings-switch {
+  display: inline-grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-light);
+  color: var(--text-secondary);
+  font-weight: 900;
+}
+
+.settings-switch i {
+  display: inline-block;
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--text-muted);
+}
+
+.settings-switch i::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 160ms ease;
+}
+
+.settings-switch.active {
+  border-color: rgba(88, 204, 2, 0.72);
+  background: rgba(88, 204, 2, 0.14);
+  color: var(--text-primary);
+}
+
+.settings-switch.active i {
+  background: var(--color-primary);
+}
+
+.settings-switch.active i::after {
+  transform: translateX(18px);
+}
+
 .selector-chip.compact {
   min-height: 44px;
   place-items: center;

@@ -111,7 +111,7 @@ async function main() {
     await page.getByLabel('23 XP').waitFor()
     await page.getByText(/Story Starter/i).waitFor()
     await page.getByText(/6\/6 lesson exercises/i).waitFor()
-    await page.getByRole('button', { name: /enable daily reminder/i }).click()
+    await page.getByRole('switch', { name: /Daily Reminders: Off/i }).click()
     await page.getByRole('button', { name: /8:30 PM/i }).click()
     await page.getByRole('button', { name: /allow reminder alerts/i }).click()
     await page.getByText(/Reminder On - 8:30 PM/i).waitFor()

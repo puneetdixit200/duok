@@ -4966,9 +4966,11 @@ function App() {
                 </small>
               </div>
               <div className="reminder-actions">
-                <button className="secondary-action" onClick={toggleDailyReminder} type="button">
-                  {reminder.enabled ? 'Disable Daily Reminder' : 'Enable Daily Reminder'}
-                </button>
+                <SettingsSwitch
+                  checked={reminder.enabled}
+                  label="Daily Reminders"
+                  onClick={toggleDailyReminder}
+                />
                 {['7:30 PM', '8:30 PM', '9:30 PM'].map((time) => (
                   <button
                     className={reminder.time === time ? 'selector-chip compact active' : 'selector-chip compact'}
@@ -5021,9 +5023,11 @@ function App() {
                 <small>Correct, wrong, gem, streak, tap, flip, and completion sounds.</small>
               </div>
               <div className="reminder-actions single-action">
-                <button className="secondary-action" onClick={() => toggleSoundPreference('soundEffects')} type="button">
-                  {soundPreferences.soundEffects ? 'Disable Sound Effects' : 'Enable Sound Effects'}
-                </button>
+                <SettingsSwitch
+                  checked={soundPreferences.soundEffects}
+                  label="Sound Effects"
+                  onClick={() => toggleSoundPreference('soundEffects')}
+                />
               </div>
             </section>
             <section className="reminder-card" aria-labelledby="auto-play-audio-title">
@@ -5034,9 +5038,11 @@ function App() {
                 <small>Automatically plays Kannada exercise audio when a lesson item opens.</small>
               </div>
               <div className="reminder-actions single-action">
-                <button className="secondary-action" onClick={() => toggleSoundPreference('autoPlayAudio')} type="button">
-                  {soundPreferences.autoPlayAudio ? 'Disable Auto-play' : 'Enable Auto-play'}
-                </button>
+                <SettingsSwitch
+                  checked={soundPreferences.autoPlayAudio}
+                  label="Auto-play Audio"
+                  onClick={() => toggleSoundPreference('autoPlayAudio')}
+                />
               </div>
             </section>
             <section className="reminder-card" aria-labelledby="learner-store-title">
@@ -5696,6 +5702,30 @@ function Stat({ value, label }: { value: number | string; label: string }) {
       <strong>{value}</strong>
       <span>{label}</span>
     </article>
+  )
+}
+
+function SettingsSwitch({
+  checked,
+  label,
+  onClick,
+}: {
+  checked: boolean
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      aria-checked={checked}
+      aria-label={`${label}: ${checked ? 'On' : 'Off'}`}
+      className={checked ? 'settings-switch active' : 'settings-switch'}
+      onClick={onClick}
+      role="switch"
+      type="button"
+    >
+      <span>Toggle: {checked ? 'ON' : 'OFF'}</span>
+      <i aria-hidden="true" />
+    </button>
   )
 }
 

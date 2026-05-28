@@ -2345,13 +2345,16 @@ describe('KannadaOS desktop app', () => {
 
     const settings = screen.getByRole('region', { name: /^Settings$/i })
     expect(within(settings).getByRole('heading', { name: /^Daily Reminders$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('switch', { name: /Daily Reminders: Off/i })).toHaveAttribute('aria-checked', 'false')
     expect(within(settings).getByRole('heading', { name: /^Daily XP Goal$/i })).toBeInTheDocument()
     expect(within(settings).getByText(/Regular - 10 min \/ day - 10 XP/i)).toBeInTheDocument()
     expect(within(settings).getByRole('button', { name: /Casual.*5 min\/day - 5 XP/i })).toBeInTheDocument()
     expect(within(settings).getByRole('button', { name: /Serious.*15 min\/day - 20 XP/i })).toBeInTheDocument()
     expect(within(settings).getByRole('button', { name: /Intense.*20 min\/day - 30 XP/i })).toBeInTheDocument()
     expect(within(settings).getByRole('heading', { name: /^Sound Effects$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('switch', { name: /Sound Effects: On/i })).toHaveAttribute('aria-checked', 'true')
     expect(within(settings).getByRole('heading', { name: /^Auto-play Audio$/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('switch', { name: /Auto-play Audio: On/i })).toHaveAttribute('aria-checked', 'true')
     expect(within(settings).getByRole('heading', { name: /^Desktop Storage$/i })).toBeInTheDocument()
     expect(within(settings).getByText(/Browser fallback/i)).toBeInTheDocument()
     expect(within(settings).getByRole('button', { name: /^Manage AI Models$/i })).toBeInTheDocument()
@@ -2457,11 +2460,12 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Daily Reminder/i })).toBeInTheDocument()
     expect(screen.getByText(/Reminder Off/i)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /enable daily reminder/i }))
+    await user.click(screen.getByRole('switch', { name: /Daily Reminders: Off/i }))
     await user.click(screen.getByRole('button', { name: /8:30 PM/i }))
     await user.click(screen.getByRole('button', { name: /allow reminder alerts/i }))
 
     expect(NotificationMock.requestPermission).toHaveBeenCalledOnce()
+    expect(screen.getByRole('switch', { name: /Daily Reminders: On/i })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(/Next reminder scheduled for/i)
@@ -2471,6 +2475,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /^Profile$/i }))
 
     expect(screen.getByText(/Reminder On - 8:30 PM/i)).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: /Daily Reminders: On/i })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByText(/Alerts allowed/i)).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(/Next reminder scheduled for/i)
   })
