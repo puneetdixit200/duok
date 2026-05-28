@@ -2959,6 +2959,12 @@ function App() {
     setPronunciationResult(null)
   }
 
+  function openPronunciationLab() {
+    const heading = document.getElementById('pronunciation-lab-title')
+    heading?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+    heading?.focus()
+  }
+
   async function playPronunciationReference(playbackRate = 1) {
     const slow = playbackRate < 1
     const synthesizeNativeSpeech = window.kannadaOS?.synthesizeNativeSpeech
@@ -4308,12 +4314,19 @@ function App() {
               {isFlashcardAudioStatus(audioStatus) && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
               <div className="review-rating-row" aria-label="Flashcard rating">
                 {[
-                  ['hard', 'Hard'],
-                  ['okay', 'Okay'],
-                  ['easy', 'Easy'],
-                ].map(([rating, label]) => (
-                  <button className="secondary-action compact-action" key={rating} onClick={() => rateFlashcard(card.id, rating as ReviewRating)} type="button">
-                    {label}
+                  ['hard', 'Hard', '❌'],
+                  ['okay', 'Okay', '🤷'],
+                  ['easy', 'Easy', '✅'],
+                ].map(([rating, label, icon]) => (
+                  <button
+                    aria-label={label}
+                    className="secondary-action compact-action rating-action"
+                    key={rating}
+                    onClick={() => rateFlashcard(card.id, rating as ReviewRating)}
+                    type="button"
+                  >
+                    <span aria-hidden="true">{icon}</span>
+                    <span>{label}</span>
                   </button>
                 ))}
               </div>
@@ -4362,6 +4375,13 @@ function App() {
                   <p>5 phrases with waveform scoring</p>
                 </article>
               )}
+              <article className="accent-card teal" aria-label="Pronunciation Lab shortcut">
+                <strong>Pronunciation Lab</strong>
+                <p>Open microphone scoring, reference audio, and attempt history.</p>
+                <button className="secondary-action compact-action" onClick={openPronunciationLab} type="button">
+                  Open Pronunciation Lab →
+                </button>
+              </article>
               <article className="accent-card saffron" aria-label="AI practice exercise">
                 <strong>AI Exercises</strong>
                 <p>Targets your weakest skill with Ollama or local fallback.</p>
@@ -4388,7 +4408,7 @@ function App() {
             <header className="runtime-header">
               <div>
                 <p className="eyebrow">speech practice</p>
-                <h2 id="pronunciation-lab-title">Pronunciation Lab</h2>
+                <h2 id="pronunciation-lab-title" tabIndex={-1}>Pronunciation Lab</h2>
               </div>
               <span className="metric-pill">
                 {latestPronunciationAttempt ? `Last score ${latestPronunciationAttempt.score}` : 'No attempts yet'}

@@ -2115,8 +2115,18 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Leitner Box: 1/i)).toBeInTheDocument()
     expect(screen.getByText(/Next review: Not scheduled/i)).toBeInTheDocument()
     expect(screen.getAllByText(/Strength 20%/i).length).toBeGreaterThanOrEqual(1)
+
+    const ratingRow = screen.getByLabelText(/Flashcard rating/i)
+    expect(within(ratingRow).getByRole('button', { name: /^Hard$/i })).toHaveTextContent('❌Hard')
+    expect(within(ratingRow).getByRole('button', { name: /^Okay$/i })).toHaveTextContent('🤷Okay')
+    expect(within(ratingRow).getByRole('button', { name: /^Easy$/i })).toHaveTextContent('✅Easy')
     await user.click(screen.getByRole('button', { name: /^Easy$/i }))
     expect(screen.getByText(/Strength 40%/i)).toBeInTheDocument()
+
+    const pronunciationShortcut = screen.getByLabelText(/Pronunciation Lab shortcut/i)
+    expect(within(pronunciationShortcut).getByRole('button', { name: /Open Pronunciation Lab/i })).toBeInTheDocument()
+    await user.click(within(pronunciationShortcut).getByRole('button', { name: /Open Pronunciation Lab/i }))
+    expect(screen.getByRole('heading', { name: /Pronunciation Lab/i })).toHaveFocus()
 
     await user.click(screen.getByRole('button', { name: /blr/i }))
     expect(screen.getByRole('heading', { name: /Bangalore Mode/i })).toBeInTheDocument()
@@ -2286,7 +2296,7 @@ describe('KannadaOS desktop app', () => {
 
     await user.click(screen.getByRole('button', { name: /practice majestic-ge hogbeku/i }))
     expect(screen.getByRole('heading', { name: /Practice/i })).toBeInTheDocument()
-    expect(screen.getByText(/Pronunciation Lab/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Pronunciation Lab/i })).toBeInTheDocument()
   })
 
   it('shows unlocked achievements and learner-owned stats in profile', async () => {

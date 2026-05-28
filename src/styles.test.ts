@@ -103,6 +103,12 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/\.pronunciation-level\.try-again\s*{[^}]*color:\s*var\(--color-error\)/s)
   })
 
+  it('styles practice flashcard ratings and pronunciation shortcut cards', () => {
+    expect(styles).toMatch(/\.rating-action\s*{[^}]*display:\s*inline-flex/s)
+    expect(styles).toMatch(/\.rating-action\s*{[^}]*gap:\s*6px/s)
+    expect(styles).toMatch(/\.accent-card\.teal\s*{[^}]*border-left:\s*5px solid #38bdf8/s)
+  })
+
   it('styles all story difficulty badges from the frontend spec', () => {
     expect(styles).toMatch(/\.difficulty-badge\.beginner\s*{[^}]*color:\s*#6ee7b7/s)
     expect(styles).toMatch(/\.difficulty-badge\.intermediate\s*{[^}]*color:\s*var\(--color-accent-gold\)/s)
