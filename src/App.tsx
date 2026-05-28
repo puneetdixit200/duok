@@ -2436,7 +2436,7 @@ function App() {
         const nextMatches = [...matchedPairs, pairId]
         setMatchedPairs(nextMatches)
         if (nextMatches.length === pairs.length) {
-          setSelectedAnswer(exercise.answer)
+          checkAnswer(exercise, exercise.answer)
         }
       }
 
@@ -3611,7 +3611,7 @@ function App() {
           </p>
           <h1 id="lesson-title">{activeExercise.prompt}</h1>
           {renderExerciseContent(activeExercise)}
-          {activeExercise.type !== 'speaking' && (
+          {activeExercise.type !== 'speaking' && activeExercise.type !== 'matchPairs' && (
             <button
               aria-keyshortcuts={checkAnswerShortcuts}
               className="primary-action"

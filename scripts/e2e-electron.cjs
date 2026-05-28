@@ -414,7 +414,6 @@ async function completeLesson(page) {
   await page.getByRole('button', { name: 'Go', exact: true }).click()
   await page.getByRole('button', { name: /ಬಾ/ }).click()
   await page.getByRole('button', { name: 'Come', exact: true }).click()
-  await page.getByRole('button', { name: /check/i }).click()
 
   await page.getByRole('heading', { name: /Lesson Complete/i }).waitFor()
   await page.getByText('+18 XP').waitFor()

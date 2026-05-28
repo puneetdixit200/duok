@@ -448,7 +448,6 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /^i$/i }))
     await user.click(screen.getByRole('button', { name: /ಈ/i }))
     await user.click(screen.getByRole('button', { name: /^ii$/i }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
     expect(screen.getByText(/Correct/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
@@ -880,6 +879,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /^Continue/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
+    expect(screen.queryByRole('button', { name: /^Check$/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
     await user.click(screen.getByRole('button', { name: 'Hello' }))
     await user.click(screen.getByRole('button', { name: /ಧನ್ಯವಾದ/i }))
@@ -888,7 +888,6 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: 'Go' }))
     await user.click(screen.getByRole('button', { name: /ಬಾ/i }))
     await user.click(screen.getByRole('button', { name: 'Come' }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
     expect(AudioMock).toHaveBeenCalledWith('./sounds/lesson-complete.wav')
@@ -1729,6 +1728,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
     expect(screen.getByText('Match pairs')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Check$/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /ನಮಸ್ಕಾರ/i }))
     await user.click(screen.getByRole('button', { name: 'Hello' }))
     await user.click(screen.getByRole('button', { name: /ಧನ್ಯವಾದ/i }))
@@ -1737,7 +1737,6 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: 'Go' }))
     await user.click(screen.getByRole('button', { name: /ಬಾ/i }))
     await user.click(screen.getByRole('button', { name: 'Come' }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/Confetti celebration/i)).toBeInTheDocument()
@@ -1857,7 +1856,6 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: 'Go' }))
     await user.click(screen.getByRole('button', { name: /ಬಾ/i }))
     await user.click(screen.getByRole('button', { name: 'Come' }))
-    await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
     expect(screen.getByLabelText('86 Accuracy')).toBeInTheDocument()
