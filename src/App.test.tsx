@@ -1481,22 +1481,27 @@ describe('KannadaOS desktop app', () => {
 
   it('renders the reverse translate variant from English to Kannada', async () => {
     const user = userEvent.setup()
-    const firstLesson = coreCurriculumUnits[0].lessons[0]
-    const progress = completeLessonProgress(createInitialProgress(), firstLesson.id, '2026-05-27T10:00:00.000Z')
+    const unlockedThroughBargaining = [
+      ...coreCurriculumUnits[0].lessons.slice(0, 3),
+      ...coreCurriculumUnits[1].lessons.slice(0, 3),
+    ].reduce(
+      (state, lesson, index) => completeLessonProgress(state, lesson.id, `2026-05-27T10:${String(index).padStart(2, '0')}:00.000Z`),
+      createInitialProgress(),
+    )
     localStorage.setItem('kannadaos:onboarded', 'true')
-    localStorage.setItem('kannadaos:progress', serializeProgress(progress))
+    localStorage.setItem('kannadaos:progress', serializeProgress(unlockedThroughBargaining))
 
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: /learn/i }))
-    await user.click(screen.getByRole('button', { name: /How Are You/i }))
+    await user.click(screen.getByRole('button', { name: /^Learn unit \d+ lesson \d+: Bargaining, 0 crowns/i }))
 
     expect(screen.getByRole('heading', { name: /Translate to Kannada/i })).toBeInTheDocument()
     expect(screen.getByText('Choose the Kannada phrase for:')).toBeInTheDocument()
-    expect(screen.getByText('How are you?')).toBeInTheDocument()
+    expect(screen.getByText('too much')).toBeInTheDocument()
 
     const correctOption = screen.getByRole('button', {
-      name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira$/i,
+      name: /^English: too much\s+ಜಾಸ್ತಿ\s+Say: jaasti$/i,
     })
     expect(correctOption).toBeInTheDocument()
 
@@ -1504,7 +1509,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByRole('status', { name: /Correct feedback/i })).toHaveTextContent('+2 XP')
-    expect(screen.getByText(/English: How are you\? \| Say: hegiddira \| Kannada: ಹೇಗಿದ್ದೀರಾ\?/i)).toBeInTheDocument()
+    expect(screen.getByText(/English: too much \| Say: jaasti \| Kannada: ಜಾಸ್ತಿ/i)).toBeInTheDocument()
   })
 
   it('runs the regular How Are You dialogue exercise from the frontend spec', async () => {
@@ -1519,15 +1524,15 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /learn/i }))
     await user.click(screen.getByRole('button', { name: /How Are You/i }))
 
-    await user.click(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira$/i }))
+    await user.click(screen.getByRole('button', { name: 'How are you?' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
-    await user.click(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\?\s+Say: hegiddira/i }))
+    await user.click(screen.getByRole('button', { name: 'I am fine' }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
-    await user.click(screen.getByRole('button', { name: /^English: I am fine\s+ಚೆನ್ನಾಗಿದ್ದೇನೆ\s+Say: chennagiddene/i }))
+    await user.click(screen.getByRole('button', { name: /^English: how are you\s+ಹೇಗಿದ್ದೀರಾ\s+Say: hegiddira/i }))
     await user.click(screen.getByRole('button', { name: /check/i }))
     await user.click(screen.getByRole('button', { name: /next exercise/i }))
 
@@ -1715,8 +1720,8 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('button', { name: /Back to Home/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Continue Learning/i }))
-    expect(screen.getByRole('heading', { name: /Translate to Kannada/i })).toBeInTheDocument()
-    expect(screen.getByText('How are you?')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Translate this phrase/i })).toBeInTheDocument()
+    expect(screen.getAllByText('How are you?').length).toBeGreaterThanOrEqual(1)
   }, 30_000)
 
   it('shows matched and wrong visual states in match-pair exercises', async () => {

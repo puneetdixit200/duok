@@ -113,7 +113,7 @@ describe('KannadaOS level 1 curriculum', () => {
       expect(unit.lessons.map((lesson) => lesson.exercises.length)).toEqual([6, 6, 6, 6, 8])
       for (const [lessonIndex, lesson] of unit.lessons.entries()) {
         const uniqueExerciseTypes = new Set(lesson.exercises.map((exercise) => exercise.type)).size
-        if (unit.title === 'Greetings & Basics' && lessonIndex === 0) {
+        if (unit.title === 'Greetings & Basics' && lessonIndex <= 1) {
           expect(uniqueExerciseTypes).toBe(5)
         } else {
           expect(uniqueExerciseTypes).toBeGreaterThanOrEqual(6)
@@ -129,7 +129,7 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(new Set(exercises.map((exercise) => exercise.id)).size).toBe(exercises.length)
 
     const expectedMinimumVocabularyByUnit = new Map([
-      ['Greetings & Basics', 17],
+      ['Greetings & Basics', 16],
       ['Numbers & Prices', 18],
       ['Transport & Directions', 22],
       ['Food & Ordering', 20],
@@ -148,16 +148,15 @@ describe('KannadaOS level 1 curriculum', () => {
   })
 
   it('includes English-to-Kannada reverse translate drills from the frontend spec', () => {
-    const reverseExercise = coreCurriculumUnits[0].lessons[1].exercises[0]
+    const reverseExercise = getAllLessonExercises(coreCurriculumUnits)
+      .find((exercise) => exercise.type === 'translate' && exercise.direction === 'enToKn')
 
     expect(reverseExercise).toEqual(expect.objectContaining({
       type: 'translate',
       direction: 'enToKn',
       prompt: 'Translate to Kannada:',
-      english: 'How are you?',
-      answer: 'ಹೇಗಿದ್ದೀರಾ?',
-      options: expect.arrayContaining(['ಹೇಗಿದ್ದೀರಾ?', 'ಚೆನ್ನಾಗಿದ್ದೇನೆ', 'ನೀವು ಹೇಗಿದ್ದೀರಾ?']),
     }))
+    expect(reverseExercise?.options.some((option) => /[\u0C80-\u0CFF]/.test(option))).toBe(true)
   })
 
   it('matches the frontend spec exercise plan for Unit 1 Lesson 1', () => {
@@ -202,24 +201,50 @@ describe('KannadaOS level 1 curriculum', () => {
     }))
   })
 
-  it('puts the frontend spec dialogue exercise into the regular How Are You lesson', () => {
+  it('matches the frontend spec exercise plan for Unit 1 Lesson 2', () => {
     const howAreYou = coreCurriculumUnits[0].lessons[1]
     const dialogueExercise = howAreYou.exercises[3]
 
+    expect(howAreYou.title).toBe('How Are You')
     expect(howAreYou.exercises.map((exercise) => exercise.type)).toEqual([
       'translate',
-      'arrange',
+      'translate',
       'fillBlank',
       'dialogue',
       'speaking',
       'matchPairs',
     ])
+    expect(howAreYou.exercises.map((exercise) => exercise.xp)).toEqual([2, 2, 2, 3, 4, 4])
+    expect(howAreYou.exercises[0]).toEqual(expect.objectContaining({
+      type: 'translate',
+      prompt: 'Translate this phrase:',
+      kannada: 'ಹೇಗಿದ್ದೀರಾ?',
+      answer: 'How are you?',
+    }))
+    expect(howAreYou.exercises[1]).toEqual(expect.objectContaining({
+      type: 'translate',
+      prompt: 'Translate this phrase:',
+      kannada: 'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+      answer: 'I am fine',
+    }))
+    expect(howAreYou.exercises[2]).toEqual(expect.objectContaining({
+      type: 'fillBlank',
+      prompt: 'Complete: ___? ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+      kannada: '___? ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+      answer: 'ಹೇಗಿದ್ದೀರಾ',
+      vocabularyIds: [
+        'unit-1-greetings-lesson-2-phrase-1',
+        'unit-1-greetings-lesson-2-phrase-2',
+      ],
+    }))
     expect(dialogueExercise).toEqual(expect.objectContaining({
       type: 'dialogue',
+      prompt: 'Reply to: ಹೇಗಿದ್ದೀರಾ?',
       kannada: 'ಹೇಗಿದ್ದೀರಾ?',
       english: 'How are you?',
       answer: 'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
       xp: 3,
+      skillTag: 'conversation',
       vocabularyIds: [
         'unit-1-greetings-lesson-2-phrase-1',
         'unit-1-greetings-lesson-2-phrase-2',
@@ -230,6 +255,23 @@ describe('KannadaOS level 1 curriculum', () => {
       'ಹೇಗಿದ್ದೀರಾ?',
       'ನೀವು ಹೇಗಿದ್ದೀರಾ?',
     ]))
+    expect(howAreYou.exercises[4]).toEqual(expect.objectContaining({
+      type: 'speaking',
+      prompt: 'Say: ಹೇಗಿದ್ದೀರಾ',
+      answer: 'hegiddira',
+      skillTag: 'pronunciation',
+    }))
+    expect(howAreYou.exercises[5]).toEqual(expect.objectContaining({
+      type: 'matchPairs',
+      prompt: 'Match',
+      answer: 'ಹೇಗಿದ್ದೀರಾ=How are you;ಚೆನ್ನಾಗಿದ್ದೇನೆ=I am fine;ನಮಸ್ಕಾರ=Hello;ಧನ್ಯವಾದ=Thank you',
+      vocabularyIds: [
+        'unit-1-greetings-lesson-2-phrase-1',
+        'unit-1-greetings-lesson-2-phrase-2',
+        'namaskara-saar',
+        'dhanyavada',
+      ],
+    }))
   })
 
   it('mixes review lessons from earlier unit vocabulary instead of only review rows', () => {
@@ -276,7 +318,7 @@ describe('KannadaOS level 1 curriculum', () => {
   })
 
   it('adds one or two distractor chips to generated arrange-word drills', () => {
-    const generatedArrange = coreCurriculumUnits[0].lessons[1].exercises.find((exercise) => exercise.type === 'arrange')
+    const generatedArrange = coreCurriculumUnits[0].lessons[2].exercises.find((exercise) => exercise.type === 'arrange')
     expect(generatedArrange).toBeDefined()
 
     if (!generatedArrange) {

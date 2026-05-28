@@ -1315,6 +1315,10 @@ function buildExercisesForLesson(
     return buildReviewExercisesForLesson(unitNumber, lessonNumber, lessonId, lessonSeed, phrases)
   }
 
+  if (unitNumber === 1 && lessonNumber === 2) {
+    return buildHowAreYouSpecExercises(lessonId, phrases)
+  }
+
   const [first, second, third] = phrases
   const typeChoices = makeTypeOptions(first.english)
   const arrangeOptions = makeArrangeWordOptions(first, phrases)
@@ -1368,18 +1372,72 @@ function buildExercisesForLesson(
     dialogueExercise,
   ]
 
-  if (unitNumber === 1 && lessonNumber === 2) {
-    return [
-      translateExercise,
-      exercises[1],
-      exercises[2],
-      dialogueExercise,
-      exercises[4],
-      exercises[5],
-    ]
-  }
-
   return exercises.slice(0, 6)
+}
+
+function buildHowAreYouSpecExercises(lessonId: string, phrases: Phrase[]): LessonExercise[] {
+  const [howAreYou, iAmFine, returnQuestion] = phrases
+  const idPrefix = `${lessonId}-exercise`
+
+  return [
+    exercise(idPrefix, 1, 'translate', 'Translate this phrase:', howAreYou, 'How are you?', [
+      'How are you?',
+      'I am fine',
+      'Thank you',
+      'Hello',
+    ], 2),
+    exercise(idPrefix, 2, 'translate', 'Translate this phrase:', iAmFine, 'I am fine', [
+      'I am fine',
+      'How are you?',
+      'Thank you',
+      'Hello',
+    ], 2),
+    {
+      ...exercise(idPrefix, 3, 'fillBlank', 'Complete: ___? ಚೆನ್ನಾಗಿದ್ದೇನೆ', howAreYou, 'ಹೇಗಿದ್ದೀರಾ', [
+        'ಹೇಗಿದ್ದೀರಾ',
+        'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+        'ನಮಸ್ಕಾರ',
+        'ಧನ್ಯವಾದ',
+      ], 2),
+      kannada: '___? ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+      english: 'How are you? I am fine',
+      explanation: 'ಹೇಗಿದ್ದೀರಾ completes the greeting question before ಚೆನ್ನಾಗಿದ್ದೇನೆ.',
+      vocabularyIds: [howAreYou.id, iAmFine.id],
+    },
+    {
+      ...exercise(idPrefix, 4, 'dialogue', 'Reply to: ಹೇಗಿದ್ದೀರಾ?', howAreYou, 'ಚೆನ್ನಾಗಿದ್ದೇನೆ', [
+        'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+        'ಹೇಗಿದ್ದೀರಾ?',
+        returnQuestion.kannada,
+        'ನಮಸ್ಕಾರ',
+      ], 3),
+      explanation: 'ಚೆನ್ನಾಗಿದ್ದೇನೆ is the best reply to ಹೇಗಿದ್ದೀರಾ?.',
+      skillTag: 'conversation',
+      vocabularyIds: [howAreYou.id, iAmFine.id],
+    },
+    {
+      ...exercise(idPrefix, 5, 'speaking', 'Say: ಹೇಗಿದ್ದೀರಾ', howAreYou, howAreYou.transliteration, [
+        'Record',
+        'Try Again',
+      ], 4),
+      skillTag: 'pronunciation',
+    },
+    {
+      ...exercise(idPrefix, 6, 'matchPairs', 'Match', howAreYou, 'ಹೇಗಿದ್ದೀರಾ=How are you;ಚೆನ್ನಾಗಿದ್ದೇನೆ=I am fine;ನಮಸ್ಕಾರ=Hello;ಧನ್ಯವಾದ=Thank you', [
+        'ಹೇಗಿದ್ದೀರಾ',
+        'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+        'ನಮಸ್ಕಾರ',
+        'ಧನ್ಯವಾದ',
+        'How are you',
+        'I am fine',
+        'Hello',
+        'Thank you',
+      ], 4),
+      kannada: 'ಹೇಗಿದ್ದೀರಾ, ಚೆನ್ನಾಗಿದ್ದೇನೆ, ನಮಸ್ಕಾರ, ಧನ್ಯವಾದ',
+      skillTag: 'vocabulary',
+      vocabularyIds: [howAreYou.id, iAmFine.id, 'namaskara-saar', 'dhanyavada'],
+    },
+  ]
 }
 
 function buildDialogueExercise(
