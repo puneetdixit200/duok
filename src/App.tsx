@@ -4495,6 +4495,7 @@ function App() {
                   subtitle={{ english: activeStorySentence.english, romanization: activeStorySentence.transliteration }}
                 />
                 <em>{formatRomanizationSubtitle(activeStorySentence.transliteration)}</em>
+                <p className="story-word-instruction">Tap any word for meaning:</p>
                 <div className="story-word-row">
                   {activeStorySentence.words.map((word) => (
                     <button
@@ -4528,9 +4529,13 @@ function App() {
             )}
             {isStoryAudioStatus(audioStatus) && <p role="status"><ReadableStatusText text={audioStatus} /></p>}
             {selectedStoryWord && (
-              <aside className="word-popover" role="dialog" aria-label={formatReadableStoryWord(selectedStoryWord)}>
+              <aside
+                className="word-popover"
+                role="dialog"
+                aria-label={formatReadableStoryWord(selectedStoryWord)}
+              >
                 <div className="word-popover-header">
-                  <strong>{formatEnglishSubtitle(selectedStoryWord.english)}</strong>
+                  <span className="word-detail-title">Word Detail</span>
                   <button
                     aria-label="Close word details"
                     className="icon-button"
@@ -4539,6 +4544,7 @@ function App() {
                   >
                     x
                   </button>
+                  <strong>{formatEnglishSubtitle(selectedStoryWord.english)}</strong>
                   <span className="kannada-subtitles">
                     <KannadaText
                       text={selectedStoryWord.text}

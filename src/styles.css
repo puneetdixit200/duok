@@ -1941,6 +1941,12 @@ h2 {
   color: var(--text-muted);
 }
 
+.story-word-instruction {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
 .word-token {
   display: grid;
   min-height: 48px;
@@ -1990,8 +1996,17 @@ h2 {
   grid-column: 1 / -1;
 }
 
+.word-detail-title {
+  color: var(--color-accent-gold);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .word-popover strong {
   display: block;
+  grid-column: 1 / -1;
   color: white;
   font-size: 1.75rem;
 }

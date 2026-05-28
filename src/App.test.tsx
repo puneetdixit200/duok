@@ -3574,6 +3574,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/ರಾಹುಲ್ ಬೆಂಗಳೂರಿಗೆ ಬಂದ/i)).toBeInTheDocument()
     expect(screen.getByText(/raahul bengalurige banda/i)).toBeInTheDocument()
     expect(screen.getByText(/Rahul came to Bangalore/i)).toBeInTheDocument()
+    expect(screen.getByText(/Tap any word for meaning/i)).toBeInTheDocument()
     expect(screen.queryByText(/ಅವನಿಗೆ ಕನ್ನಡ ಬರುತ್ತಿರಲಿಲ್ಲ/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /take quiz/i })).not.toBeInTheDocument()
 
@@ -3581,6 +3582,7 @@ describe('KannadaOS desktop app', () => {
 
     const wordDialog = screen.getByRole('dialog', { name: /ಬಂದ/i })
     expect(wordDialog).toBeInTheDocument()
+    expect(within(wordDialog).getByText(/Word Detail/i)).toBeInTheDocument()
     expect(within(wordDialog).getByText(/banda/i)).toBeInTheDocument()
     expect(within(wordDialog).getAllByText(/came/i).length).toBeGreaterThanOrEqual(1)
     await user.click(within(wordDialog).getByRole('button', { name: /add to vocabulary/i }))
