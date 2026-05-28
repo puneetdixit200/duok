@@ -1,10 +1,19 @@
 export type ConversationSpeaker = 'tutor' | 'learner'
 
+export interface PersistedConversationCorrection {
+  id: string
+  kannada: string
+  transliteration: string
+  english: string
+  context?: string
+}
+
 export interface PersistedConversationMessage {
   id: string
   speaker: ConversationSpeaker
   text: string
   subtext?: string
+  correction?: PersistedConversationCorrection
 }
 
 export type ConversationStore = Record<string, PersistedConversationMessage[]>
@@ -80,7 +89,22 @@ function isPersistedMessage(value: unknown): value is PersistedConversationMessa
     typeof value.id === 'string' &&
     (value.speaker === 'tutor' || value.speaker === 'learner') &&
     typeof value.text === 'string' &&
-    (typeof value.subtext === 'undefined' || typeof value.subtext === 'string')
+    (typeof value.subtext === 'undefined' || typeof value.subtext === 'string') &&
+    (typeof value.correction === 'undefined' || isPersistedCorrection(value.correction))
+  )
+}
+
+function isPersistedCorrection(value: unknown): value is PersistedConversationCorrection {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.kannada === 'string' &&
+    typeof value.transliteration === 'string' &&
+    typeof value.english === 'string' &&
+    (typeof value.context === 'undefined' || typeof value.context === 'string')
   )
 }
 

@@ -18,13 +18,35 @@ describe('conversation log persistence', () => {
       {},
       'auto-ride',
       [
-        { id: 'opening', speaker: 'tutor', text: 'ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?' },
+        {
+          id: 'opening',
+          speaker: 'tutor',
+          text: 'ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?',
+          correction: {
+            id: 'majestic-ge-hogbeku',
+            kannada: 'ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು',
+            transliteration: 'Majestic-ge hogbeku',
+            english: 'I need to go to Majestic',
+            context: 'Use -ge for destinations.',
+          },
+        },
         { id: 'user-1', speaker: 'learner', text: 'Majestic hogbeku' },
       ],
     )
 
     expect(getScenarioMessages(store, 'auto-ride', [])).toEqual([
-      { id: 'opening', speaker: 'tutor', text: 'ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?' },
+      {
+        id: 'opening',
+        speaker: 'tutor',
+        text: 'ಸಾರ್, ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?',
+        correction: {
+          id: 'majestic-ge-hogbeku',
+          kannada: 'ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು',
+          transliteration: 'Majestic-ge hogbeku',
+          english: 'I need to go to Majestic',
+          context: 'Use -ge for destinations.',
+        },
+      },
       { id: 'user-1', speaker: 'learner', text: 'Majestic hogbeku' },
     ])
     expect(getScenarioMessages(store, 'bmtc-bus', [{ id: 'bmtc', speaker: 'tutor', text: 'ಟಿಕೆಟ್!' }])).toEqual([

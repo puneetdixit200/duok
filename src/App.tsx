@@ -88,6 +88,7 @@ import {
   serializeConversationStore,
   trimConversationMessages,
   type ConversationStore,
+  type PersistedConversationCorrection,
 } from './services/conversationLog'
 import { applyLearnerStorage, collectLearnerStorage } from './services/learnerStore'
 import type { CurriculumUnit, GeneratedExercise, LessonExercise, Phrase, Scenario, Story, StorySentence, StoryWord, TutorPersona } from './types'
@@ -105,6 +106,7 @@ interface ChatMessage {
   speaker: 'tutor' | 'learner'
   text: string
   subtext?: string
+  correction?: PersistedConversationCorrection
 }
 
 interface ModelSetupItem {
@@ -2510,6 +2512,7 @@ function App() {
             selectedScenario.usefulPhrases[0],
             `${providerLabel}: ${getActiveHostedModel(aiProviderSettings)}.`,
           ),
+          correction: tutorReply.correction,
         }
         setVoiceStatus(`${providerLabel} tutor reply ready.`)
       } else {
@@ -2535,6 +2538,7 @@ function App() {
             selectedScenario.usefulPhrases[0],
             'Ollama local tutor reply.',
           ),
+          correction: tutorReply.correction,
         }
         setVoiceStatus('Ollama tutor reply ready.')
       } else {
@@ -4117,6 +4121,15 @@ function App() {
                   <small className="message-subtext">
                     <ReadableStatusText text={message.subtext} />
                   </small>
+                )}
+                {message.correction && (
+                  <section
+                    aria-label={`Highlighted correction: ${message.correction.english}`}
+                    className="correction-highlight"
+                  >
+                    <span>Correct phrase</span>
+                    <EnglishFirstKannadaText phrase={message.correction} showContext />
+                  </section>
                 )}
               </article>
             ))}
@@ -6014,7 +6027,7 @@ function createOpeningMessage(scenario: Scenario): ChatMessage {
   }
 }
 
-function buildTutorReply(input: string, scenario: Scenario, persona: TutorPersona): Pick<ChatMessage, 'text' | 'subtext'> {
+function buildTutorReply(input: string, scenario: Scenario, persona: TutorPersona): Pick<ChatMessage, 'text' | 'subtext' | 'correction'> {
   const normalized = input.toLowerCase()
 
   if (scenario.id === 'auto-ride' && normalized.includes('majestic') && normalized.includes('hogbeku')) {
@@ -6022,6 +6035,7 @@ function buildTutorReply(input: string, scenario: Scenario, persona: TutorPerson
     return {
       text: `${persona.name}: Add -ge for "to" before the destination.`,
       subtext: formatTutorPhraseSupport(persona, phrase, 'Use this exact auto phrase.'),
+      correction: toConversationCorrection(phrase),
     }
   }
 
@@ -6072,6 +6086,16 @@ function getChatQuickReplies(scenario: Scenario): Phrase[] {
 
 function formatTutorPhraseSupport(persona: TutorPersona, phrase: Phrase, note: string): string {
   return `${persona.name}: ${note} Kannada: ${phrase.kannada} | Say: ${phrase.transliteration} | English: ${phrase.english}`
+}
+
+function toConversationCorrection(phrase: Phrase): PersistedConversationCorrection {
+  return {
+    id: phrase.id,
+    kannada: phrase.kannada,
+    transliteration: phrase.transliteration,
+    english: phrase.english,
+    context: phrase.context,
+  }
 }
 
 function getRequiredPhrase(phraseId: string): Phrase {

@@ -1837,7 +1837,12 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Add -ge for "to" before the destination/i)).toBeInTheDocument()
     expect(screen.getByText(/Kannada: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
     expect(screen.getAllByText(/English: I need to go to Majestic/i).length).toBeGreaterThanOrEqual(1)
+    const correction = screen.getByRole('region', { name: /Highlighted correction: I need to go to Majestic/i })
+    expect(within(correction).getByText(/Correct phrase/i)).toBeInTheDocument()
+    expect(within(correction).getByText('ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು')).toBeInTheDocument()
+    expect(within(correction).getByText(/Say: Majestic-ge hogbeku/i)).toBeInTheDocument()
     expect(localStorage.getItem('kannadaos:progress')).toContain('"chatMessagesSent":1')
+    expect(localStorage.getItem('kannadaos:conversation-log')).toContain('"correction"')
   })
 
   it('persists Bangalore checklist progress from scenario checkboxes', async () => {

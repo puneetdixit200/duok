@@ -1587,6 +1587,27 @@ h2 {
   gap: 2px;
 }
 
+.correction-highlight {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  border: 1px solid rgba(88, 204, 2, 0.46);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(88, 204, 2, 0.12);
+}
+
+.correction-highlight > span {
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.correction-highlight .readable-phrase {
+  gap: 3px;
+}
+
 .message.learner {
   justify-self: end;
   border: 1px solid var(--color-accent);
