@@ -2964,7 +2964,7 @@ describe('KannadaOS desktop app', () => {
     expect(within(pronunciationResult).getByText(/Level: Clear/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/Transcript:/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(1)
-    expect(within(pronunciationResult).getByText(/Clear pronunciation/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Excellent! Very clear pronunciation\./i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/Problem syllables:/i)).toBeInTheDocument()
     expect(pronunciationResult).toHaveTextContent(/Problem syllables:\s*None/i)
     const history = screen.getByLabelText(/Pronunciation history/i)
@@ -2998,7 +2998,7 @@ describe('KannadaOS desktop app', () => {
           transcript: 'ನಮಸ್ಕಾರ ಸಾರ್',
           score: 98,
           level: 'clear',
-          feedback: 'Clear pronunciation.',
+          feedback: 'Excellent! Very clear pronunciation.',
           tip: 'Keep the same rhythm.',
           problemParts: [],
           createdAt: '2026-05-27T10:00:00.000Z',
@@ -3010,7 +3010,7 @@ describe('KannadaOS desktop app', () => {
           transcript: 'ಟಿಕೆಟ್ ಎಷ್ಟು',
           score: 82,
           level: 'steady',
-          feedback: 'Almost there.',
+          feedback: 'Good! Focus on ಎಷ್ಟು.',
           tip: 'Hold the ending.',
           problemParts: ['ಎಷ್ಟು'],
           createdAt: '2026-05-26T10:00:00.000Z',
@@ -3022,7 +3022,7 @@ describe('KannadaOS desktop app', () => {
           transcript: 'ಇಲ್ಲಿ',
           score: 58,
           level: 'needs-practice',
-          feedback: 'Practice slowly.',
+          feedback: 'Keep practicing. Listen to the reference again.',
           tip: 'Match each sound.',
           problemParts: ['ನಿಲ್ಲಿಸಿ'],
           createdAt: '2026-05-24T10:00:00.000Z',

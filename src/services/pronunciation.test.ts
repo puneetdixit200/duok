@@ -13,7 +13,7 @@ describe('pronunciation scoring', () => {
     expect(result.score).toBe(100)
     expect(result.level).toBe('clear')
     expect(result.problemParts).toEqual([])
-    expect(result.feedback).toMatch(/clear/i)
+    expect(result.feedback).toBe('Excellent! Very clear pronunciation.')
     expect(result.tip).toMatch(/keep/i)
   })
 
@@ -43,6 +43,7 @@ describe('pronunciation scoring', () => {
     expect(result.score).toBeLessThan(70)
     expect(result.level).toBe('needs-practice')
     expect(result.problemParts).toEqual(['ನಮಸ್ಕಾರ'])
+    expect(result.feedback).toBe('Keep practicing. Listen to the reference again.')
   })
 
   it('flags missing phrase parts and returns a specific practice tip', () => {
@@ -56,7 +57,7 @@ describe('pronunciation scoring', () => {
     expect(result.score).toBeLessThan(90)
     expect(result.level).toBe('steady')
     expect(result.problemParts).toEqual(['ಸಾರ್'])
-    expect(result.feedback).toMatch(/almost/i)
+    expect(result.feedback).toBe('Good! Focus on ಸಾರ್.')
     expect(result.tip).toBe('Hold the ending: ಸಾರ್.')
   })
 

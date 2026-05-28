@@ -96,22 +96,20 @@ function getPronunciationLevel(score: number): PronunciationLevel {
 
 function buildPronunciationFeedback(level: PronunciationLevel, problemParts: string[]): string {
   if (level === 'clear') {
-    return 'Clear pronunciation with strong Kannada rhythm.'
+    return 'Excellent! Very clear pronunciation.'
   }
 
   if (level === 'steady') {
     return problemParts.length
-      ? `Almost there. Recheck ${problemParts.join(', ')}.`
-      : 'Almost there. The phrase is understandable.'
+      ? `Good! Focus on ${problemParts.join(', ')}.`
+      : 'Good! Focus on the full phrase rhythm.'
   }
 
   if (level === 'try-again') {
     return "Let's try again. Play the reference and repeat slowly."
   }
 
-  return problemParts.length
-    ? `Practice slowly and bring back ${problemParts.join(', ')}.`
-    : 'Practice slowly and match each sound to the reference.'
+  return 'Keep practicing. Listen to the reference again.'
 }
 
 function buildPronunciationTip(level: PronunciationLevel, problemParts: string[]): string {
