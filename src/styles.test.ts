@@ -96,6 +96,12 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toContain('.dialogue-reply-prompt')
   })
 
+  it('styles tutor persona explanation cards from the chat spec', () => {
+    expect(styles).toMatch(/\.chat-panel\s*{[^}]*grid-template-rows:\s*auto auto auto 1fr auto auto/s)
+    expect(styles).toMatch(/\.persona-style-card\s*{[^}]*grid-template-columns:\s*48px minmax\(0,\s*1fr\)/s)
+    expect(styles).toMatch(/\.persona-avatar\s*{[^}]*place-items:\s*center/s)
+  })
+
   it('styles type-Kannada live preview cards', () => {
     expect(styles).toMatch(/\.typing-preview-card\s*{[^}]*display:\s*grid/s)
     expect(styles).toMatch(/\.typing-preview-card > strong\s*{[^}]*font-size:\s*1\.75rem/s)

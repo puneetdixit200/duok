@@ -796,6 +796,18 @@ function getScenarioIconLabel(scenario: Scenario): string {
   return `${scenario.title} ${scenario.difficulty.toLowerCase()} scenario icon`
 }
 
+function getTutorPersonaIcon(persona: TutorPersona): string {
+  if (persona.id === 'grammar-teacher') {
+    return '✏️'
+  }
+
+  if (persona.id === 'conversation-coach') {
+    return '🎭'
+  }
+
+  return '👩‍🏫'
+}
+
 function isFlashcardAudioStatus(status: string): boolean {
   return /^Playing (?:Web Speech )?flashcard audio:|^Flashcard Piper/i.test(status)
 }
@@ -4055,6 +4067,19 @@ function App() {
               </select>
             </label>
           </div>
+          <section
+            className="persona-style-card"
+            aria-label={`Tutor persona: ${selectedTutorPersona.name}`}
+          >
+            <span className="persona-avatar" aria-hidden="true">
+              {getTutorPersonaIcon(selectedTutorPersona)}
+            </span>
+            <div>
+              <strong>{selectedTutorPersona.name}</strong>
+              <p>{selectedTutorPersona.style}</p>
+              <small>Correction style: {selectedTutorPersona.correctionStyle}</small>
+            </div>
+          </section>
           <div className="chat-stream" aria-live="polite">
             {chatMessages.map((message) => (
               <article className={`message ${message.speaker}`} key={message.id}>
@@ -4063,8 +4088,7 @@ function App() {
                 </p>
                 {message.subtext && (
                   <small className="message-subtext">
-                    <span>{message.subtext}</span>
-                    <SubtitleLines text={message.subtext} />
+                    <ReadableStatusText text={message.subtext} />
                   </small>
                 )}
               </article>

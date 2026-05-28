@@ -2059,6 +2059,9 @@ describe('KannadaOS desktop app', () => {
       'aria-keyshortcuts',
       'Meta+M Control+M',
     )
+    const defaultPersonaCard = screen.getByLabelText(/Tutor persona: Friendly Anna/i)
+    expect(within(defaultPersonaCard).getByText(/Casual, patient, and Bangalore-friendly/i)).toBeInTheDocument()
+    expect(within(defaultPersonaCard).getByText(/Correction style: Gentle corrections with a usable phrase/i)).toBeInTheDocument()
 
     await user.selectOptions(screen.getByRole('combobox', { name: /^Scenario$/i }), 'bmtc-bus')
 
@@ -2066,12 +2069,16 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/ಟಿಕೆಟ್! ಟಿಕೆಟ್!/i)).toBeInTheDocument()
 
     await user.selectOptions(screen.getByRole('combobox', { name: /^Persona$/i }), 'grammar-teacher')
+    const grammarPersonaCard = screen.getByLabelText(/Tutor persona: Grammar Teacher/i)
+    expect(within(grammarPersonaCard).getByText(/Formal and precise with endings and cases/i)).toBeInTheDocument()
+    expect(within(grammarPersonaCard).getByText(/Correction style: Direct correction with one grammar note/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /ಟಿಕೆಟ್ ಎಷ್ಟು/i }))
     await user.click(screen.getByRole('button', { name: /send/i }))
 
     expect(screen.getByText(/Grammar Teacher: Good fare question/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ಟಿಕೆಟ್ ಎಷ್ಟು/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/Put the destination first/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/English: How much is the ticket/i).length).toBeGreaterThanOrEqual(1)
 
     await user.click(screen.getByRole('button', { name: /record voice/i }))
     const activeVoiceButton = screen.getByRole('button', { name: /stop recording/i })

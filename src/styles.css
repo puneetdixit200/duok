@@ -1436,7 +1436,7 @@ h2 {
 
 .chat-panel {
   display: grid;
-  grid-template-rows: auto auto 1fr auto auto;
+  grid-template-rows: auto auto auto 1fr auto auto;
   gap: 16px;
 }
 
@@ -1465,6 +1465,42 @@ h2 {
   background: var(--color-surface-light);
   color: var(--text-primary);
   font-weight: 900;
+}
+
+.persona-style-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.persona-avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(88, 204, 2, 0.16);
+  font-size: 1.5rem;
+}
+
+.persona-style-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.persona-style-card p {
+  margin: 0 0 4px;
+  color: var(--text-secondary);
+}
+
+.persona-style-card small {
+  color: var(--color-accent-gold);
+  font-weight: 800;
 }
 
 .selector-chip {
