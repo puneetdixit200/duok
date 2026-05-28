@@ -758,7 +758,7 @@ describe('KannadaOS desktop app', () => {
     const feedbackPanel = screen.getByRole('status', { name: /Wrong answer feedback/i })
     expect(within(feedbackPanel).getByText('Not quite.')).toBeInTheDocument()
     expect(within(feedbackPanel).getByText('❤️ -1')).toHaveClass('heart-loss-indicator')
-    expect(within(feedbackPanel).getByText('Correct answer: Hello sir')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('Correct answer: English: Hello sir | Say: namaskara saar | Kannada: ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
     expect(within(feedbackPanel).getByText(/respectful hello used across Bangalore/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Got it/i })).toBeInTheDocument()
   })
@@ -776,9 +776,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
 
     const feedbackPanel = screen.getByRole('status', { name: /Wrong answer feedback/i })
-    expect(within(feedbackPanel).getByText('Correct answer: ನಮಸ್ಕಾರ ಸಾರ್ ಹೇಗಿದ್ದೀರಾ')).toBeInTheDocument()
-    expect(within(feedbackPanel).getByText('English: Hello sir, how are you?')).toBeInTheDocument()
-    expect(within(feedbackPanel).getByText('Say: namaskara saar hegiddira')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('Correct answer: English: Hello sir, how are you? | Say: namaskara saar hegiddira | Kannada: ನಮಸ್ಕಾರ ಸಾರ್ ಹೇಗಿದ್ದೀರಾ')).toBeInTheDocument()
   })
 
   it('reintroduces a missed lesson exercise after two more exercises', async () => {
@@ -2853,9 +2851,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(within(reviewSession).getByRole('button', { name: /Check Review/i }))
 
     const feedbackPanel = within(reviewSession).getByRole('status')
-    expect(within(feedbackPanel).getByText(/Correct answer: ಹೋಗಬೇಕು/i)).toBeInTheDocument()
-    expect(within(feedbackPanel).getByText('English: need to go')).toBeInTheDocument()
-    expect(within(feedbackPanel).getByText('Say: hogbeku')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText(/Correct answer: English: need to go \| Say: hogbeku \| Kannada: ಹೋಗಬೇಕು/i)).toBeInTheDocument()
     expect(within(feedbackPanel).getByText(/No hearts lost/i)).toBeInTheDocument()
 
     await waitFor(() => {

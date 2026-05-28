@@ -1301,7 +1301,33 @@ function getFeedbackAnswerSummary(exercise: LessonExercise): string {
     return `${formatEnglishSubtitle(exercise.english)} | Answer: ${exercise.answer}`
   }
 
+  if (containsKannada(exercise.answer)) {
+    return formatEnglishFirstSubtitleLine(exercise.answer, getKannadaSubtitle(exercise.answer, exercise) ?? {
+      english: glossKannadaWords(exercise.answer),
+      romanization: romanizeKannadaWords(exercise.answer),
+    })
+  }
+
   return `Correct answer: ${exercise.answer}`
+}
+
+function getWrongFeedbackAnswerSummary(exercise: LessonExercise): string {
+  return `Correct answer: ${getFeedbackAnswerSummary(exercise)}`
+}
+
+function getReviewFeedbackAnswerSummary(reviewExercise: ReviewMiniExercise): string {
+  if (!containsKannada(reviewExercise.answer)) {
+    return `Correct answer: ${reviewExercise.answer}`
+  }
+
+  if (normalizeKannadaText(reviewExercise.answer) === normalizeKannadaText(reviewExercise.phrase.kannada)) {
+    return `Correct answer: ${formatEnglishFirstPhraseLine(reviewExercise.phrase)}`
+  }
+
+  return `Correct answer: ${formatEnglishFirstSubtitleLine(reviewExercise.answer, getKannadaSubtitle(reviewExercise.answer) ?? {
+    english: glossKannadaWords(reviewExercise.answer),
+    romanization: romanizeKannadaWords(reviewExercise.answer),
+  })}`
 }
 
 function getFeedbackAriaLabel(feedback: 'correct' | 'wrong' | 'almost'): string {
@@ -3621,7 +3647,7 @@ function App() {
                     <strong>{timedOut ? "Time's up." : 'Not quite.'}</strong>
                     <span className="heart-loss-indicator">❤️ -1</span>
                   </div>
-                  <p><ReadableStatusText text={`Correct answer: ${activeExercise.answer}`} context={activeExercise} /></p>
+                  <p><ReadableStatusText text={getWrongFeedbackAnswerSummary(activeExercise)} context={activeExercise} /></p>
                   <p><ReadableStatusText text={activeExercise.explanation} context={activeExercise} /></p>
                 </>
               )}
@@ -4354,7 +4380,7 @@ function App() {
                           ? '+1 XP'
                           : (
                               <ReadableStatusText
-                                text={`Correct answer: ${activeReviewExercise.answer}. No hearts lost. This word will return soon.`}
+                                text={`${getReviewFeedbackAnswerSummary(activeReviewExercise)}. No hearts lost. This word will return soon.`}
                               />
                             )}
                       </span>
