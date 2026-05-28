@@ -8,9 +8,27 @@ interface GenerateOptions {
   weakArea: string
 }
 
+interface GenerateTutorOptions {
+  fetchImpl?: typeof fetch
+  model?: string
+  baseUrl?: string
+  learnerText: string
+  scenarioTitle: string
+  personaName: string
+  personaStyle: string
+  correctionStyle: string
+  usefulPhrases: string[]
+}
+
 export interface ExerciseGenerationResult {
   source: 'native' | 'ollama' | 'openrouter' | 'nvidia' | 'fallback'
   exercise: GeneratedExercise
+  error?: string
+}
+
+export interface TutorReplyGenerationResult {
+  source: 'ollama' | 'fallback'
+  text: string
   error?: string
 }
 
@@ -58,6 +76,56 @@ export async function generateExerciseWithOllama({
   }
 }
 
+export async function generateTutorReplyWithOllama({
+  fetchImpl = fetch,
+  model = 'llama3.2',
+  baseUrl = 'http://localhost:11434',
+  learnerText,
+  scenarioTitle,
+  personaName,
+  personaStyle,
+  correctionStyle,
+  usefulPhrases,
+}: GenerateTutorOptions): Promise<TutorReplyGenerationResult> {
+  try {
+    const response = await fetchImpl(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        prompt: buildTutorReplyPrompt({
+          learnerText,
+          scenarioTitle,
+          personaName,
+          personaStyle,
+          correctionStyle,
+          usefulPhrases,
+        }),
+      }),
+    })
+
+    if (!response.ok) {
+      return { source: 'fallback', text: '', error: `Ollama HTTP ${response.status}` }
+    }
+
+    const payload = (await response.json()) as { response?: string }
+    const text = (payload.response ?? '').trim()
+
+    if (!text) {
+      return { source: 'fallback', text: '', error: 'Ollama returned an empty tutor reply.' }
+    }
+
+    return { source: 'ollama', text }
+  } catch (error) {
+    return {
+      source: 'fallback',
+      text: '',
+      error: error instanceof Error ? error.message : 'Unknown Ollama tutor failure',
+    }
+  }
+}
+
 export async function checkOllamaStatus(fetchImpl: typeof fetch = fetch): Promise<'online' | 'offline'> {
   try {
     const response = await fetchImpl('http://localhost:11434/api/tags', { method: 'GET' })
@@ -75,6 +143,27 @@ export function buildExercisePrompt(weakArea: string): string {
     'Schema: {"type":"translate|arrange|fillBlank|listening|speaking|matchPairs","prompt":"string","kannada":"string","transliteration":"latin reading","english":"English meaning","answer":"string","options":["string"],"explanation":"string"}',
     'Every Kannada string must have a readable English meaning and Latin transliteration.',
     'Use practical Bangalore Kannada and keep options short.',
+  ].join('\n')
+}
+
+export function buildTutorReplyPrompt({
+  learnerText,
+  scenarioTitle,
+  personaName,
+  personaStyle,
+  correctionStyle,
+  usefulPhrases,
+}: Omit<GenerateTutorOptions, 'fetchImpl' | 'model' | 'baseUrl'>): string {
+  return [
+    `You are ${personaName}, a Kannada tutor for KannadaOS.`,
+    `Persona style: ${personaStyle}`,
+    `Correction style: ${correctionStyle}`,
+    `Scenario: ${scenarioTitle}`,
+    `Learner said: "${learnerText}"`,
+    `Useful phrases: ${usefulPhrases.join(' / ')}`,
+    'Reply in English first, with Kannada phrases when useful.',
+    'Always include a Kannada phrase, romanized "Say:" text, and English meaning.',
+    'Keep the reply under 3 sentences and stay in the scenario.',
   ].join('\n')
 }
 

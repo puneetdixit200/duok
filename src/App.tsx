@@ -45,7 +45,7 @@ import {
   type ProgressState,
   type ReviewRating,
 } from './domain/progress'
-import { checkOllamaStatus, generateExerciseWithOllama } from './services/ollama'
+import { checkOllamaStatus, generateExerciseWithOllama, generateTutorReplyWithOllama } from './services/ollama'
 import { generateExerciseWithNativeRuntime } from './services/nativeExercise'
 import {
   generateExerciseWithHostedProvider,
@@ -2400,7 +2400,7 @@ function App() {
         scenarioTitle: selectedScenario.title,
         personaName: selectedTutorPersona.name,
         personaStyle: selectedTutorPersona.style,
-        usefulPhrases: selectedScenario.usefulPhrases.map((phrase) => `${phrase.transliteration} = ${phrase.english}`),
+        usefulPhrases: selectedScenario.usefulPhrases.map((phrase) => `${phrase.kannada} = ${phrase.transliteration} = ${phrase.english}`),
       })
 
       if (hostedReply.source === aiProviderSettings.activeProvider) {
@@ -2415,6 +2415,30 @@ function App() {
         setVoiceStatus(`${providerLabel} tutor reply ready.`)
       } else {
         setVoiceStatus(`${providerLabel} unavailable; using offline tutor. ${hostedReply.error ?? ''}`.trim())
+      }
+    } else if (aiProviderSettings.activeProvider === 'ollama') {
+      setVoiceStatus('Asking Ollama...')
+      const ollamaReply = await generateTutorReplyWithOllama({
+        learnerText: text,
+        scenarioTitle: selectedScenario.title,
+        personaName: selectedTutorPersona.name,
+        personaStyle: selectedTutorPersona.style,
+        correctionStyle: selectedTutorPersona.correctionStyle,
+        usefulPhrases: selectedScenario.usefulPhrases.map((phrase) => `${phrase.kannada} = ${phrase.transliteration} = ${phrase.english}`),
+      })
+
+      if (ollamaReply.source === 'ollama') {
+        tutorReply = {
+          text: ollamaReply.text,
+          subtext: formatTutorPhraseSupport(
+            selectedTutorPersona,
+            selectedScenario.usefulPhrases[0],
+            'Ollama local tutor reply.',
+          ),
+        }
+        setVoiceStatus('Ollama tutor reply ready.')
+      } else {
+        setVoiceStatus(`Ollama unavailable; using offline tutor. ${ollamaReply.error ?? ''}`.trim())
       }
     }
 

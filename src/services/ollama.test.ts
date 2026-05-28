@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { generateExerciseWithOllama } from './ollama'
+import { generateExerciseWithOllama, generateTutorReplyWithOllama } from './ollama'
 
 describe('Ollama exercise generation', () => {
   it('parses valid JSON exercise responses', async () => {
@@ -62,5 +62,57 @@ describe('Ollama exercise generation', () => {
     await expect(
       generateExerciseWithOllama({ fetchImpl: failingFetch, weakArea: 'verbs' }),
     ).resolves.toMatchObject({ source: 'fallback' })
+  })
+
+  it('generates tutor chat replies through Ollama with persona and scenario context', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        response: 'Friendly Anna: You can say ಮೀಟರ್ ಹಾಕಿ. Say: miitar haaki. English: Put the meter.',
+      }),
+    })) as unknown as typeof fetch
+
+    const result = await generateTutorReplyWithOllama({
+      fetchImpl,
+      model: 'llama3.1:8b',
+      learnerText: 'meter please',
+      scenarioTitle: 'Auto Ride',
+      personaName: 'Friendly Anna',
+      personaStyle: 'Casual and patient',
+      correctionStyle: 'Gentle: Nice try!',
+      usefulPhrases: ['ಮೀಟರ್ ಹಾಕಿ = miitar haaki = Put the meter'],
+    })
+
+    expect(result.source).toBe('ollama')
+    expect(result.text).toContain('ಮೀಟರ್ ಹಾಕಿ')
+    expect(fetchImpl).toHaveBeenCalledWith('http://localhost:11434/api/generate', expect.objectContaining({
+      method: 'POST',
+    }))
+    expect(JSON.parse(String(fetchImpl.mock.calls[0][1]?.body))).toMatchObject({
+      model: 'llama3.1:8b',
+      stream: false,
+      prompt: expect.stringContaining('Learner said: "meter please"'),
+    })
+    expect(JSON.parse(String(fetchImpl.mock.calls[0][1]?.body)).prompt).toContain('Always include a Kannada phrase')
+  })
+
+  it('falls back from Ollama tutor replies when the local model is unavailable', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: false,
+      status: 503,
+      json: async () => ({}),
+    })) as unknown as typeof fetch
+
+    await expect(
+      generateTutorReplyWithOllama({
+        fetchImpl,
+        learnerText: 'hello',
+        scenarioTitle: 'Auto Ride',
+        personaName: 'Friendly Anna',
+        personaStyle: 'Patient',
+        correctionStyle: 'Gentle',
+        usefulPhrases: ['ನಮಸ್ಕಾರ = namaskara = hello'],
+      }),
+    ).resolves.toMatchObject({ source: 'fallback', error: 'Ollama HTTP 503' })
   })
 })
