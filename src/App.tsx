@@ -3999,14 +3999,6 @@ function App() {
               <p className="eyebrow">{selectedTutorPersona.name} - {selectedScenario.difficulty}</p>
               <h2 id="chat-title">{selectedScenario.title}</h2>
             </div>
-            <button
-              aria-keyshortcuts="Meta+M Control+M"
-              className="secondary-action"
-              onClick={recordVoiceInput}
-              type="button"
-            >
-              {recordingTarget === 'chat' ? 'Stop Recording' : 'Record Voice'}
-            </button>
           </header>
           <div className="chat-selector-row">
             <label className="chat-select-field">
@@ -4076,6 +4068,16 @@ function App() {
               placeholder="Type in Kannada or English..."
               value={chatInput}
             />
+            <button
+              aria-keyshortcuts={microphoneShortcuts}
+              aria-label={recordingTarget === 'chat' ? 'Stop recording' : 'Record voice'}
+              className={recordingTarget === 'chat' ? 'voice-action recording' : 'voice-action'}
+              onClick={recordVoiceInput}
+              title={recordingTarget === 'chat' ? 'Stop recording' : 'Record voice'}
+              type="button"
+            >
+              {recordingTarget === 'chat' ? '■' : '🎤'}
+            </button>
             <button className="primary-action" type="submit">
               Send
             </button>

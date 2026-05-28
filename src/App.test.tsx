@@ -2011,6 +2011,13 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /chat/i }))
 
+    const chatInputForm = screen.getByPlaceholderText(/type in kannada/i).closest('form')
+    expect(chatInputForm).not.toBeNull()
+    expect(within(chatInputForm!).getByRole('button', { name: /record voice/i })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'Meta+M Control+M',
+    )
+
     await user.selectOptions(screen.getByRole('combobox', { name: /^Scenario$/i }), 'bmtc-bus')
 
     expect(screen.getByRole('heading', { name: /BMTC Bus/i })).toBeInTheDocument()
