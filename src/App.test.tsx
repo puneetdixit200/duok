@@ -235,6 +235,39 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByLabelText(/Gems/)).toHaveTextContent('💎 130')
   })
 
+  it('clears the quest claim burst after the animation finishes', () => {
+    vi.useFakeTimers()
+    const today = new Date().toISOString().slice(0, 10)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      dailyXp: 10,
+      gems: 120,
+      lastPracticeDate: today,
+      completedExerciseIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+      todayActivityIds: ['survival-translate-1', 'survival-arrange-1', 'survival-fill-1'],
+    }))
+
+    render(<App />)
+
+    const quests = screen.getByLabelText(/Daily quests/i)
+    const xpQuestCard = within(quests).getByText('Earn 10 XP').closest('article')
+    expect(xpQuestCard).toBeInTheDocument()
+
+    fireEvent.click(within(xpQuestCard!).getByRole('button', { name: /Claim 10/i }))
+
+    const gems = screen.getByLabelText(/Gems/)
+    expect(gems).toHaveClass('rolling')
+    expect(within(xpQuestCard!).getByLabelText(/Quest claim celebration: Earn 10 XP/i)).toBeInTheDocument()
+
+    act(() => {
+      vi.advanceTimersByTime(2200)
+    })
+
+    expect(gems).not.toHaveClass('rolling')
+    expect(within(xpQuestCard!).queryByLabelText(/Quest claim celebration: Earn 10 XP/i)).not.toBeInTheDocument()
+  })
+
   it('starts a fresh daily quest board when saved progress is from a previous local date', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-05-28T08:00:00.000Z'))

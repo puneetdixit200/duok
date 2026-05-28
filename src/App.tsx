@@ -183,6 +183,7 @@ const seenUnitTipsKey = 'kannadaos:seen-unit-tips'
 const defaultChatScenario = bangaloreScenarios.find((scenario) => scenario.id === 'auto-ride') ?? bangaloreScenarios[0]
 const defaultTutorPersona = tutorPersonas[0]
 const storyQuizXp = 5
+const questClaimAnimationMs = 2200
 const weakSkillPracticeLimit = 6
 const pronunciationPhrases = survivalPhrases.filter((phrase) =>
   ['namaskara-saar', 'ticket-eshtu', 'swalpa-adjust-maadi', 'majestic-ge-hogbeku', 'illi-nillisi'].includes(phrase.id),
@@ -1632,6 +1633,20 @@ function App() {
 
     previousStreakDaysRef.current = progress.streakDays
   }, [progress.streakDays, soundPreferences.soundEffects])
+
+  useEffect(() => {
+    if (!claimedQuestId) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setClaimedQuestId(null)
+    }, questClaimAnimationMs)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [claimedQuestId])
 
   useEffect(() => {
     localStorage.setItem(learnerProfileKey, JSON.stringify(learnerProfile))
