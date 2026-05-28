@@ -215,6 +215,16 @@ describe('KannadaOS level 1 curriculum', () => {
     })
   })
 
+  it('awards match-pair drills one XP per matched pair', () => {
+    const matchPairExercises = getAllLessonExercises([...coreCurriculumUnits, getScriptCurriculumUnit()])
+      .filter((exercise) => exercise.type === 'matchPairs')
+
+    expect(matchPairExercises.length).toBeGreaterThan(0)
+    for (const exercise of matchPairExercises) {
+      expect(exercise.xp).toBe(exercise.answer.split(';').filter(Boolean).length)
+    }
+  })
+
   it('adds one or two distractor chips to generated arrange-word drills', () => {
     const generatedArrange = coreCurriculumUnits[0].lessons[1].exercises.find((exercise) => exercise.type === 'arrange')
     expect(generatedArrange).toBeDefined()

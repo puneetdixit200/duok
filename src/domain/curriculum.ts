@@ -1355,7 +1355,7 @@ function buildExercisesForLesson(
       ...exercise(idPrefix, 6, 'matchPairs', 'Match each Kannada phrase:', first, matchPairs, [
         ...phrases.map((phrase) => phrase.kannada),
         ...phrases.map((phrase) => phrase.english),
-      ], 4),
+      ], phrases.length),
       kannada: phrases.map((phrase) => phrase.kannada).join(', '),
       vocabularyIds: phrases.map((phrase) => phrase.id),
     },
@@ -1446,7 +1446,7 @@ function buildReviewExercisesForLesson(
       ...exercise(idPrefix, 6, 'matchPairs', 'Match each Kannada phrase:', matchPhrases[0], matchPairs, [
         ...matchPhrases.map((phrase) => phrase.kannada),
         ...matchPhrases.map((phrase) => phrase.english),
-      ], 4),
+      ], matchPhrases.length),
       kannada: matchPhrases.map((phrase) => phrase.kannada).join(', '),
       vocabularyIds: matchPhrases.map((phrase) => phrase.id),
     },
