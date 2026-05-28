@@ -4,6 +4,7 @@ import {
   fallbackExercise,
   parseGeneratedExerciseResponse,
   type ExerciseGenerationResult,
+  type ExercisePromptContext,
 } from './ollama'
 
 export interface NativeExerciseRequest {
@@ -20,18 +21,20 @@ export interface NativeExerciseResponse {
 interface GenerateNativeExerciseOptions {
   runtimeConfig: LocalRuntimeConfig
   weakArea: string
+  promptContext?: ExercisePromptContext
   generateNativeExercise: (request: NativeExerciseRequest) => Promise<NativeExerciseResponse>
 }
 
 export async function generateExerciseWithNativeRuntime({
   runtimeConfig,
   weakArea,
+  promptContext,
   generateNativeExercise,
 }: GenerateNativeExerciseOptions): Promise<ExerciseGenerationResult> {
   const fallback = fallbackExercise(weakArea)
 
   try {
-    const prompt = buildExercisePrompt(weakArea)
+    const prompt = buildExercisePrompt(weakArea, promptContext)
     const result = await generateNativeExercise({ runtimeConfig, prompt })
 
     if (!result.ok) {

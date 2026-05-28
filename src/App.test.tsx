@@ -2105,6 +2105,8 @@ describe('KannadaOS desktop app', () => {
     expect((await within(aiPracticeCard).findAllByText(/Offline: Fill in the blank:/i)).length).toBeGreaterThanOrEqual(1)
     expect(within(aiPracticeCard).getByText('English: I need to go to school')).toBeInTheDocument()
     expect(within(aiPracticeCard).getByText('Say: naanu shaalege ___')).toBeInTheDocument()
+    expect(within(aiPracticeCard).getAllByText(/Skill: verbs/i).length).toBeGreaterThanOrEqual(1)
+    expect(within(aiPracticeCard).getAllByText(/Vocab: hogbeku/i).length).toBeGreaterThanOrEqual(1)
     expect(within(aiPracticeCard).getByText(/1 saved drill for curriculum review/i)).toBeInTheDocument()
     await waitFor(() => {
       expect(localStorage.getItem('kannadaos:ai-expansion')).toContain('Fill in the blank:')

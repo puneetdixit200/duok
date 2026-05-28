@@ -1,4 +1,10 @@
-import { buildExercisePrompt, fallbackExercise, parseGeneratedExerciseResponse, type ExerciseGenerationResult } from './ollama'
+import {
+  buildExercisePrompt,
+  fallbackExercise,
+  parseGeneratedExerciseResponse,
+  type ExerciseGenerationResult,
+  type ExercisePromptContext,
+} from './ollama'
 
 export type AiProviderId = 'local' | 'ollama' | 'openrouter' | 'nvidia'
 export type HostedProviderId = Extract<AiProviderId, 'openrouter' | 'nvidia'>
@@ -28,6 +34,7 @@ interface GenerateHostedExerciseOptions {
   hostedChatCompletion?: HostedChatCompletion
   providerSettings: AiProviderSettings
   weakArea: string
+  promptContext?: ExercisePromptContext
 }
 
 interface GenerateHostedTutorOptions {
@@ -86,6 +93,7 @@ export async function generateExerciseWithHostedProvider({
   hostedChatCompletion,
   providerSettings,
   weakArea,
+  promptContext,
 }: GenerateHostedExerciseOptions): Promise<ExerciseGenerationResult> {
   const fallback = fallbackExercise(weakArea)
   const connection = getHostedProviderConnection(providerSettings)
@@ -108,7 +116,7 @@ export async function generateExerciseWithHostedProvider({
           role: 'system',
           content: 'You create short Kannada learning exercises and return only one JSON object.',
         },
-        { role: 'user', content: buildExercisePrompt(weakArea) },
+        { role: 'user', content: buildExercisePrompt(weakArea, promptContext) },
       ],
       hostedChatCompletion,
     )

@@ -483,6 +483,12 @@ h2 {
   justify-items: start;
 }
 
+.generated-exercise-meta {
+  color: #d7f5e2;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
 .generated-answer {
   display: grid;
   gap: 3px;

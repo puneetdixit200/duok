@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { generateExerciseWithOllama, generateTutorReplyWithOllama } from './ollama'
+import { buildExercisePrompt, generateExerciseWithOllama, generateTutorReplyWithOllama } from './ollama'
 
 describe('Ollama exercise generation', () => {
   it('parses valid JSON exercise responses', async () => {
@@ -15,6 +15,9 @@ describe('Ollama exercise generation', () => {
           answer: 'ಮನೆಗೆ',
           options: ['ಮನೆಗೆ', 'ಧನ್ಯವಾದ', 'ನಮಸ್ಕಾರ', 'ಸಾರ್'],
           explanation: 'ಮನೆಗೆ means to home.',
+          skillTag: 'postpositions',
+          xp: 2,
+          vocabularyIds: ['manege'],
         }),
       }),
     })) as unknown as typeof fetch
@@ -30,6 +33,26 @@ describe('Ollama exercise generation', () => {
     expect(result.exercise.english).toBe('I need to go home')
     expect(result.exercise.transliteration).toBe('naanu manege hogbeku')
     expect(result.exercise.options).toContain('ಮನೆಗೆ')
+    expect(result.exercise.skillTag).toBe('postpositions')
+    expect(result.exercise.xp).toBe(2)
+    expect(result.exercise.vocabularyIds).toEqual(['manege'])
+  })
+
+  it('builds the frontend spec AI exercise prompt with learner context and metadata schema', () => {
+    const prompt = buildExercisePrompt('transport', {
+      difficultyLevel: 'steady beginner',
+      weakAreas: { transport: 3, verbs: 1 },
+      targetSkillTag: 'transport',
+      vocabularyList: ['majestic-ge-hogbeku: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು (Majestic-ge hogbeku) = I need to go to Majestic'],
+    })
+
+    expect(prompt).toContain('The learner is at steady beginner level')
+    expect(prompt).toContain('transport (3), verbs (1)')
+    expect(prompt).toContain('Focus on the skill tag: transport')
+    expect(prompt).toContain('Use vocabulary from this list: majestic-ge-hogbeku')
+    expect(prompt).toContain('"skillTag":"greetings"')
+    expect(prompt).toContain('"xp":2')
+    expect(prompt).toContain('"vocabularyIds":["phrase-id"]')
   })
 
   it('extracts JSON from markdown code fences before parsing', async () => {

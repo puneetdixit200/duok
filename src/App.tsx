@@ -41,11 +41,17 @@ import {
   serializeProgress,
   toggleScenarioChecklistItem,
   unlockStoryWithGems,
+  type AdaptiveDifficultyLevel,
   type DailyQuest,
   type ProgressState,
   type ReviewRating,
 } from './domain/progress'
-import { checkOllamaStatus, generateExerciseWithOllama, generateTutorReplyWithOllama } from './services/ollama'
+import {
+  checkOllamaStatus,
+  generateExerciseWithOllama,
+  generateTutorReplyWithOllama,
+  type ExercisePromptContext,
+} from './services/ollama'
 import { generateExerciseWithNativeRuntime } from './services/nativeExercise'
 import {
   generateExerciseWithHostedProvider,
@@ -673,6 +679,7 @@ function GeneratedExerciseSummary({
     <span className="generated-exercise-summary">
       <strong>{source ? `${formatGeneratedExerciseSource(source)}: ${exercise.prompt}` : exercise.prompt}</strong>
       <ChoiceText text={exercise.kannada} context={context} />
+      <GeneratedExerciseMetadata exercise={exercise} />
       {answerHasReadableKannada && (
         <span className="generated-answer">
           <span>Answer</span>
@@ -681,6 +688,20 @@ function GeneratedExerciseSummary({
       )}
     </span>
   )
+}
+
+function GeneratedExerciseMetadata({ exercise }: { exercise: GeneratedExercise }) {
+  const metadata = [
+    exercise.skillTag ? `Skill: ${exercise.skillTag}` : null,
+    typeof exercise.xp === 'number' ? `${exercise.xp} XP` : null,
+    exercise.vocabularyIds?.length ? `Vocab: ${exercise.vocabularyIds.slice(0, 3).join(', ')}` : null,
+  ].filter((item): item is string => Boolean(item))
+
+  if (!metadata.length) {
+    return null
+  }
+
+  return <small className="generated-exercise-meta">{metadata.join(' · ')}</small>
 }
 
 function getGeneratedExerciseReadableContext(exercise: GeneratedExercise): LessonExercise {
@@ -694,9 +715,9 @@ function getGeneratedExerciseReadableContext(exercise: GeneratedExercise): Lesso
     answer: exercise.answer,
     options: exercise.options,
     explanation: exercise.explanation ?? 'Generated Kannada practice exercise.',
-    skillTag: 'generated',
-    xp: 0,
-    vocabularyIds: [],
+    skillTag: exercise.skillTag ?? 'generated',
+    xp: exercise.xp ?? 0,
+    vocabularyIds: exercise.vocabularyIds ?? [],
   }
 }
 
@@ -2340,7 +2361,8 @@ function App() {
 
   async function generateAiExercise() {
     const weakArea = Object.keys(progress.weakAreas)[0] ?? 'verbs'
-    const result = await generateExerciseWithPreferredProvider(weakArea)
+    const promptContext = getAiExercisePromptContext(weakArea)
+    const result = await generateExerciseWithPreferredProvider(weakArea, promptContext)
 
     setGeneratedExercise(formatGeneratedExerciseStatus(result.source, result.exercise))
     setLatestGeneratedExercise(result.exercise)
@@ -2348,26 +2370,36 @@ function App() {
     setAiExpansionDeck((current) => [result.exercise, ...current].slice(0, 8))
   }
 
-  async function generateExerciseWithPreferredProvider(weakArea: string) {
+  function getAiExercisePromptContext(weakArea: string): ExercisePromptContext {
+    return {
+      difficultyLevel: formatAdaptiveDifficultyForAiPrompt(getAdaptiveDifficulty(progress, new Date().toISOString()).level),
+      weakAreas: progress.weakAreas,
+      targetSkillTag: weakArea,
+      vocabularyList: getAiExerciseVocabularyList(weakArea, allCurriculumUnits),
+    }
+  }
+
+  async function generateExerciseWithPreferredProvider(weakArea: string, promptContext: ExercisePromptContext) {
     if (aiProviderSettings.activeProvider === 'openrouter' || aiProviderSettings.activeProvider === 'nvidia') {
       return generateExerciseWithHostedProvider({
         hostedChatCompletion: window.kannadaOS?.generateHostedChat,
         providerSettings: aiProviderSettings,
         weakArea,
+        promptContext,
       })
     }
 
     if (aiProviderSettings.activeProvider === 'ollama') {
-      const ollamaResult = await generateExerciseWithOllama({ weakArea })
+      const ollamaResult = await generateExerciseWithOllama({ weakArea, promptContext })
       return ollamaResult.source === 'ollama'
         ? ollamaResult
-        : generateExerciseWithHostedFallback(weakArea, ollamaResult)
+        : generateExerciseWithHostedFallback(weakArea, promptContext, ollamaResult)
     }
 
-    return generateExerciseWithLocalPreference(weakArea)
+    return generateExerciseWithLocalPreference(weakArea, promptContext)
   }
 
-  async function generateExerciseWithLocalPreference(weakArea: string) {
+  async function generateExerciseWithLocalPreference(weakArea: string, promptContext: ExercisePromptContext) {
     const nativeGenerator = window.kannadaOS?.generateNativeExercise
     const smokeSummary = runtimeSmokeSummary
     const canUseNative =
@@ -2377,24 +2409,26 @@ function App() {
       nativeGenerator
     const nativeResult = canUseNative
       ? await generateExerciseWithNativeRuntime({
-          runtimeConfig,
-          weakArea,
-          generateNativeExercise: nativeGenerator,
-        })
+        runtimeConfig,
+        weakArea,
+        promptContext,
+        generateNativeExercise: nativeGenerator,
+      })
       : null
 
     if (nativeResult?.source === 'native') {
       return nativeResult
     }
 
-    const ollamaResult = await generateExerciseWithOllama({ weakArea })
+    const ollamaResult = await generateExerciseWithOllama({ weakArea, promptContext })
     return ollamaResult.source === 'ollama'
       ? ollamaResult
-      : generateExerciseWithHostedFallback(weakArea, ollamaResult)
+      : generateExerciseWithHostedFallback(weakArea, promptContext, ollamaResult)
   }
 
   async function generateExerciseWithHostedFallback(
     weakArea: string,
+    promptContext: ExercisePromptContext,
     fallbackResult: Awaited<ReturnType<typeof generateExerciseWithOllama>>,
   ) {
     const hostedFallbackSettings = getConfiguredHostedExerciseFallbackSettings(aiProviderSettings)
@@ -2407,6 +2441,7 @@ function App() {
       hostedChatCompletion: window.kannadaOS?.generateHostedChat,
       providerSettings: hostedFallbackSettings,
       weakArea,
+      promptContext,
     })
   }
 
@@ -5683,6 +5718,51 @@ function getConfiguredHostedExerciseFallbackSettings(settings: AiProviderSetting
   return null
 }
 
+function formatAdaptiveDifficultyForAiPrompt(level: AdaptiveDifficultyLevel): string {
+  if (level === 'gentle') {
+    return 'gentle beginner'
+  }
+
+  if (level === 'challenge') {
+    return 'challenge beginner'
+  }
+
+  return 'steady beginner'
+}
+
+function getAiExerciseVocabularyList(targetSkillTag: string, units: CurriculumUnit[]): string[] {
+  const matchingExercises = units
+    .flatMap((unit) => unit.lessons)
+    .flatMap((lesson) => lesson.exercises)
+    .filter((exercise) => exercise.skillTag === targetSkillTag)
+
+  const fallbackExercises = units
+    .flatMap((unit) => unit.lessons)
+    .flatMap((lesson) => lesson.exercises)
+
+  const vocabularyIds = collectGeneratedPromptVocabularyIds(
+    matchingExercises.length ? matchingExercises : fallbackExercises,
+  )
+
+  return vocabularyIds
+    .map((vocabularyId) => getPhraseByVocabularyId(vocabularyId))
+    .filter((phrase): phrase is Phrase => phrase !== null)
+    .slice(0, 12)
+    .map((phrase) => `${phrase.id}: ${phrase.kannada} (${phrase.transliteration}) = ${phrase.english}`)
+}
+
+function collectGeneratedPromptVocabularyIds(exercises: LessonExercise[]): string[] {
+  const vocabularyIds = new Set<string>()
+
+  for (const exercise of exercises) {
+    for (const vocabularyId of exercise.vocabularyIds) {
+      vocabularyIds.add(vocabularyId)
+    }
+  }
+
+  return Array.from(vocabularyIds)
+}
+
 function formatLessonDuration(durationMs: number): string {
   const totalSeconds = Math.max(0, Math.round(durationMs / 1000))
   const minutes = Math.floor(totalSeconds / 60)
@@ -5962,7 +6042,11 @@ function isGeneratedExercise(exercise: Partial<GeneratedExercise>): exercise is 
     typeof exercise.answer === 'string' &&
     Array.isArray(exercise.options) &&
     exercise.options.every((option) => typeof option === 'string') &&
-    (exercise.explanation === undefined || typeof exercise.explanation === 'string')
+    (exercise.explanation === undefined || typeof exercise.explanation === 'string') &&
+    (exercise.skillTag === undefined || typeof exercise.skillTag === 'string') &&
+    (exercise.xp === undefined || typeof exercise.xp === 'number') &&
+    (exercise.vocabularyIds === undefined ||
+      (Array.isArray(exercise.vocabularyIds) && exercise.vocabularyIds.every((vocabularyId) => typeof vocabularyId === 'string')))
   )
 }
 

@@ -142,4 +142,7 @@ export interface GeneratedExercise {
   answer: string
   options: string[]
   explanation?: string
+  skillTag?: string
+  xp?: number
+  vocabularyIds?: string[]
 }

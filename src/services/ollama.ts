@@ -1,11 +1,19 @@
-import { lessonExercises } from '../domain/curriculum'
-import type { ExerciseType, GeneratedExercise } from '../types'
+import { getAllLessonExercises, getPhraseByVocabularyId, lessonExercises } from '../domain/curriculum'
+import type { ExerciseType, GeneratedExercise, Phrase } from '../types'
+
+export interface ExercisePromptContext {
+  difficultyLevel?: string
+  weakAreas?: Record<string, number> | string[] | string
+  targetSkillTag?: string
+  vocabularyList?: Array<string | Phrase>
+}
 
 interface GenerateOptions {
   fetchImpl?: typeof fetch
   model?: string
   baseUrl?: string
   weakArea: string
+  promptContext?: ExercisePromptContext
 }
 
 interface GenerateTutorOptions {
@@ -46,6 +54,7 @@ export async function generateExerciseWithOllama({
   model = 'llama3.2',
   baseUrl = 'http://localhost:11434',
   weakArea,
+  promptContext,
 }: GenerateOptions): Promise<ExerciseGenerationResult> {
   const fallback = fallbackExercise(weakArea)
 
@@ -56,7 +65,7 @@ export async function generateExerciseWithOllama({
       body: JSON.stringify({
         model,
         stream: false,
-        prompt: buildExercisePrompt(weakArea),
+        prompt: buildExercisePrompt(weakArea, promptContext),
       }),
     })
 
@@ -135,12 +144,22 @@ export async function checkOllamaStatus(fetchImpl: typeof fetch = fetch): Promis
   }
 }
 
-export function buildExercisePrompt(weakArea: string): string {
+export function buildExercisePrompt(weakArea: string, context: ExercisePromptContext = {}): string {
+  const targetSkillTag = context.targetSkillTag?.trim() || weakArea
+  const difficultyLevel = context.difficultyLevel?.trim() || 'beginner survival Kannada'
+  const weakAreas = formatWeakAreasForPrompt(context.weakAreas ?? { [weakArea]: 1 })
+  const vocabularyList = formatVocabularyListForPrompt(
+    context.vocabularyList?.length ? context.vocabularyList : getDefaultVocabularyList(targetSkillTag),
+  )
+
   return [
-    'Return only valid JSON for a Kannada learning exercise.',
+    'Generate one Kannada learning exercise in JSON format.',
     'No markdown except a single JSON object if absolutely necessary.',
+    `The learner is at ${difficultyLevel} level. Their weak areas are: ${weakAreas}.`,
+    `Focus on the skill tag: ${targetSkillTag}.`,
+    `Use vocabulary from this list: ${vocabularyList}`,
     `Target weak area: ${weakArea}.`,
-    'Schema: {"type":"translate|arrange|fillBlank|listening|speaking|matchPairs","prompt":"string","kannada":"string","transliteration":"latin reading","english":"English meaning","answer":"string","options":["string"],"explanation":"string"}',
+    'Return JSON with this schema: {"type":"translate|fillBlank|arrange","prompt":"English instruction","kannada":"Kannada text","transliteration":"romanized","english":"English meaning","answer":"correct answer string","options":["option1","option2","option3","option4"],"explanation":"Why this is correct","skillTag":"greetings","xp":2,"vocabularyIds":["phrase-id"]}',
     'Every Kannada string must have a readable English meaning and Latin transliteration.',
     'Use practical Bangalore Kannada and keep options short.',
   ].join('\n')
@@ -198,6 +217,18 @@ export function parseGeneratedExerciseResponse(raw: string): GeneratedExercise {
     exercise.english = parsed.english
   }
 
+  if (typeof parsed.skillTag === 'string') {
+    exercise.skillTag = parsed.skillTag
+  }
+
+  if (typeof parsed.xp === 'number' && Number.isFinite(parsed.xp)) {
+    exercise.xp = parsed.xp
+  }
+
+  if (Array.isArray(parsed.vocabularyIds)) {
+    exercise.vocabularyIds = parsed.vocabularyIds.filter((vocabularyId): vocabularyId is string => typeof vocabularyId === 'string')
+  }
+
   return exercise
 }
 
@@ -219,6 +250,9 @@ export function fallbackExercise(weakArea: string): GeneratedExercise {
     answer: local.answer,
     options: local.options,
     explanation: local.explanation,
+    skillTag: local.skillTag,
+    xp: local.xp,
+    vocabularyIds: local.vocabularyIds,
   }
 
   if (local.transliteration) {
@@ -230,4 +264,57 @@ export function fallbackExercise(weakArea: string): GeneratedExercise {
   }
 
   return exercise
+}
+
+function formatWeakAreasForPrompt(weakAreas: ExercisePromptContext['weakAreas']): string {
+  if (typeof weakAreas === 'string') {
+    return weakAreas
+  }
+
+  if (Array.isArray(weakAreas)) {
+    return weakAreas.length ? weakAreas.join(', ') : 'none yet'
+  }
+
+  const entries = Object.entries(weakAreas ?? {})
+    .filter(([, count]) => count > 0)
+    .sort((left, right) => right[1] - left[1])
+    .map(([skillTag, count]) => `${skillTag} (${count})`)
+
+  return entries.length ? entries.join(', ') : 'none yet'
+}
+
+function formatVocabularyListForPrompt(vocabularyList: Array<string | Phrase>): string {
+  const formatted = vocabularyList
+    .map((item) => typeof item === 'string' ? item : formatPromptPhrase(item))
+    .filter((item) => item.trim().length > 0)
+
+  return formatted.length ? formatted.join(' / ') : 'use authored survival Kannada vocabulary'
+}
+
+function getDefaultVocabularyList(targetSkillTag: string): Phrase[] {
+  const allExercises = getAllLessonExercises()
+  const matchingVocabularyIds = collectVocabularyIds(allExercises.filter((exercise) => exercise.skillTag === targetSkillTag))
+  const fallbackVocabularyIds = collectVocabularyIds(allExercises)
+  const vocabularyIds = matchingVocabularyIds.length ? matchingVocabularyIds : fallbackVocabularyIds
+
+  return vocabularyIds
+    .map((vocabularyId) => getPhraseByVocabularyId(vocabularyId))
+    .filter((phrase): phrase is Phrase => phrase !== null)
+    .slice(0, 12)
+}
+
+function collectVocabularyIds(exercises: typeof lessonExercises): string[] {
+  const vocabularyIds = new Set<string>()
+
+  for (const exercise of exercises) {
+    for (const vocabularyId of exercise.vocabularyIds) {
+      vocabularyIds.add(vocabularyId)
+    }
+  }
+
+  return Array.from(vocabularyIds)
+}
+
+function formatPromptPhrase(phrase: Phrase): string {
+  return `${phrase.id}: ${phrase.kannada} (${phrase.transliteration}) = ${phrase.english}`
 }
