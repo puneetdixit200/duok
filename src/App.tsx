@@ -4008,31 +4008,35 @@ function App() {
               {recordingTarget === 'chat' ? 'Stop Recording' : 'Record Voice'}
             </button>
           </header>
-          <div className="scenario-picker" aria-label="Chat scenarios">
-            {bangaloreScenarios.map((scenario) => (
-              <button
-                className={selectedScenario.id === scenario.id ? 'selector-chip active' : 'selector-chip'}
-                key={scenario.id}
-                onClick={() => selectChatScenario(scenario.id)}
-                type="button"
+          <div className="chat-selector-row">
+            <label className="chat-select-field">
+              <span id="chat-scenario-label">Scenario</span>
+              <select
+                aria-labelledby="chat-scenario-label"
+                onChange={(event) => selectChatScenario(event.target.value)}
+                value={selectedScenario.id}
               >
-                <strong>{scenario.title}</strong>
-                <small>{scenario.difficulty}</small>
-              </button>
-            ))}
-          </div>
-          <div className="persona-picker" aria-label="Tutor personalities">
-            {tutorPersonas.map((persona) => (
-              <button
-                className={selectedTutorPersona.id === persona.id ? 'selector-chip active' : 'selector-chip'}
-                key={persona.id}
-                onClick={() => setSelectedTutorPersonaId(persona.id)}
-                type="button"
+                {bangaloreScenarios.map((scenario) => (
+                  <option key={scenario.id} value={scenario.id}>
+                    {scenario.title} - {scenario.difficulty}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="chat-select-field">
+              <span id="chat-persona-label">Persona</span>
+              <select
+                aria-labelledby="chat-persona-label"
+                onChange={(event) => setSelectedTutorPersonaId(event.target.value)}
+                value={selectedTutorPersona.id}
               >
-                <strong>{persona.name}</strong>
-                <small>{persona.correctionStyle}</small>
-              </button>
-            ))}
+                {tutorPersonas.map((persona) => (
+                  <option key={persona.id} value={persona.id}>
+                    {persona.name} - {persona.correctionStyle}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <div className="chat-stream" aria-live="polite">
             {chatMessages.map((message) => (

@@ -1863,7 +1863,9 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /chat/i }))
 
-    const scenarioPicker = screen.getByLabelText(/Chat scenarios/i)
+    const scenarioSelect = screen.getByRole('combobox', { name: /^Scenario$/i })
+    expect(scenarioSelect).toHaveValue('auto-ride')
+    expect(within(scenarioSelect).getByRole('option', { name: /BMTC Bus - Beginner/i })).toBeInTheDocument()
     let quickReplies = screen.getByRole('group', { name: /Quick replies/i })
     expect(within(quickReplies).getAllByRole('button')).toHaveLength(4)
     expect(within(quickReplies).getByRole('button', { name: /English: I need to go to Majestic/i })).toBeInTheDocument()
@@ -1873,14 +1875,16 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /send/i }))
     expect(await screen.findByText(/Add -ge for "to" before the destination/i)).toBeInTheDocument()
 
-    await user.click(within(scenarioPicker).getByRole('button', { name: /BMTC Bus/i }))
+    await user.selectOptions(scenarioSelect, 'bmtc-bus')
+    expect(scenarioSelect).toHaveValue('bmtc-bus')
     expect(screen.queryByText('Majestic hogbeku')).not.toBeInTheDocument()
     quickReplies = screen.getByRole('group', { name: /Quick replies/i })
     expect(within(quickReplies).getAllByRole('button')).toHaveLength(4)
     expect(within(quickReplies).getByRole('button', { name: /English: How much is the ticket/i })).toBeInTheDocument()
     expect(within(quickReplies).getByRole('button', { name: /English: Please speak slowly/i })).toBeInTheDocument()
 
-    await user.click(within(scenarioPicker).getByRole('button', { name: /Auto Ride/i }))
+    await user.selectOptions(scenarioSelect, 'auto-ride')
+    expect(scenarioSelect).toHaveValue('auto-ride')
     expect(screen.getByText('Majestic hogbeku')).toBeInTheDocument()
     expect(screen.getByText(/Kannada: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
   })
@@ -2007,12 +2011,12 @@ describe('KannadaOS desktop app', () => {
     await completeOnboarding(user)
     await user.click(screen.getByRole('button', { name: /chat/i }))
 
-    await user.click(screen.getByRole('button', { name: /BMTC Bus/i }))
+    await user.selectOptions(screen.getByRole('combobox', { name: /^Scenario$/i }), 'bmtc-bus')
 
     expect(screen.getByRole('heading', { name: /BMTC Bus/i })).toBeInTheDocument()
     expect(screen.getByText(/ಟಿಕೆಟ್! ಟಿಕೆಟ್!/i)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Grammar Teacher/i }))
+    await user.selectOptions(screen.getByRole('combobox', { name: /^Persona$/i }), 'grammar-teacher')
     await user.click(screen.getByRole('button', { name: /ಟಿಕೆಟ್ ಎಷ್ಟು/i }))
     await user.click(screen.getByRole('button', { name: /send/i }))
 
