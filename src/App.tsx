@@ -208,6 +208,18 @@ const startingLevelOptions = [
   { id: 'can-read', label: 'I can read Kannada script', detail: 'Mark the Script Academy as complete and focus on speaking.' },
 ] as const
 const dailyGoalOptions = [5, 10, 20, 30] as const
+type DailyGoalXp = (typeof dailyGoalOptions)[number]
+interface DailyGoalDetails {
+  name: string
+  minutesPerDay: number
+  description: string
+}
+const dailyGoalDetailsByXp = {
+  5: { name: 'Casual', minutesPerDay: 5, description: 'Short daily practice.' },
+  10: { name: 'Regular', minutesPerDay: 10, description: 'Steady daily practice.' },
+  20: { name: 'Serious', minutesPerDay: 15, description: 'Focused beginner pace.' },
+  30: { name: 'Intense', minutesPerDay: 20, description: 'Deep daily practice.' },
+} satisfies Record<DailyGoalXp, DailyGoalDetails>
 const tabShortcutByKey: Record<string, Tab> = {
   '1': 'home',
   '2': 'learn',
@@ -3248,17 +3260,21 @@ function App() {
               <p className="eyebrow">Step 3 of 3 - {selectedStartingLevelOption.label}</p>
               <h1 id="onboarding-title">Set a daily XP goal</h1>
               <div className="level-grid compact-grid" aria-label="Choose daily XP goal">
-                {dailyGoalOptions.map((goal) => (
-                  <button
-                    className={selectedDailyGoalXp === goal ? 'choice-card selected' : 'choice-card'}
-                    key={goal}
-                    onClick={() => setSelectedDailyGoalXp(goal)}
-                    type="button"
-                  >
-                    <span>{goal} XP</span>
-                    <small>{goal <= 10 ? 'Light daily practice' : goal === 20 ? 'Focused beginner pace' : 'Intensive practice'}</small>
-                  </button>
-                ))}
+                {dailyGoalOptions.map((goal) => {
+                  const details = getDailyGoalDetails(goal)
+                  return (
+                    <button
+                      className={selectedDailyGoalXp === goal ? 'choice-card selected' : 'choice-card'}
+                      key={goal}
+                      onClick={() => setSelectedDailyGoalXp(goal)}
+                      type="button"
+                    >
+                      <span>{details.name}</span>
+                      <small>{details.minutesPerDay} min / day - {goal} XP</small>
+                      <small>{details.description}</small>
+                    </button>
+                  )
+                })}
               </div>
               <button className="primary-action" onClick={startLearning} type="button">
                 Start Learning
@@ -4850,20 +4866,24 @@ function App() {
               <div>
                 <span className="model-category">daily goal</span>
                 <h3 id="daily-goal-title">Daily XP Goal</h3>
-                <p>{learnerProfile.dailyGoalXp} XP per day</p>
+                <p>{formatDailyGoalLabel(learnerProfile.dailyGoalXp)}</p>
                 <small>Dashboard quests and the XP ring use this target.</small>
               </div>
               <div className="reminder-actions">
-                {dailyGoalOptions.map((goal) => (
-                  <button
-                    className={learnerProfile.dailyGoalXp === goal ? 'selector-chip compact active' : 'selector-chip compact'}
-                    key={goal}
-                    onClick={() => setDailyGoal(goal)}
-                    type="button"
-                  >
-                    {goal} XP
-                  </button>
-                ))}
+                {dailyGoalOptions.map((goal) => {
+                  const details = getDailyGoalDetails(goal)
+                  return (
+                    <button
+                      className={learnerProfile.dailyGoalXp === goal ? 'selector-chip compact active' : 'selector-chip compact'}
+                      key={goal}
+                      onClick={() => setDailyGoal(goal)}
+                      type="button"
+                    >
+                      <strong>{details.name}</strong>
+                      <small>{details.minutesPerDay} min/day - {goal} XP</small>
+                    </button>
+                  )
+                })}
               </div>
             </section>
             <section className="reminder-card" aria-labelledby="sound-effects-title">
@@ -5521,6 +5541,19 @@ function Stat({ value, label }: { value: number | string; label: string }) {
       <span>{label}</span>
     </article>
   )
+}
+
+function getDailyGoalDetails(goal: number): DailyGoalDetails {
+  const normalizedGoal = dailyGoalOptions.includes(goal as DailyGoalXp)
+    ? goal as DailyGoalXp
+    : defaultLearnerProfile.dailyGoalXp as DailyGoalXp
+
+  return dailyGoalDetailsByXp[normalizedGoal]
+}
+
+function formatDailyGoalLabel(goal: number): string {
+  const details = getDailyGoalDetails(goal)
+  return `${details.name} - ${details.minutesPerDay} min / day - ${goal} XP`
 }
 
 function formatStreakCounter(streakDays: number): string {

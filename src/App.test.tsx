@@ -129,7 +129,14 @@ describe('KannadaOS desktop app', () => {
 
     await user.click(within(levelChoices).getByRole('button', { name: /I know a few words/i }))
     await user.click(screen.getByRole('button', { name: /next: set goal/i }))
-    await user.click(screen.getByRole('button', { name: /5 XP/i }))
+
+    const goalChoices = screen.getByLabelText(/Choose daily XP goal/i)
+    expect(within(goalChoices).getByRole('button', { name: /Casual.*5 min \/ day.*5 XP/i })).toBeInTheDocument()
+    expect(within(goalChoices).getByRole('button', { name: /Regular.*10 min \/ day.*10 XP/i })).toBeInTheDocument()
+    expect(within(goalChoices).getByRole('button', { name: /Serious.*15 min \/ day.*20 XP/i })).toBeInTheDocument()
+    expect(within(goalChoices).getByRole('button', { name: /Intense.*20 min \/ day.*30 XP/i })).toBeInTheDocument()
+
+    await user.click(within(goalChoices).getByRole('button', { name: /Casual.*5 min \/ day.*5 XP/i }))
     await user.click(screen.getByRole('button', { name: /start learning/i }))
 
     expect(localStorage.getItem('kannadaos:learner-profile')).toContain('"motivation":"work"')
@@ -2167,6 +2174,10 @@ describe('KannadaOS desktop app', () => {
     const settings = screen.getByRole('region', { name: /^Settings$/i })
     expect(within(settings).getByRole('heading', { name: /^Daily Reminders$/i })).toBeInTheDocument()
     expect(within(settings).getByRole('heading', { name: /^Daily XP Goal$/i })).toBeInTheDocument()
+    expect(within(settings).getByText(/Regular - 10 min \/ day - 10 XP/i)).toBeInTheDocument()
+    expect(within(settings).getByRole('button', { name: /Casual.*5 min\/day - 5 XP/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('button', { name: /Serious.*15 min\/day - 20 XP/i })).toBeInTheDocument()
+    expect(within(settings).getByRole('button', { name: /Intense.*20 min\/day - 30 XP/i })).toBeInTheDocument()
     expect(within(settings).getByRole('heading', { name: /^Sound Effects$/i })).toBeInTheDocument()
     expect(within(settings).getByRole('heading', { name: /^Auto-play Audio$/i })).toBeInTheDocument()
     expect(within(settings).getByRole('heading', { name: /^Desktop Storage$/i })).toBeInTheDocument()
