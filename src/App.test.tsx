@@ -310,7 +310,8 @@ describe('KannadaOS desktop app', () => {
 
     fireEvent.keyDown(window, { key: '1', metaKey: true })
     await user.click(within(screen.getByRole('region', { name: /Quick actions/i })).getByRole('button', { name: /Open tutor messages/i }))
-    expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Tutor Chat/i })).toBeInTheDocument()
+    expect(screen.getByText(/Scenario: Auto Ride/i)).toBeInTheDocument()
   })
 
   it('renders spec navigation icons and learner resource counters', async () => {
@@ -1287,7 +1288,8 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByRole('heading', { name: /Stories/i })).toBeInTheDocument()
 
     await pressShortcut('5')
-    expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Tutor Chat/i })).toBeInTheDocument()
+    expect(screen.getByText(/Scenario: Auto Ride/i)).toBeInTheDocument()
 
     await pressShortcut('6')
     expect(screen.getByRole('heading', { name: /Bangalore Mode/i })).toBeInTheDocument()
@@ -2113,7 +2115,8 @@ describe('KannadaOS desktop app', () => {
 
     await user.selectOptions(screen.getByRole('combobox', { name: /^Scenario$/i }), 'bmtc-bus')
 
-    expect(screen.getByRole('heading', { name: /BMTC Bus/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Tutor Chat/i })).toBeInTheDocument()
+    expect(screen.getByText(/Scenario: BMTC Bus/i)).toBeInTheDocument()
     expect(screen.getAllByText(/ಟಿಕೆಟ್! ಟಿಕೆಟ್!/i).length).toBeGreaterThanOrEqual(1)
 
     await user.selectOptions(screen.getByRole('combobox', { name: /^Persona$/i }), 'grammar-teacher')
@@ -2197,7 +2200,8 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getAllByText(/ticket eshtu/i).length).toBeGreaterThanOrEqual(1)
     await user.click(screen.getByRole('button', { name: /back/i }))
     await user.click(screen.getByRole('button', { name: /open auto ride in chat/i }))
-    expect(screen.getByRole('heading', { name: /Auto Ride/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Tutor Chat/i })).toBeInTheDocument()
+    expect(screen.getByText(/Scenario: Auto Ride/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^English: I need to go to Majestic/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /^Profile$/i }))

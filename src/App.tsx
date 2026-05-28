@@ -4133,8 +4133,9 @@ function App() {
           <header className="section-header">
             <div>
               <p className="eyebrow">{selectedTutorPersona.name} - {selectedScenario.difficulty}</p>
-              <h2 id="chat-title">{selectedScenario.title}</h2>
+              <h2 id="chat-title">Tutor Chat</h2>
             </div>
+            <span className="metric-pill">Scenario: {selectedScenario.title}</span>
           </header>
           <div className="chat-selector-row">
             <label className="chat-select-field">
