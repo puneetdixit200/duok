@@ -1926,7 +1926,7 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Kannada: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು/i)).toBeInTheDocument()
   })
 
-  it('routes tutor chat replies through Ollama when the local provider is selected', async () => {
+  it('routes tutor chat replies through Ollama when the Ollama provider is selected', async () => {
     const user = userEvent.setup()
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)
@@ -1964,6 +1964,42 @@ describe('KannadaOS desktop app', () => {
     expect(generateCall).toBeDefined()
     expect(JSON.parse(String(generateCall?.[1]?.body)).prompt).toEqual(expect.stringContaining('Learner said: "meter please"'))
     expect(JSON.parse(String(generateCall?.[1]?.body)).prompt).toEqual(expect.stringContaining('Scenario: Auto Ride'))
+  })
+
+  it('tries Ollama before the offline tutor when the local provider is selected', async () => {
+    const user = userEvent.setup()
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/tags')) {
+        return { ok: true, json: async () => ({ models: [{ name: 'llama3.1:8b' }] }) }
+      }
+
+      if (url.endsWith('/api/generate')) {
+        return {
+          ok: true,
+          json: async () => ({
+            response: 'Friendly Anna: Local Ollama says ಮೀಟರ್ ಹಾಕಿ. Say: miitar haaki. English: Put the meter.',
+          }),
+        }
+      }
+
+      return { ok: false, json: async () => ({}) }
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:ai-provider', JSON.stringify({ activeProvider: 'local' }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+    await user.type(screen.getByPlaceholderText(/type in kannada/i), 'meter please')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    expect(await screen.findByText(/Ollama tutor reply ready/i)).toBeInTheDocument()
+    expect(screen.getByText(/Friendly Anna: Local Ollama says ಮೀಟರ್ ಹಾಕಿ/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Ollama local tutor reply/i).length).toBeGreaterThanOrEqual(1)
+    expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/api/generate'))).toBe(true)
   })
 
   it('falls back from hosted tutor chat to Ollama before using the offline tutor', async () => {

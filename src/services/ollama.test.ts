@@ -123,6 +123,75 @@ describe('Ollama exercise generation', () => {
     expect(prompt).toContain('Always include a Kannada phrase')
   })
 
+  it('chooses an installed Ollama model before generating tutor replies', async () => {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/tags')) {
+        return {
+          ok: true,
+          json: async () => ({ models: [{ name: 'qwen2.5:0.5b' }, { name: 'llama3.1:8b' }] }),
+        }
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          response: 'Friendly Anna: Local Ollama says ಮೀಟರ್ ಹಾಕಿ. Say: miitar haaki. English: Put the meter.',
+        }),
+      }
+    }) as unknown as typeof fetch
+
+    const result = await generateTutorReplyWithOllama({
+      fetchImpl,
+      learnerText: 'meter please',
+      scenarioTitle: 'Auto Ride',
+      scenarioSituation: 'You are negotiating an auto from Indiranagar to Majestic.',
+      personaName: 'Friendly Anna',
+      personaStyle: 'Casual and patient',
+      correctionStyle: 'Gentle: Nice try!',
+      usefulPhrases: ['ಮೀಟರ್ ಹಾಕಿ = miitar haaki = Put the meter'],
+    })
+
+    expect(result.source).toBe('ollama')
+    const generateCall = vi.mocked(fetchImpl).mock.calls.find(([input]) => String(input).endsWith('/api/generate'))
+    expect(JSON.parse(String(generateCall?.[1]?.body))).toMatchObject({
+      model: 'llama3.1:8b',
+      stream: false,
+    })
+  })
+
+  it('adds timeout signals to Ollama model lookup and tutor generation requests', async () => {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/tags')) {
+        return { ok: true, json: async () => ({ models: [{ name: 'llama3.1:8b' }] }) }
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          response: 'Friendly Anna: Say ಮೀಟರ್ ಹಾಕಿ. Say: miitar haaki. English: Put the meter.',
+        }),
+      }
+    }) as unknown as typeof fetch
+
+    await generateTutorReplyWithOllama({
+      fetchImpl,
+      learnerText: 'meter please',
+      scenarioTitle: 'Auto Ride',
+      scenarioSituation: 'You are negotiating an auto from Indiranagar to Majestic.',
+      personaName: 'Friendly Anna',
+      personaStyle: 'Casual and patient',
+      correctionStyle: 'Gentle: Nice try!',
+      usefulPhrases: ['ಮೀಟರ್ ಹಾಕಿ = miitar haaki = Put the meter'],
+    })
+
+    const tagsCall = vi.mocked(fetchImpl).mock.calls.find(([input]) => String(input).endsWith('/api/tags'))
+    const generateCall = vi.mocked(fetchImpl).mock.calls.find(([input]) => String(input).endsWith('/api/generate'))
+    expect((tagsCall?.[1] as RequestInit | undefined)?.signal).toBeInstanceOf(AbortSignal)
+    expect((generateCall?.[1] as RequestInit | undefined)?.signal).toBeInstanceOf(AbortSignal)
+  })
+
   it('falls back from Ollama tutor replies when the local model is unavailable', async () => {
     const fetchImpl = vi.fn(async () => ({
       ok: false,

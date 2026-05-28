@@ -2557,10 +2557,16 @@ function App() {
   async function appendChatTurn(text: string, subtext?: string) {
     const offlineTutorReply = buildTutorReply(text, selectedScenario, selectedTutorPersona)
     let tutorReply = offlineTutorReply
+    const preserveVoiceTranscriptStatus = Boolean(subtext)
+    const setProviderStatus = (status: string) => {
+      if (!preserveVoiceTranscriptStatus) {
+        setVoiceStatus(status)
+      }
+    }
 
     if (aiProviderSettings.activeProvider === 'openrouter' || aiProviderSettings.activeProvider === 'nvidia') {
       const providerLabel = getAiProviderLabel(aiProviderSettings.activeProvider)
-      setVoiceStatus(`Asking ${providerLabel}...`)
+      setProviderStatus(`Asking ${providerLabel}...`)
       const hostedReply = await generateTutorReplyWithHostedProvider({
         hostedChatCompletion: window.kannadaOS?.generateHostedChat,
         providerSettings: aiProviderSettings,
@@ -2583,7 +2589,7 @@ function App() {
           ),
           correction: offlineTutorReply.correction,
         }
-        setVoiceStatus(`${providerLabel} tutor reply ready.`)
+        setProviderStatus(`${providerLabel} tutor reply ready.`)
       } else {
         const ollamaReply = await generateOllamaTutorReply(text)
         if (ollamaReply.source === 'ollama') {
@@ -2596,14 +2602,14 @@ function App() {
             ),
             correction: offlineTutorReply.correction,
           }
-          setVoiceStatus(`${providerLabel} unavailable; Ollama tutor reply ready.`)
+          setProviderStatus(`${providerLabel} unavailable; Ollama tutor reply ready.`)
         } else {
           const fallbackReason = [hostedReply.error, ollamaReply.error].filter(Boolean).join(' ')
-          setVoiceStatus(`${providerLabel} unavailable; Ollama unavailable; using offline tutor. ${fallbackReason}`.trim())
+          setProviderStatus(`${providerLabel} unavailable; Ollama unavailable; using offline tutor. ${fallbackReason}`.trim())
         }
       }
-    } else if (aiProviderSettings.activeProvider === 'ollama') {
-      setVoiceStatus('Asking Ollama...')
+    } else if (aiProviderSettings.activeProvider === 'local' || aiProviderSettings.activeProvider === 'ollama') {
+      setProviderStatus('Asking Ollama...')
       const ollamaReply = await generateOllamaTutorReply(text)
 
       if (ollamaReply.source === 'ollama') {
@@ -2616,9 +2622,9 @@ function App() {
           ),
           correction: offlineTutorReply.correction,
         }
-        setVoiceStatus('Ollama tutor reply ready.')
+        setProviderStatus('Ollama tutor reply ready.')
       } else {
-        setVoiceStatus(`Ollama unavailable; using offline tutor. ${ollamaReply.error ?? ''}`.trim())
+        setProviderStatus(`Ollama unavailable; using offline tutor. ${ollamaReply.error ?? ''}`.trim())
       }
     }
 

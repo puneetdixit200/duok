@@ -49,12 +49,12 @@ async function main() {
     await page.getByRole('button', { name: /chat/i }).click()
     await page.getByPlaceholder(/type in kannada/i).fill('Majestic hogbeku')
     await page.getByRole('button', { name: /send/i }).click()
-    await page.getByText(/Add -ge for "to" before the destination/i).waitFor()
+    await waitForMajesticCorrection(page)
     await page.getByText(/Kannada: ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು/i).waitFor()
     await page.reload()
     await page.getByRole('button', { name: /chat/i }).click()
     await page.getByText('Majestic hogbeku').waitFor()
-    await page.getByText(/Add -ge for "to" before the destination/i).waitFor()
+    await waitForMajesticCorrection(page)
     await page.getByRole('combobox', { name: /^Scenario$/i }).selectOption('bmtc-bus')
     await page.getByRole('heading', { name: /Tutor Chat/i }).waitFor()
     await page.getByText(/Scenario: BMTC Bus/i).waitFor()
@@ -64,7 +64,7 @@ async function main() {
     await page.waitForTimeout(1200)
     await page.getByRole('button', { name: /stop recording/i }).click()
     await page.getByText(/Voice transcript ready: English: Hello sir/i).waitFor()
-    await page.locator('.chat-stream').getByText('ನಮಸ್ಕಾರ ಸಾರ್', { exact: true }).waitFor()
+    await waitForVoiceChatTranscript(page)
 
     await page.getByRole('button', { name: /practice/i }).click()
     await page.getByRole('button', { name: /^English: need to go\s+ಹೋಗಬೇಕು\s+Say: hogbeku/i }).click()
@@ -369,24 +369,24 @@ function createFakeMicWav() {
 }
 
 async function completeLesson(page) {
-  await page.getByText('Translate', { exact: true }).waitFor()
+  await waitForText(page, 'Translate')
   await page.getByRole('button', { name: 'Hello sir' }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('Translate', { exact: true }).waitFor()
+  await waitForText(page, 'Translate')
   await page.getByRole('button', { name: 'Thank you' }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('Listening', { exact: true }).waitFor()
+  await waitForText(page, 'Listening')
   await page.getByRole('button', { name: /play again/i }).click()
   await page.getByText(/Piper audio ready|Playing reference audio|Auto reference audio|Auto Piper audio ready/i).waitFor()
   await page.getByRole('button', { name: /namaskara saar/i }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('Match pairs', { exact: true }).waitFor()
+  await waitForText(page, 'Match pairs')
   await page.getByRole('button', { name: /ನಮಸ್ಕಾರ/ }).click()
   await page.getByRole('button', { name: 'Hello', exact: true }).click()
   await page.getByRole('button', { name: /ಧನ್ಯವಾದ/ }).click()
@@ -397,7 +397,7 @@ async function completeLesson(page) {
   await page.getByRole('button', { name: 'Come', exact: true }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('Speaking', { exact: true }).waitFor()
+  await waitForText(page, 'Speaking')
   await page.getByRole('button', { name: /record phrase/i }).click()
   try {
     await page.getByRole('button', { name: /stop recording/i }).waitFor({ timeout: 5000 })
@@ -410,7 +410,7 @@ async function completeLesson(page) {
   await page.getByRole('button', { name: /^Continue/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('Arrange words', { exact: true }).waitFor()
+  await waitForText(page, 'Arrange words')
   await page.getByRole('button', { name: /ನಮಸ್ಕಾರ/ }).click()
   await page.getByRole('button', { name: /ಸಾರ್/ }).click()
   await page.getByRole('button', { name: /ಧನ್ಯವಾದ/ }).click()
@@ -419,6 +419,31 @@ async function completeLesson(page) {
   await page.getByRole('heading', { name: /Lesson Complete/i }).waitFor()
   await page.getByText('+18 XP').waitFor()
   await page.getByLabel('6 Correct').waitFor()
+}
+
+async function waitForText(page, text) {
+  try {
+    await page.getByText(text, { exact: true }).waitFor()
+  } catch (error) {
+    throw new Error(`Expected to see "${text}". Visible text:\n${await page.locator('body').innerText()}`)
+  }
+}
+
+async function waitForMajesticCorrection(page) {
+  try {
+    await page.locator('.correction-highlight').getByText(/English: I need to go to Majestic/i).waitFor()
+  } catch (error) {
+    throw new Error(`Expected Majestic correction. Visible text:\n${await page.locator('body').innerText()}`)
+  }
+}
+
+async function waitForVoiceChatTranscript(page) {
+  try {
+    await page.locator('.chat-stream').getByText(/English: Hello sir/i).first().waitFor()
+    await page.locator('.chat-stream').getByText(/Say: namaskara saar/i).first().waitFor()
+  } catch (error) {
+    throw new Error(`Expected voice chat transcript. Visible text:\n${await page.locator('body').innerText()}`)
+  }
 }
 
 async function probeOllama() {

@@ -49,10 +49,14 @@ const allowedTypes: ExerciseType[] = [
   'speaking',
   'matchPairs',
 ]
+const fallbackOllamaModel = 'llama3.1:8b'
+const preferredOllamaModels = [fallbackOllamaModel, 'llama3.2', 'llama3', 'qwen2.5:0.5b']
+const ollamaTagsTimeoutMs = 2_000
+const ollamaGenerateTimeoutMs = 12_000
 
 export async function generateExerciseWithOllama({
   fetchImpl = fetch,
-  model = 'llama3.2',
+  model,
   baseUrl = 'http://localhost:11434',
   weakArea,
   promptContext,
@@ -60,15 +64,16 @@ export async function generateExerciseWithOllama({
   const fallback = fallbackExercise(weakArea)
 
   try {
-    const response = await fetchImpl(`${baseUrl}/api/generate`, {
+    const resolvedModel = await resolveOllamaModel(fetchImpl, baseUrl, model)
+    const response = await fetchWithTimeout(fetchImpl, `${baseUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model,
+        model: resolvedModel,
         stream: false,
         prompt: buildExercisePrompt(weakArea, promptContext),
       }),
-    })
+    }, ollamaGenerateTimeoutMs)
 
     if (!response.ok) {
       return { source: 'fallback', exercise: fallback, error: `Ollama HTTP ${response.status}` }
@@ -88,7 +93,7 @@ export async function generateExerciseWithOllama({
 
 export async function generateTutorReplyWithOllama({
   fetchImpl = fetch,
-  model = 'llama3.2',
+  model,
   baseUrl = 'http://localhost:11434',
   learnerText,
   scenarioTitle,
@@ -99,11 +104,12 @@ export async function generateTutorReplyWithOllama({
   usefulPhrases,
 }: GenerateTutorOptions): Promise<TutorReplyGenerationResult> {
   try {
-    const response = await fetchImpl(`${baseUrl}/api/generate`, {
+    const resolvedModel = await resolveOllamaModel(fetchImpl, baseUrl, model)
+    const response = await fetchWithTimeout(fetchImpl, `${baseUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model,
+        model: resolvedModel,
         stream: false,
         prompt: buildTutorReplyPrompt({
           learnerText,
@@ -115,7 +121,7 @@ export async function generateTutorReplyWithOllama({
           usefulPhrases,
         }),
       }),
-    })
+    }, ollamaGenerateTimeoutMs)
 
     if (!response.ok) {
       return { source: 'fallback', text: '', error: `Ollama HTTP ${response.status}` }
@@ -140,10 +146,64 @@ export async function generateTutorReplyWithOllama({
 
 export async function checkOllamaStatus(fetchImpl: typeof fetch = fetch): Promise<'online' | 'offline'> {
   try {
-    const response = await fetchImpl('http://localhost:11434/api/tags', { method: 'GET' })
+    const response = await fetchWithTimeout(fetchImpl, 'http://localhost:11434/api/tags', {
+      method: 'GET',
+    }, ollamaTagsTimeoutMs)
     return response.ok ? 'online' : 'offline'
   } catch {
     return 'offline'
+  }
+}
+
+async function resolveOllamaModel(fetchImpl: typeof fetch, baseUrl: string, requestedModel?: string): Promise<string> {
+  if (requestedModel?.trim()) {
+    return requestedModel.trim()
+  }
+
+  try {
+    const response = await fetchWithTimeout(fetchImpl, `${baseUrl}/api/tags`, {
+      method: 'GET',
+    }, ollamaTagsTimeoutMs)
+    if (!response.ok) {
+      return fallbackOllamaModel
+    }
+
+    const payload = (await response.json()) as { models?: Array<{ name?: string }> }
+    const installedModels = (payload.models ?? [])
+      .map((item) => item.name?.trim() ?? '')
+      .filter(Boolean)
+    return preferredOllamaModels.find((item) => installedModels.includes(item)) ?? installedModels[0] ?? fallbackOllamaModel
+  } catch {
+    return fallbackOllamaModel
+  }
+}
+
+async function fetchWithTimeout(
+  fetchImpl: typeof fetch,
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const timeout = createTimeoutSignal(timeoutMs)
+  try {
+    return await fetchImpl(input, { ...init, signal: timeout.signal })
+  } finally {
+    timeout.clear()
+  }
+}
+
+function createTimeoutSignal(timeoutMs: number): { signal: AbortSignal; clear: () => void } {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(new Error(`Ollama request timed out after ${timeoutMs}ms.`)), timeoutMs)
+
+  if (typeof timeoutId === 'object' && timeoutId !== null) {
+    const maybeNodeTimeout = timeoutId as { unref?: () => void }
+    maybeNodeTimeout.unref?.()
+  }
+
+  return {
+    signal: controller.signal,
+    clear: () => clearTimeout(timeoutId),
   }
 }
 
