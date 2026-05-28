@@ -4998,21 +4998,24 @@ function App() {
                 <p>{formatDailyGoalLabel(learnerProfile.dailyGoalXp)}</p>
                 <small>Dashboard quests and the XP ring use this target.</small>
               </div>
-              <div className="reminder-actions">
-                {dailyGoalOptions.map((goal) => {
-                  const details = getDailyGoalDetails(goal)
-                  return (
-                    <button
-                      className={learnerProfile.dailyGoalXp === goal ? 'selector-chip compact active' : 'selector-chip compact'}
-                      key={goal}
-                      onClick={() => setDailyGoal(goal)}
-                      type="button"
-                    >
-                      <strong>{details.name}</strong>
-                      <small>{details.minutesPerDay} min/day - {goal} XP</small>
-                    </button>
-                  )
-                })}
+              <div className="reminder-actions goal-action">
+                <label className="settings-select-field">
+                  <span>Daily XP Goal</span>
+                  <select
+                    aria-label="Daily XP Goal"
+                    onChange={(event) => setDailyGoal(Number(event.target.value))}
+                    value={learnerProfile.dailyGoalXp}
+                  >
+                    {dailyGoalOptions.map((goal) => {
+                      const details = getDailyGoalDetails(goal)
+                      return (
+                        <option key={goal} value={goal}>
+                          {details.name} - {details.minutesPerDay} min/day - {goal} XP
+                        </option>
+                      )
+                    })}
+                  </select>
+                </label>
               </div>
             </section>
             <section className="reminder-card" aria-labelledby="sound-effects-title">

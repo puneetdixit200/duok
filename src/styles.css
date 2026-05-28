@@ -2162,6 +2162,32 @@ h2 {
   justify-content: end;
 }
 
+.reminder-actions.goal-action {
+  grid-template-columns: minmax(220px, 360px);
+  justify-content: end;
+}
+
+.settings-select-field {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-select-field span {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 900;
+}
+
+.settings-select-field select {
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0 42px 0 14px;
+  background: var(--color-background);
+  color: var(--text-primary);
+  font-weight: 900;
+}
+
 .settings-switch {
   display: inline-grid;
   grid-template-columns: 1fr auto;
