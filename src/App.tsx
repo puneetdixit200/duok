@@ -3393,7 +3393,8 @@ function App() {
       const lessonAccuracy = lessonAttemptCount > 0 ? Math.round((lessonCorrectCount / lessonAttemptCount) * 100) : 0
       const lessonTime = formatLessonDuration(completedLessonDurationMs)
       const newWordCount = new Set(activeLesson.exercises.flatMap((exercise) => exercise.vocabularyIds)).size
-      const crownRating = formatCrownRating(getLessonProgressSummary(progress, activeLesson.id).masteryLevel)
+      const earnedCrownLevel = getLessonProgressSummary(progress, activeLesson.id).masteryLevel
+      const crownRating = formatCrownRating(earnedCrownLevel)
 
       return (
         <main className="app-shell lesson-shell">
@@ -3411,6 +3412,15 @@ function App() {
               <span>★</span>
               <span>★</span>
               <span>★</span>
+            </div>
+            <div className="crown-earned-burst" aria-label={`${crownRating} crown level earned`}>
+              <span className="crown-icon" aria-hidden="true">👑</span>
+              <div className="crown-fill-row" aria-hidden="true">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <span className={index < earnedCrownLevel ? 'filled' : ''} key={index} />
+                ))}
+              </div>
+              <small>{crownRating} Crown earned</small>
             </div>
             <article className="xp-card">
               <strong>+{totalLessonXp} XP</strong>

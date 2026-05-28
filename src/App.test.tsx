@@ -1658,6 +1658,10 @@ describe('KannadaOS desktop app', () => {
 
     expect(screen.getByRole('heading', { name: /Lesson Complete/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/Confetti celebration/i)).toBeInTheDocument()
+    const crownBurst = screen.getByLabelText(/★☆☆☆☆ crown level earned/i)
+    expect(crownBurst).toHaveClass('crown-earned-burst')
+    expect(crownBurst.querySelectorAll('.crown-fill-row span.filled')).toHaveLength(1)
+    expect(within(crownBurst).getByText(/★☆☆☆☆ Crown earned/i)).toBeInTheDocument()
     expect(screen.getByText(/\+18 XP/i)).toBeInTheDocument()
     expect(screen.getByLabelText('6 Correct')).toBeInTheDocument()
     expect(screen.getByLabelText('★☆☆☆☆ Crown')).toBeInTheDocument()
