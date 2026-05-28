@@ -314,6 +314,8 @@ const unitSeeds: UnitSeed[] = [
           phrase('hegiddira', 'ಹೇಗಿದ್ದೀರಾ?', 'How are you?', 'Respectful daily greeting.'),
           phrase('chennagiddene', 'ಚೆನ್ನಾಗಿದ್ದೇನೆ', 'I am fine', 'A safe answer to daily greetings.'),
           phrase('neevu-hegiddira', 'ನೀವು ಹೇಗಿದ್ದೀರಾ?', 'How are you?', 'Respectful return question.'),
+          phrase('neevu-chennagiddira', 'ನೀವು ಚೆನ್ನಾಗಿದ್ದೀರಾ?', 'Are you doing well?', 'Warm follow-up with neighbors or office staff.'),
+          phrase('naanu-chennagiddene', 'ನಾನು ಚೆನ್ನಾಗಿದ್ದೇನೆ', 'I am doing well', 'Full-sentence answer for polite small talk.'),
         ],
       },
       {
@@ -325,6 +327,8 @@ const unitSeeds: UnitSeed[] = [
           phrase('nimma-hesaru-enu', 'ನಿಮ್ಮ ಹೆಸರು ಏನು?', 'What is your name?', 'Asking a new colleague or tutor.'),
           phrase('nanna-hesaru-rahul', 'ನನ್ನ ಹೆಸರು ರಾಹುಲ್', 'My name is Rahul', 'Replace Rahul with your own name.'),
           phrase('nimmanu-bheti-aagi-santosha', 'ನಿಮ್ಮನ್ನು ಭೇಟಿ ಆಗಿ ಸಂತೋಷ', 'Nice to meet you', 'Polite after an introduction.'),
+          phrase('naanu-bengaluru-ge-bandiddene', 'ನಾನು ಬೆಂಗಳೂರಿಗೆ ಬಂದಿದ್ದೇನೆ', 'I came to Bengaluru', 'Say you are new in the city.'),
+          phrase('nimmanu-kandu-santosha', 'ನಿಮ್ಮನ್ನು ಕಂಡು ಸಂತೋಷ', 'Happy to meet you', 'Natural introduction closer.'),
         ],
       },
       {
@@ -336,6 +340,7 @@ const unitSeeds: UnitSeed[] = [
           phrase('oota-aayta', 'ಊಟ ಆಯ್ತಾ?', 'Did you eat?', 'Common office and neighbor small talk.'),
           phrase('banni', 'ಬನ್ನಿ', 'Please come', 'Friendly invitation.'),
           phrase('hogi-banni', 'ಹೋಗಿ ಬನ್ನಿ', 'Go and come back', 'Polite goodbye.'),
+          phrase('shubha-dina', 'ಶುಭ ದಿನ', 'Good day', 'Simple friendly wish.'),
         ],
       },
       {
@@ -434,23 +439,30 @@ const unitSeeds: UnitSeed[] = [
         ['majestic-ge-hogbeku', 'ಮೆಜೆಸ್ಟಿಕ್‌ಗೆ ಹೋಗಬೇಕು', 'I need to go to Majestic', 'Auto destination.'],
         ['meter-haaki', 'ಮೀಟರ್ ಹಾಕಿ', 'Please use the meter', 'Negotiating politely.'],
         ['illi-nillisi', 'ಇಲ್ಲಿ ನಿಲ್ಲಿಸಿ', 'Stop here', 'End of ride.'],
+        ['meter-beku', 'ಮೀಟರ್ ಬೇಕು', 'I want meter', 'Insist on meter fare.'],
+        ['eshtu-aagutte', 'ಎಷ್ಟು ಆಗುತ್ತೆ?', 'How much will it be?', 'Ask the estimated auto fare.'],
       ]),
       transportLesson('Bus Phrases', 'Talk to a conductor', [
         ['koramangala-ticket', 'ಕೋರಮಂಗಲಕ್ಕೆ ಟಿಕೆಟ್', 'Ticket to Koramangala', 'BMTC phrase.'],
         ['ticket-eshtu', 'ಟಿಕೆಟ್ ಎಷ್ಟು?', 'How much is the ticket?', 'Fare question.'],
         ['change-beku', 'ಚಿಲ್ಲರೆ ಬೇಕು', 'I need change', 'Cash on bus.'],
         ['indiranagaradinda', 'ಇಂದಿರಾನಗರದಿಂದ', 'from Indiranagar', 'Use -ದಿಂದ to say from Indiranagar.'],
+        ['mundina-stop-yaavudu', 'ಮುಂದಿನ ಸ್ಟಾಪ್ ಯಾವುದು?', 'Which is the next stop?', 'Ask the conductor or another passenger.'],
       ]),
       transportLesson('Directions', 'Ask where to go', [
         ['ellige-hogbeku', 'ಎಲ್ಲಿಗೆ ಹೋಗಬೇಕು?', 'Where should I go?', 'When lost.'],
         ['edakke-hogi', 'ಎಡಕ್ಕೆ ಹೋಗಿ', 'Go left', 'Direction phrase.'],
         ['balakke-hogi', 'ಬಲಕ್ಕೆ ಹೋಗಿ', 'Go right', 'Direction phrase.'],
         ['neravagi-hogi', 'ನೇರವಾಗಿ ಹೋಗಿ', 'Go straight', 'Direction phrase.'],
+        ['illi-banni', 'ಇಲ್ಲಿ ಬನ್ನಿ', 'Come here', 'Guide a driver or friend to your spot.'],
+        ['alli-hogi', 'ಅಲ್ಲಿ ಹೋಗಿ', 'Go there', 'Point someone toward a place.'],
       ]),
       transportLesson('At the Metro', 'Use metro stations', [
         ['metro-station-elli', 'ಮೆಟ್ರೋ ಸ್ಟೇಷನ್ ಎಲ್ಲಿ?', 'Where is the metro station?', 'Ask for station.'],
         ['card-recharge-beku', 'ಕಾರ್ಡ್ ರೀಚಾರ್ಜ್ ಬೇಕು', 'I need to recharge the card', 'Metro counter.'],
         ['yaava-platform', 'ಯಾವ ಪ್ಲಾಟ್‌ಫಾರ್ಮ್?', 'Which platform?', 'Station navigation.'],
+        ['token-elli-sigutte', 'ಟೋಕನ್ ಎಲ್ಲಿ ಸಿಗುತ್ತೆ?', 'Where do I get a token?', 'Ask at the metro station.'],
+        ['train-yaavaga-barutte', 'ಟ್ರೇನ್ ಯಾವಾಗ ಬರುತ್ತೆ?', 'When will the train come?', 'Ask about train arrival.'],
       ]),
       transportLesson('Unit 3 Review', 'Review transport and directions', [
         ['safe-route-yaavudu', 'ಸೇಫ್ ರೂಟ್ ಯಾವುದು?', 'Which route is safe?', 'Night travel.'],
@@ -486,22 +498,27 @@ const unitSeeds: UnitSeed[] = [
         ['eradu-idli-beku', 'ಎರಡು ಇಡ್ಲಿ ಬೇಕು', 'I want two idlis', 'Common order.'],
         ['coffee-kodi', 'ಕಾಫಿ ಕೊಡಿ', 'Please give coffee', 'Counter request.'],
         ['chahaa-kodi', 'ಚಹಾ ಕೊಡಿ', 'Please give tea', 'Counter request.'],
+        ['ondu-kaafi-kodi', 'ಒಂದು ಕಾಫಿ ಕೊಡಿ', 'Please give one coffee', 'Specific coffee counter order.'],
       ]),
       foodLesson('Ordering Food', [
         ['neeru-kodi', 'ನೀರು ಕೊಡಿ', 'Please give water', 'Universal request.'],
         ['chutney-swalpa', 'ಚಟ್ನಿ ಸ್ವಲ್ಪ', 'A little chutney', 'Food counter.'],
         ['sambar-beku', 'ಸಾಂಬಾರ್ ಬೇಕು', 'I want sambar', 'Extra serving.'],
         ['anna-kodi', 'ಅನ್ನ ಕೊಡಿ', 'Please give rice', 'Meal request.'],
+        ['uppu-kammi', 'ಉಪ್ಪು ಕಡಿಮೆ', 'Less salt', 'Food preference.'],
       ]),
       foodLesson('Restaurant Phrases', [
         ['khara-kammi', 'ಖಾರ ಕಡಿಮೆ', 'Less spicy', 'Ask before ordering.'],
         ['khara-jaasti', 'ಖಾರ ಜಾಸ್ತಿ', 'More spicy', 'Food preference.'],
         ['sari-ide', 'ಸರಿ ಇದೆ', 'It is okay', 'Accept food or spice level.'],
+        ['menu-kodi', 'ಮೆನು ಕೊಡಿ', 'Please give the menu', 'Ask for the menu.'],
+        ['table-beku', 'ಟೇಬಲ್ ಬೇಕು', 'I need a table', 'Restaurant seating phrase.'],
       ]),
       foodLesson('Likes & Dislikes', [
         ['bill-kodi', 'ಬಿಲ್ ಕೊಡಿ', 'Please give the bill', 'At the end.'],
         ['parcel-beku', 'ಪಾರ್ಸೆಲ್ ಬೇಕು', 'I want parcel/takeaway', 'Takeaway order.'],
         ['illi-thinbeku', 'ಇಲ್ಲಿ ತಿನ್ನಬೇಕು', 'I want to eat here', 'Dine-in.'],
+        ['ruchi-ide', 'ರುಚಿ ಇದೆ', 'It is tasty', 'Compliment food.'],
       ]),
       foodLesson('Unit 4 Review', [
         ['veg-ideya', 'ವೆಜ್ ಇದೆಯಾ?', 'Is there vegetarian food?', 'Food check.'],
@@ -549,11 +566,13 @@ const unitSeeds: UnitSeed[] = [
         ['swalpa-kammi-maadi', 'ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ', 'Please reduce a little', 'Bargaining.'],
         ['bele-jaasti', 'ಬೆಲೆ ಜಾಸ್ತಿ', 'The price is high', 'Polite pushback.'],
         ['sari-kodi', 'ಸರಿ ಕೊಡಿ', 'Okay, give it', 'Close the deal.'],
+        ['final-price-eshtu', 'ಫೈನಲ್ ಬೆಲೆ ಎಷ್ಟು?', 'What is the final price?', 'Settle a bargaining round.'],
       ]),
       shoppingLesson('Declining & Accepting', [
         ['change-madbeku', 'ಚೇಂಜ್ ಮಾಡಬೇಕು', 'I need to exchange it', 'Return counter.'],
         ['receipt-ide', 'ರಸೀದಿ ಇದೆ', 'I have the receipt', 'Proof.'],
         ['size-sari-illa', 'ಸೈಸ್ ಸರಿ ಇಲ್ಲ', 'The size is not right', 'Clothes.'],
+        ['bere-colour-ideya', 'ಬೇರೆ ಕಲರ್ ಇದೆಯಾ?', 'Is there another color?', 'Shopping choice phrase.'],
       ]),
       shoppingLesson('Unit 5 Review', [
         ['charger-ideya', 'ಚಾರ್ಜರ್ ಇದೆಯಾ?', 'Do you have a charger?', 'Phone store.'],
@@ -641,21 +660,26 @@ const unitSeeds: UnitSeed[] = [
         ['good-morning', 'ಗುಡ್ ಮಾರ್ನಿಂಗ್', 'Good morning', 'Office greeting.'],
         ['meeting-ide', 'ಮೀಟಿಂಗ್ ಇದೆ', 'There is a meeting', 'Calendar phrase.'],
         ['coffee-barthira', 'ಕಾಫಿಗೆ ಬರುತ್ತೀರಾ?', 'Will you come for coffee?', 'Friendly invite.'],
+        ['namaskara-team', 'ನಮಸ್ಕಾರ ಟೀಮ್', 'Hello team', 'Friendly group greeting.'],
       ]),
       officeLesson('Lunch & Tea Talk', [
         ['time-ideya', 'ಸಮಯ ಇದೆಯಾ?', 'Do you have time?', 'Ask availability.'],
         ['screen-share-maadi', 'ಸ್ಕ್ರೀನ್ ಶೇರ್ ಮಾಡಿ', 'Please share the screen', 'Meeting request.'],
         ['matte-explain-maadi', 'ಮತ್ತೆ ಎಕ್ಸ್‌ಪ್ಲೇನ್ ಮಾಡಿ', 'Please explain again', 'Clarification.'],
+        ['tea-break-hogona', 'ಟೀ ಬ್ರೇಕ್ ಹೋಗೋಣ', 'Let us go for a tea break', 'Office break invite.'],
       ]),
       officeLesson('Simple Work Requests', [
         ['ivattu-mugisthini', 'ಇವತ್ತು ಮುಗಿಸ್ತೀನಿ', 'I will finish today', 'Status update.'],
         ['naale-kalustini', 'ನಾಳೆ ಕಳುಸ್ತೀನಿ', 'I will send tomorrow', 'Deadline phrase.'],
         ['help-beku', 'ಹೆಲ್ಪ್ ಬೇಕು', 'I need help', 'Ask early.'],
+        ['mail-kalisi', 'ಮೇಲ್ ಕಳುಹಿಸಿ', 'Please send an email', 'Work request.'],
       ]),
       officeLesson('Scheduling & Time', [
         ['oota-aayta', 'ಊಟ ಆಯ್ತಾ?', 'Did you eat?', 'Lunch small talk.'],
         ['table-ideya', 'ಟೇಬಲ್ ಇದೆಯಾ?', 'Is there a table?', 'Cafeteria.'],
         ['together-hogona', 'ಒಟ್ಟಿಗೆ ಹೋಗೋಣ', 'Let us go together', 'Invite.'],
+        ['time-change-maadi', 'ಟೈಮ್ ಚೇಂಜ್ ಮಾಡಿ', 'Please change the time', 'Meeting reschedule request.'],
+        ['calendar-ge-haki', 'ಕ್ಯಾಲೆಂಡರ್‌ಗೆ ಹಾಕಿ', 'Put it on the calendar', 'Scheduling phrase.'],
       ]),
       officeLesson('Unit 7 Review', [
         ['leave-beku', 'ಲೀವ್ ಬೇಕು', 'I need leave', 'HR phrase.'],
@@ -1386,7 +1410,7 @@ function buildReviewExercisesForLesson(
   const arrangePhrase = getReviewPhrase(phrases, 3)
   const fillPhrase = getReviewPhrase(phrases, 5)
   const listeningPhrase = getReviewPhrase(phrases, 7)
-  const speakingPhrase = getReviewPhrase(phrases, 9)
+  const speakingPhrase = getReviewLessonPhrase(phrases, lessonNumber - 1, 1) ?? getReviewPhrase(phrases, 9)
   const typePhrase = getReviewPhrase(phrases, 11)
   const dialoguePhrase = getReviewPhrase(phrases, Math.max(0, phrases.length - 3))
   const matchPhrases = selectReviewPhrases(phrases, 1, 4)
@@ -1436,6 +1460,11 @@ function buildReviewExercisesForLesson(
 
 function getReviewPhrase(phrases: Phrase[], index: number): Phrase {
   return phrases[index % phrases.length]
+}
+
+function getReviewLessonPhrase(phrases: Phrase[], lessonNumber: number, phraseNumber: number): Phrase | null {
+  const lessonPhraseId = `-lesson-${lessonNumber}-phrase-${phraseNumber}`
+  return phrases.find((phrase) => phrase.id.includes(lessonPhraseId)) ?? null
 }
 
 function selectReviewPhrases(phrases: Phrase[], startIndex: number, count: number): Phrase[] {
@@ -1685,7 +1714,7 @@ function buildScriptUnit(): CurriculumUnit {
 
 function scriptSymbol(kind: ScriptSymbol['kind'], kannada: string, transliteration: string): ScriptSymbol {
   return {
-    id: `script-${transliteration}-${kind}`,
+    id: `script-${transliteration}-${kannada.codePointAt(0)?.toString(16) ?? 'symbol'}-${kind}`,
     kind,
     kannada,
     transliteration,
@@ -1739,6 +1768,7 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       symbol: symbols[0],
       answer: makeScriptMatchPairs(symbols.slice(0, 4)),
       options: makeScriptMatchOptions(symbols.slice(0, 4)),
+      vocabularySymbols: symbols.slice(0, 4),
       xp: 4,
     }),
     scriptExercise({
@@ -1776,9 +1806,9 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       index: 7,
       type: 'typeKannada',
       prompt: 'Type the transliteration:',
-      symbol: symbols[1] ?? symbols[0],
-      answer: (symbols[1] ?? symbols[0]).transliteration,
-      options: makeScriptSoundOptions(symbols[1] ?? symbols[0], symbols),
+      symbol: getScriptSymbolAt(symbols, 4),
+      answer: getScriptSymbolAt(symbols, 4).transliteration,
+      options: makeScriptSoundOptions(getScriptSymbolAt(symbols, 4), symbols),
       xp: 3,
     }),
     scriptExercise({
@@ -1786,15 +1816,16 @@ function buildScriptExercisesForLesson(lessonId: string, title: string, symbols:
       index: 8,
       type: 'matchPairs',
       prompt: 'Match script to sound:',
-      symbol: symbols[0],
-      answer: makeScriptMatchPairs(symbols.slice(2, 6)),
-      options: makeScriptMatchOptions(symbols.slice(2, 6)),
+      symbol: getScriptSymbolAt(symbols, 4),
+      answer: makeScriptMatchPairs(getScriptSymbolWindow(symbols, 4, 4)),
+      options: makeScriptMatchOptions(getScriptSymbolWindow(symbols, 4, 4)),
+      vocabularySymbols: getScriptSymbolWindow(symbols, 4, 4),
       xp: 4,
     }),
   ]
 
   for (let index = exercises.length; index < targetCount; index += 1) {
-    const symbol = symbols[index % symbols.length]
+    const symbol = getScriptSymbolAt(symbols, index)
     exercises.push(scriptExercise({
       lessonId,
       index: index + 1,
@@ -1818,6 +1849,7 @@ function scriptExercise({
   symbol,
   answer,
   options,
+  vocabularySymbols,
   xp,
 }: {
   lessonId: string
@@ -1827,8 +1859,11 @@ function scriptExercise({
   symbol: ScriptSymbol
   answer: string
   options: string[]
+  vocabularySymbols?: ScriptSymbol[]
   xp: number
 }): LessonExercise {
+  const vocabularySource = vocabularySymbols?.length ? vocabularySymbols : [symbol]
+
   return {
     id: `${lessonId}-script-${index}`,
     type,
@@ -1841,8 +1876,18 @@ function scriptExercise({
     explanation: `${symbol.kannada} is read as "${symbol.transliteration}".`,
     skillTag: 'script',
     xp,
-    vocabularyIds: [symbol.id],
+    vocabularyIds: vocabularySource.map((item) => item.id),
   }
+}
+
+function getScriptSymbolAt(symbols: ScriptSymbol[], index: number): ScriptSymbol {
+  return symbols[index % symbols.length]
+}
+
+function getScriptSymbolWindow(symbols: ScriptSymbol[], startIndex: number, count: number): ScriptSymbol[] {
+  return Array.from({ length: Math.min(count, symbols.length) }, (_unused, offset) =>
+    getScriptSymbolAt(symbols, startIndex + offset),
+  )
 }
 
 function makeScriptLetterOptions(answer: ScriptSymbol, symbols: ScriptSymbol[]): string[] {

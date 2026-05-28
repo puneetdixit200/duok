@@ -120,6 +120,24 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(exercises.some((exercise) => exercise.type === 'dialogue')).toBe(true)
     expect(exercises.some((exercise) => exercise.type === 'translate' && exercise.direction === 'enToKn')).toBe(true)
     expect(new Set(exercises.map((exercise) => exercise.id)).size).toBe(exercises.length)
+
+    const expectedMinimumVocabularyByUnit = new Map([
+      ['Greetings & Basics', 20],
+      ['Numbers & Prices', 18],
+      ['Transport & Directions', 22],
+      ['Food & Ordering', 20],
+      ['Shopping & Bargaining', 18],
+      ['Home & PG Life', 16],
+      ['Office & Workplace', 18],
+      ['Emergencies & Help', 16],
+    ])
+    for (const unit of coreCurriculumUnits) {
+      const vocabularyIds = new Set(unit.lessons.flatMap((lesson) =>
+        lesson.exercises.flatMap((exercise) => exercise.vocabularyIds),
+      ))
+      expect(vocabularyIds.size).toBeGreaterThanOrEqual(expectedMinimumVocabularyByUnit.get(unit.title) ?? 0)
+    }
+    expect(new Set(exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBeGreaterThanOrEqual(148)
   })
 
   it('includes English-to-Kannada reverse translate drills from the frontend spec', () => {
@@ -463,6 +481,7 @@ describe('KannadaOS level 1 curriculum', () => {
     ])
     expect([...coreCurriculumUnits, scriptUnit].reduce((total, unit) => total + unit.lessons.length, 0)).toBe(49)
     expect(getAllLessonExercises([...coreCurriculumUnits, scriptUnit])).toHaveLength(332)
+    expect(new Set(getAllLessonExercises([scriptUnit]).flatMap((exercise) => exercise.vocabularyIds)).size).toBeGreaterThanOrEqual(49)
   })
 
   it('builds Kannada Script Academy lessons from script-specific drill types', () => {
@@ -477,6 +496,10 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(vowelsPartTwo.exercises.map((exercise) => exercise.kannada)).not.toEqual(expect.arrayContaining(['ಋ', 'ಅಂ']))
     expect(labialsAndOthers.exercises).toHaveLength(10)
     expect(vowelSigns.exercises).toHaveLength(10)
+    expect(new Set(vowelsPartOne.exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBe(6)
+    expect(new Set(vowelsPartTwo.exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBe(6)
+    expect(new Set(labialsAndOthers.exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBe(10)
+    expect(new Set(vowelSigns.exercises.flatMap((exercise) => exercise.vocabularyIds)).size).toBe(10)
     expect(vowelsPartOne.exercises).toEqual(expect.arrayContaining([
       expect.objectContaining({
         type: 'translate',
