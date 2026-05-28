@@ -1703,16 +1703,44 @@ h2 {
 
 .pronunciation-result {
   display: grid;
-  gap: 6px;
+  gap: 10px;
   padding: 16px;
   border: 1px solid rgba(16, 185, 129, 0.45);
   border-radius: 14px;
   background: rgba(16, 185, 129, 0.12);
 }
 
-.pronunciation-result strong {
+.pronunciation-score-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pronunciation-score-line strong {
   color: #6ee7b7;
   font-size: 1.75rem;
+}
+
+.pronunciation-level {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pronunciation-level.clear {
+  color: var(--color-primary);
+}
+
+.pronunciation-level.steady {
+  color: var(--color-accent);
+}
+
+.pronunciation-level.needs-practice,
+.pronunciation-level.try-again {
+  color: var(--color-error);
 }
 
 .pronunciation-result p,
@@ -1721,7 +1749,14 @@ h2 {
   margin: 0;
 }
 
-.pronunciation-result span {
+.pronunciation-result-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.pronunciation-result-label {
   color: var(--color-accent-gold);
   font-weight: 900;
 }

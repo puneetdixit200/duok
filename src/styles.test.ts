@@ -95,6 +95,14 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/\.typing-preview-card > strong\s*{[^}]*font-size:\s*1\.75rem/s)
   })
 
+  it('styles pronunciation lab result rows and score levels', () => {
+    expect(styles).toMatch(/\.pronunciation-score-line\s*{[^}]*display:\s*flex/s)
+    expect(styles).toContain('.pronunciation-result-row')
+    expect(styles).toMatch(/\.pronunciation-level\.clear\s*{[^}]*color:\s*var\(--color-primary\)/s)
+    expect(styles).toMatch(/\.pronunciation-level\.steady\s*{[^}]*color:\s*var\(--color-accent\)/s)
+    expect(styles).toMatch(/\.pronunciation-level\.try-again\s*{[^}]*color:\s*var\(--color-error\)/s)
+  })
+
   it('styles all story difficulty badges from the frontend spec', () => {
     expect(styles).toMatch(/\.difficulty-badge\.beginner\s*{[^}]*color:\s*#6ee7b7/s)
     expect(styles).toMatch(/\.difficulty-badge\.intermediate\s*{[^}]*color:\s*var\(--color-accent-gold\)/s)

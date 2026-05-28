@@ -1335,7 +1335,7 @@ describe('KannadaOS desktop app', () => {
 
     await user.type(screen.getByLabelText(/Transcribed speech/i), 'ನಮಸ್ಕಾರ ಸಾರ್')
     fireEvent.keyDown(window, { key: 'Enter', metaKey: true })
-    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score 100/i)
+    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score: 100 \/ 100/i)
 
     await user.click(screen.getByRole('button', { name: /stories/i }))
     await user.click(screen.getByRole('button', { name: /Read First Day in Bangalore/i }))
@@ -2878,9 +2878,13 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /score pronunciation/i }))
 
     const pronunciationResult = screen.getByLabelText(/Pronunciation result/i)
-    expect(within(pronunciationResult).getByText(/Score 100/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Score: 100 \/ 100/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Level: Clear/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Transcript:/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getAllByText(/ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(1)
     expect(within(pronunciationResult).getByText(/Clear pronunciation/i)).toBeInTheDocument()
-    expect(within(pronunciationResult).getByText(/No problem syllables/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Problem syllables:/i)).toBeInTheDocument()
+    expect(pronunciationResult).toHaveTextContent(/Problem syllables:\s*None/i)
     const history = screen.getByLabelText(/Pronunciation history/i)
     expect(history).toHaveTextContent(/Latest: 100 \(Clear\)/i)
     expect(history).toHaveTextContent(/ನಮಸ್ಕಾರ ಸಾರ್/i)
@@ -2967,6 +2971,8 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /score pronunciation/i }))
 
     const pronunciationResult = screen.getByLabelText(/Pronunciation result/i)
+    expect(within(pronunciationResult).getByText(/Level: Try Again/i)).toBeInTheDocument()
+    expect(within(pronunciationResult).getByText(/Transcript:/i)).toBeInTheDocument()
     expect(within(pronunciationResult).getByText(/Let's try again/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Pronunciation history/i)).toHaveTextContent(/Latest: \d+ \(Try Again\)/i)
 
@@ -3018,7 +3024,7 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
     expect(screen.getByText(/namaskara saar = Hello sir/i)).toBeInTheDocument()
     expect(screen.getByDisplayValue('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
-    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score 100/i)
+    expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score: 100 \/ 100/i)
   })
 
   it('shows a clear error when recorded chat audio cannot be transcribed', async () => {

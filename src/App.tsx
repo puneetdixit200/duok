@@ -4466,17 +4466,31 @@ function App() {
             )}
             {pronunciationResult && (
               <article className="pronunciation-result" aria-label="Pronunciation result">
-                <strong>Score {pronunciationResult.score}</strong>
-                <p>{pronunciationResult.feedback}</p>
-                <span>
-                  {pronunciationResult.problemParts.length
-                    ? `Problem syllables: ${pronunciationResult.problemParts.join(', ')}`
-                    : 'No problem syllables'}
-                </span>
+                <div className="pronunciation-score-line">
+                  <strong>Score: {pronunciationResult.score} / 100</strong>
+                  <span className={`pronunciation-level ${pronunciationResult.level}`}>
+                    Level: {formatPronunciationLevel(pronunciationResult.level)}
+                  </span>
+                </div>
+                <p className="pronunciation-result-row">
+                  <span className="pronunciation-result-label">Transcript:</span>
+                  <ReadableStatusText text={pronunciationTranscript || 'No transcript yet'} />
+                </p>
+                <p className="pronunciation-result-row">
+                  <span className="pronunciation-result-label">Feedback:</span>
+                  {pronunciationResult.feedback}
+                </p>
+                <p className="pronunciation-result-row">
+                  <span className="pronunciation-result-label">Problem syllables:</span>
+                  {pronunciationResult.problemParts.length ? pronunciationResult.problemParts.join(', ') : 'None'}
+                </p>
                 {pronunciationResult.problemParts.length > 0 && (
                   <SubtitleLines text={pronunciationResult.problemParts.join(' ')} />
                 )}
-                <small>{pronunciationResult.tip}</small>
+                <small className="pronunciation-result-row">
+                  <span className="pronunciation-result-label">Tip:</span>
+                  {pronunciationResult.tip}
+                </small>
                 <button className="secondary-action compact-action" onClick={retryPronunciationPractice} type="button">
                   Try Again
                 </button>
