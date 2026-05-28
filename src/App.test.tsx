@@ -1966,6 +1966,51 @@ describe('KannadaOS desktop app', () => {
     expect(JSON.parse(String(generateCall?.[1]?.body)).prompt).toEqual(expect.stringContaining('Scenario: Auto Ride'))
   })
 
+  it('falls back from hosted tutor chat to Ollama before using the offline tutor', async () => {
+    const user = userEvent.setup()
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/api/tags')) {
+        return { ok: true, json: async () => ({ models: [{ name: 'llama3.1:8b' }] }) }
+      }
+
+      if (url === 'https://openrouter.ai/api/v1/chat/completions') {
+        return { ok: false, status: 503, json: async () => ({}) }
+      }
+
+      if (url.endsWith('/api/generate')) {
+        return {
+          ok: true,
+          json: async () => ({
+            response: 'Friendly Anna: Ollama fallback says ಮೀಟರ್ ಹಾಕಿ. Say: miitar haaki. English: Put the meter.',
+          }),
+        }
+      }
+
+      return { ok: false, status: 404, json: async () => ({}) }
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:ai-provider', JSON.stringify({
+      activeProvider: 'openrouter',
+      openRouterApiKey: 'sk-or-chat',
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /chat/i }))
+    await user.type(screen.getByPlaceholderText(/type in kannada/i), 'meter please')
+    await user.click(screen.getByRole('button', { name: /send/i }))
+
+    expect(await screen.findByText(/OpenRouter unavailable; Ollama tutor reply ready/i)).toBeInTheDocument()
+    expect(screen.getByText(/Friendly Anna: Ollama fallback says ಮೀಟರ್ ಹಾಕಿ/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Ollama local tutor reply/i).length).toBeGreaterThanOrEqual(1)
+
+    expect(fetchMock.mock.calls.some(([input]) => String(input) === 'https://openrouter.ai/api/v1/chat/completions')).toBe(true)
+    expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/api/generate'))).toBe(true)
+  })
+
   it('keeps only the latest 50 tutor chat messages for a scenario', async () => {
     const user = userEvent.setup()
     const messages = Array.from({ length: 50 }, (_, index) => ({

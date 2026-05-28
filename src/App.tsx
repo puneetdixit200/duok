@@ -2555,7 +2555,8 @@ function App() {
   }
 
   async function appendChatTurn(text: string, subtext?: string) {
-    let tutorReply = buildTutorReply(text, selectedScenario, selectedTutorPersona)
+    const offlineTutorReply = buildTutorReply(text, selectedScenario, selectedTutorPersona)
+    let tutorReply = offlineTutorReply
 
     if (aiProviderSettings.activeProvider === 'openrouter' || aiProviderSettings.activeProvider === 'nvidia') {
       const providerLabel = getAiProviderLabel(aiProviderSettings.activeProvider)
@@ -2580,23 +2581,30 @@ function App() {
             selectedScenario.usefulPhrases[0],
             `${providerLabel}: ${getActiveHostedModel(aiProviderSettings)}.`,
           ),
-          correction: tutorReply.correction,
+          correction: offlineTutorReply.correction,
         }
         setVoiceStatus(`${providerLabel} tutor reply ready.`)
       } else {
-        setVoiceStatus(`${providerLabel} unavailable; using offline tutor. ${hostedReply.error ?? ''}`.trim())
+        const ollamaReply = await generateOllamaTutorReply(text)
+        if (ollamaReply.source === 'ollama') {
+          tutorReply = {
+            text: ollamaReply.text,
+            subtext: formatTutorPhraseSupport(
+              selectedTutorPersona,
+              selectedScenario.usefulPhrases[0],
+              'Ollama local tutor reply.',
+            ),
+            correction: offlineTutorReply.correction,
+          }
+          setVoiceStatus(`${providerLabel} unavailable; Ollama tutor reply ready.`)
+        } else {
+          const fallbackReason = [hostedReply.error, ollamaReply.error].filter(Boolean).join(' ')
+          setVoiceStatus(`${providerLabel} unavailable; Ollama unavailable; using offline tutor. ${fallbackReason}`.trim())
+        }
       }
     } else if (aiProviderSettings.activeProvider === 'ollama') {
       setVoiceStatus('Asking Ollama...')
-      const ollamaReply = await generateTutorReplyWithOllama({
-        learnerText: text,
-        scenarioTitle: selectedScenario.title,
-        scenarioSituation: selectedScenario.situation,
-        personaName: selectedTutorPersona.name,
-        personaStyle: selectedTutorPersona.style,
-        correctionStyle: selectedTutorPersona.correctionStyle,
-        usefulPhrases: selectedScenario.usefulPhrases.map((phrase) => `${phrase.kannada} = ${phrase.transliteration} = ${phrase.english}`),
-      })
+      const ollamaReply = await generateOllamaTutorReply(text)
 
       if (ollamaReply.source === 'ollama') {
         tutorReply = {
@@ -2606,7 +2614,7 @@ function App() {
             selectedScenario.usefulPhrases[0],
             'Ollama local tutor reply.',
           ),
-          correction: tutorReply.correction,
+          correction: offlineTutorReply.correction,
         }
         setVoiceStatus('Ollama tutor reply ready.')
       } else {
@@ -2623,6 +2631,18 @@ function App() {
     setChatMessages(trimmedMessages)
     setProgress((current) => recordChatMessageSent(current))
     setConversationStore((current) => appendScenarioMessages(current, selectedScenario.id, trimmedMessages))
+  }
+
+  function generateOllamaTutorReply(text: string) {
+    return generateTutorReplyWithOllama({
+      learnerText: text,
+      scenarioTitle: selectedScenario.title,
+      scenarioSituation: selectedScenario.situation,
+      personaName: selectedTutorPersona.name,
+      personaStyle: selectedTutorPersona.style,
+      correctionStyle: selectedTutorPersona.correctionStyle,
+      usefulPhrases: selectedScenario.usefulPhrases.map((phrase) => `${phrase.kannada} = ${phrase.transliteration} = ${phrase.english}`),
+    })
   }
 
   function selectChatScenario(scenarioId: string) {
