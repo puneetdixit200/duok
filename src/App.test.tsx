@@ -634,7 +634,9 @@ describe('KannadaOS desktop app', () => {
     await renderApp()
 
     const navigation = screen.getByLabelText(/Primary navigation/i)
-    expect(within(navigation).getByRole('button', { name: /Home.*streak active/i })).toBeInTheDocument()
+    const homeButton = within(navigation).getByRole('button', { name: /Home.*streak active/i })
+    expect(homeButton).toBeInTheDocument()
+    expect(homeButton.querySelector('.nav-flame')).toHaveTextContent('🔥')
     expect(within(navigation).getByRole('button', { name: /Practice.*2 due reviews/i })).toBeInTheDocument()
     expect(within(navigation).getByRole('button', { name: /^Chat$/i })).toBeInTheDocument()
   })

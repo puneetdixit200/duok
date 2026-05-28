@@ -37,6 +37,8 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
       'numberRoll',
       'starBurst',
       'crownFill',
+      'streakFire',
+      'flameParticle',
       'pulseGlow',
       'heartBreak',
       'recordingPulse',
@@ -51,6 +53,8 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/\.confetti-burst span\s*{[^}]*animation:\s*confettiFall/s)
     expect(styles).toMatch(/\.lesson-complete \.star-row span\s*{[^}]*animation:\s*starBurst/s)
     expect(styles).toMatch(/\.crown-fill-row span\.filled\s*{[^}]*animation:\s*crownFill/s)
+    expect(styles).toMatch(/\.nav-flame\s*{[^}]*animation:\s*streakFire/s)
+    expect(styles).toMatch(/\.nav-flame::before,\s*\.nav-flame::after\s*{[^}]*animation:\s*flameParticle/s)
     expect(styles).toMatch(/\.quest-claim-action\s*{[^}]*animation:\s*pulseGlow/s)
     expect(styles).toMatch(/\.gem-counter\.rolling\s*{[^}]*animation:[^}]*gemBounce[^}]*numberRoll/s)
     expect(styles).toMatch(/\.flashcard\s*{[^}]*transition:[^}]*transform/s)
