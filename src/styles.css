@@ -2786,6 +2786,36 @@ h2 {
   margin-top: 12px;
 }
 
+.typing-target-card {
+  justify-items: center;
+}
+
+.typing-preview-card {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  text-align: center;
+}
+
+.typing-preview-card > span {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.typing-preview-card > strong {
+  color: var(--text-primary);
+  font-size: 1.75rem;
+}
+
+.typing-preview-card > small {
+  color: var(--color-accent-gold);
+  font-weight: 800;
+}
+
 .keyboard-helper {
   display: grid;
   gap: 8px;

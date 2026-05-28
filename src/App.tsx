@@ -5542,13 +5542,16 @@ function App() {
       const inputLabel = scriptTransliterationExercise ? 'Script transliteration answer' : 'Kannada typing answer'
       return (
         <>
-          <div className="phrase-card">
-            <small>{exercise.english}</small>
-            <KannadaStrong
-              text={scriptTransliterationExercise ? exercise.kannada : exercise.answer}
-              context={exercise}
-            />
-            <SubtitleLines text={scriptTransliterationExercise ? exercise.kannada : exercise.answer} context={exercise} />
+          <div className={scriptTransliterationExercise ? 'phrase-card' : 'phrase-card typing-target-card'}>
+            <small>{scriptTransliterationExercise ? exercise.english : 'Type the Kannada for:'}</small>
+            {scriptTransliterationExercise ? (
+              <>
+                <KannadaStrong text={exercise.kannada} context={exercise} />
+                <SubtitleLines text={exercise.kannada} context={exercise} />
+              </>
+            ) : (
+              <strong className="review-english-prompt">{exercise.english ?? exercise.answer}</strong>
+            )}
             <button aria-keyshortcuts={lessonReplayAudioShortcuts} className="mini-button" onClick={() => void playExerciseReference(exercise)} type="button">
               Listen
             </button>
@@ -5569,10 +5572,23 @@ function App() {
               value={typedAnswer}
             />
           </label>
+          {!scriptTransliterationExercise && (
+            <article className="typing-preview-card" role="region" aria-label="Kannada live preview">
+              <span>{typedAnswer || 'Type Latin letters'}</span>
+              <strong>
+                {convertedAnswer ? (
+                  <ReadableStatusText text={convertedAnswer} context={exercise} />
+                ) : (
+                  'Live preview appears here'
+                )}
+              </strong>
+              <small>Live preview</small>
+            </article>
+          )}
           <article className="keyboard-helper" aria-label={scriptTransliterationExercise ? 'Script sound helper' : 'Kannada keyboard helper'}>
             <strong>{scriptTransliterationExercise ? 'Script sound helper' : 'Keyboard helper'}</strong>
             <ReadableStatusText
-              text={scriptTransliterationExercise ? convertedAnswer : typedAnswer ? convertedAnswer : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'}
+              text={scriptTransliterationExercise ? convertedAnswer : 'Transliteration input converts Latin to Kannada script in real time.'}
               context={exercise}
             />
             <div className="suggestion-row compact">

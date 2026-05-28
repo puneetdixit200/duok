@@ -1149,13 +1149,23 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: new RegExp(introductionsLesson.title, 'i') }))
 
     expect(screen.getByText('typeKannada')).toBeInTheDocument()
-    await user.type(screen.getByLabelText(/Kannada typing answer/i), 'ನಿಮ್ಮ ಹೆಸರು ಏನ')
+    expect(screen.getByText(/Type the Kannada for:/i)).toBeInTheDocument()
+    expect(screen.queryByText('ನಿಮ್ಮ ಹೆಸರು ಏನು?')).not.toBeInTheDocument()
+
+    const typingInput = screen.getByLabelText(/Kannada typing answer/i)
+    const livePreview = screen.getByRole('region', { name: /Kannada live preview/i })
+    expect(within(livePreview).getByText(/Live preview appears here/i)).toBeInTheDocument()
+
+    await user.type(typingInput, 'nimma hesaru enu?')
+    expect(within(livePreview).getByText('ನಿಮ್ಮ ಹೆಸರು ಏನು?')).toBeInTheDocument()
+
+    await user.clear(typingInput)
+    await user.type(typingInput, 'ನಿಮ್ಮ ಹೆಸರು ಏನ')
     await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByText(/Almost! Check:/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Lesson hearts/i)).toHaveTextContent('❤️ 5')
 
-    const typingInput = screen.getByLabelText(/Kannada typing answer/i)
     await user.clear(typingInput)
     await user.type(typingInput, 'ನಿಮ್ಮ ಹೆಸರು ಏನು?')
     fireEvent.keyDown(typingInput, { key: 'Enter' })

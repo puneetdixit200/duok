@@ -90,6 +90,11 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toContain('.dialogue-reply-prompt')
   })
 
+  it('styles type-Kannada live preview cards', () => {
+    expect(styles).toMatch(/\.typing-preview-card\s*{[^}]*display:\s*grid/s)
+    expect(styles).toMatch(/\.typing-preview-card > strong\s*{[^}]*font-size:\s*1\.75rem/s)
+  })
+
   it('styles all story difficulty badges from the frontend spec', () => {
     expect(styles).toMatch(/\.difficulty-badge\.beginner\s*{[^}]*color:\s*#6ee7b7/s)
     expect(styles).toMatch(/\.difficulty-badge\.intermediate\s*{[^}]*color:\s*var\(--color-accent-gold\)/s)
