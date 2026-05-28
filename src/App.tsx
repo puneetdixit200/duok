@@ -4314,7 +4314,24 @@ function App() {
                     className="lesson-progress review-session-progress"
                     aria-label={`Review progress: ${reviewIndex + 1} of ${reviewSessionIds.length} due words`}
                   >
-                    <span style={{ width: `${Math.max(12, ((reviewIndex + 1) / reviewSessionIds.length) * 100)}%` }} />
+                    {reviewSessionIds.map((reviewId, index) => {
+                      const segmentState = index < reviewIndex
+                        ? 'completed'
+                        : index === reviewIndex
+                          ? reviewFeedback === 'correct'
+                            ? 'completed'
+                            : reviewFeedback === 'wrong'
+                              ? 'wrong'
+                              : 'current'
+                          : 'pending'
+                      return (
+                        <span
+                          aria-label={`Review ${index + 1} of ${reviewSessionIds.length}: ${segmentState}`}
+                          className={`lesson-progress-segment ${segmentState}`}
+                          key={`${reviewId}-${index}`}
+                        />
+                      )
+                    })}
                   </div>
                   <div className="phrase-card review-card">
                     <small>{activeReviewExercise.prompt}</small>
