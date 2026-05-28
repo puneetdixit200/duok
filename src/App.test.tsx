@@ -693,7 +693,7 @@ describe('KannadaOS desktop app', () => {
 
     const feedbackPanel = screen.getByRole('status', { name: /Wrong answer feedback/i })
     expect(within(feedbackPanel).getByText('Not quite.')).toBeInTheDocument()
-    expect(within(feedbackPanel).getByText('❤️ -1')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('❤️ -1')).toHaveClass('heart-loss-indicator')
     expect(within(feedbackPanel).getByText('Correct answer: Hello sir')).toBeInTheDocument()
     expect(within(feedbackPanel).getByText(/respectful hello used across Bangalore/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Got it/i })).toBeInTheDocument()

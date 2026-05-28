@@ -3521,7 +3521,7 @@ function App() {
                 <>
                   <div className="feedback-header">
                     <strong>{timedOut ? "Time's up." : 'Not quite.'}</strong>
-                    <span>❤️ -1</span>
+                    <span className="heart-loss-indicator">❤️ -1</span>
                   </div>
                   <p><ReadableStatusText text={`Correct answer: ${activeExercise.answer}`} context={activeExercise} /></p>
                   <p><ReadableStatusText text={activeExercise.explanation} context={activeExercise} /></p>

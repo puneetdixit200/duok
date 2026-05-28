@@ -1075,6 +1075,12 @@ h2 {
   animation: floatUp 600ms ease-out;
 }
 
+.heart-loss-indicator {
+  color: #fecdd3;
+  font-weight: 900;
+  animation: heartBreak 500ms ease-out;
+}
+
 .listening-card,
 .speaking-card,
 .xp-card {

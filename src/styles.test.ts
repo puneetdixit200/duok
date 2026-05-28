@@ -45,6 +45,7 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/\.feedback\.correct\s*{[^}]*animation:\s*correctPulse/s)
     expect(styles).toMatch(/\.feedback\.wrong\s*{[^}]*animation:\s*wrongShake/s)
     expect(styles).toMatch(/\.feedback strong\s*{[^}]*animation:\s*floatUp/s)
+    expect(styles).toMatch(/\.heart-loss-indicator\s*{[^}]*animation:\s*heartBreak/s)
     expect(styles).toMatch(/\.confetti-burst span\s*{[^}]*animation:\s*confettiFall/s)
     expect(styles).toMatch(/\.quest-claim-action\s*{[^}]*animation:\s*pulseGlow/s)
     expect(styles).toMatch(/\.gem-counter\.rolling\s*{[^}]*animation:[^}]*gemBounce[^}]*numberRoll/s)
