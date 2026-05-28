@@ -1894,6 +1894,26 @@ h2 {
   font-size: 2rem;
 }
 
+.blr-hero .readable-phrase {
+  gap: 6px;
+}
+
+.blr-hero .readable-phrase-english {
+  font-size: 2rem;
+  line-height: 1.08;
+}
+
+.blr-hero .readable-phrase [lang='kn'] {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 1.25rem;
+}
+
+.blr-hero .readable-phrase .romanization,
+.blr-hero .readable-phrase-context {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9375rem;
+}
+
 .scenario-grid {
   grid-template-columns: repeat(3, minmax(180px, 1fr));
 }
@@ -1907,6 +1927,7 @@ h2 {
 }
 
 .scenario-card > span {
+  font-size: 1.5rem;
   color: var(--color-accent-gold);
   font-weight: 900;
 }

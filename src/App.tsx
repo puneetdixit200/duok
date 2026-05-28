@@ -4058,8 +4058,9 @@ function App() {
           <div className="chat-stream" aria-live="polite">
             {chatMessages.map((message) => (
               <article className={`message ${message.speaker}`} key={message.id}>
-                <p>{message.text}</p>
-                <SubtitleLines text={message.text} />
+                <p>
+                  <ReadableStatusText text={message.text} />
+                </p>
                 {message.subtext && (
                   <small className="message-subtext">
                     <span>{message.subtext}</span>
@@ -4925,12 +4926,21 @@ function App() {
               <h2 id="blr-title">Bangalore Mode</h2>
               <p>Practice real daily-life conversations.</p>
             </div>
-            <span className="metric-pill">swalpa adjust maadi</span>
+            <span className="metric-pill">daily survival phrase</span>
           </header>
           <article className="blr-hero">
             <p className="eyebrow">Slang of the Day</p>
-            <h3>Swalpa adjust maadi</h3>
-            <p>Please adjust a little. Use it in crowds, shared autos, queues, and PG life.</p>
+            <h3>
+              <EnglishFirstKannadaText
+                phrase={{
+                  english: 'Please adjust a little',
+                  kannada: 'ಸ್ವಲ್ಪ ಅಡ್ಜಸ್ಟ್ ಮಾಡಿ',
+                  transliteration: 'swalpa adjust maadi',
+                  context: 'Use it in crowds, shared autos, queues, and PG life.',
+                }}
+                showContext
+              />
+            </h3>
           </article>
           <div className="scenario-grid">
             {bangaloreScenarios.map((scenario) => {

@@ -115,6 +115,12 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/\.accent-card\.teal\s*{[^}]*border-left:\s*5px solid #38bdf8/s)
   })
 
+  it('styles Bangalore Mode readable slang and scenario icons', () => {
+    expect(styles).toMatch(/\.blr-hero \.readable-phrase-english\s*{[^}]*font-size:\s*2rem/s)
+    expect(styles).toMatch(/\.blr-hero \.readable-phrase \[lang='kn'\]\s*{[^}]*font-size:\s*1\.25rem/s)
+    expect(styles).toMatch(/\.scenario-card > span\s*{[^}]*font-size:\s*1\.5rem/s)
+  })
+
   it('styles all story difficulty badges from the frontend spec', () => {
     expect(styles).toMatch(/\.difficulty-badge\.beginner\s*{[^}]*color:\s*#6ee7b7/s)
     expect(styles).toMatch(/\.difficulty-badge\.intermediate\s*{[^}]*color:\s*var\(--color-accent-gold\)/s)

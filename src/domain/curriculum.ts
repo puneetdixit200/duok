@@ -741,7 +741,7 @@ export const bangaloreScenarios: Scenario[] = [
   {
     id: 'bmtc-bus',
     title: 'BMTC Bus',
-    icon: 'BUS',
+    icon: '🚌',
     difficulty: 'Beginner',
     situation: 'You boarded 500D at Majestic and need a ticket to Koramangala.',
     openingLine: {
@@ -755,7 +755,7 @@ export const bangaloreScenarios: Scenario[] = [
   {
     id: 'auto-ride',
     title: 'Auto Ride',
-    icon: 'AUTO',
+    icon: '🛺',
     difficulty: 'Beginner',
     situation: 'You are negotiating an auto from Indiranagar to Majestic.',
     openingLine: {
@@ -769,7 +769,7 @@ export const bangaloreScenarios: Scenario[] = [
   {
     id: 'darshini',
     title: 'Darshini',
-    icon: 'FOOD',
+    icon: '🍽️',
     difficulty: 'Beginner',
     situation: 'Order breakfast and filter coffee at a busy standing hotel.',
     openingLine: {
@@ -783,7 +783,7 @@ export const bangaloreScenarios: Scenario[] = [
   {
     id: 'kirana',
     title: 'Kirana',
-    icon: 'SHOP',
+    icon: '🛒',
     difficulty: 'Beginner',
     situation: 'Buy milk and decline a carry bag at the neighborhood store.',
     openingLine: {
@@ -797,7 +797,7 @@ export const bangaloreScenarios: Scenario[] = [
   {
     id: 'office',
     title: 'Office',
-    icon: 'WORK',
+    icon: '💼',
     difficulty: 'Intermediate',
     situation: 'Greet coworkers and answer lunch small talk.',
     openingLine: {
@@ -811,7 +811,7 @@ export const bangaloreScenarios: Scenario[] = [
   {
     id: 'pg-owner',
     title: 'PG Owner',
-    icon: 'HOME',
+    icon: '🏠',
     difficulty: 'Intermediate',
     situation: 'Ask your PG owner about water and maintenance.',
     openingLine: {
