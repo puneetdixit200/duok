@@ -4451,7 +4451,7 @@ function App() {
                   romanization: card.transliteration,
                   english: card.english,
                 })} ${flashcardBack ? 'Back of flashcard' : 'Tap to flip'}`}
-                className="flashcard"
+                className={flashcardBack ? 'flashcard flipped' : 'flashcard'}
                 onClick={() => {
                   playAppSound('flip')
                   setFlashcardBack((value) => !value)
