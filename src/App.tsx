@@ -1174,6 +1174,21 @@ function buildReviewKannadaOptions(answer: string): string[] {
   return [answer, ...distractors].slice(0, 4)
 }
 
+function formatLessonExerciseType(type: LessonExercise['type']): string {
+  const labels: Record<LessonExercise['type'], string> = {
+    translate: 'Translate',
+    arrange: 'Arrange words',
+    fillBlank: 'Fill in the blank',
+    listening: 'Listening',
+    speaking: 'Speaking',
+    matchPairs: 'Match pairs',
+    typeKannada: 'Type Kannada',
+    dialogue: 'Dialogue',
+  }
+
+  return labels[type]
+}
+
 function applyStartingLevelPlacement(
   progress: ProgressState,
   startingLevel: string,
@@ -3518,7 +3533,7 @@ function App() {
         </header>
         <section className="lesson-card" aria-labelledby="lesson-title">
           <p className="eyebrow">
-            <span>{activeExercise.type}</span>
+            <span>{formatLessonExerciseType(activeExercise.type)}</span>
             <small>{activeLesson.title}</small>
             {activeExercise.timeLimitSeconds && <small>{activeExercise.timeLimitSeconds}s timed</small>}
           </p>
@@ -3942,7 +3957,7 @@ function App() {
             <span className="metric-pill">{progress.xp} XP</span>
           </header>
           <section className="level-map expanded" aria-label="Learn curriculum tree">
-            {allCurriculumUnits.map((unit, mapUnitIndex) => {
+            {allCurriculumUnits.map((unit) => {
               const unlockedUnit = unlockedUnitIds.has(unit.id)
               const unitNumber = unit.optional ? 0 : coreCurriculumUnits.findIndex((coreUnit) => coreUnit.id === unit.id) + 1
               const unitProgress = getUnitCompletionSummary(unit, progress)
@@ -3981,7 +3996,7 @@ function App() {
                       const unlocked = unit.optional || isLessonUnlocked(lesson.id, progress)
                       return (
                         <button
-                          aria-label={`Learn unit ${mapUnitIndex + 1} lesson ${unitLessonIndex + 1}: ${lesson.title}, ${lessonProgress.masteryLevel} crowns, ${crownRating}`}
+                          aria-label={`Learn unit ${unitNumber} lesson ${unitLessonIndex + 1}: ${lesson.title}, ${lessonProgress.masteryLevel} crowns, ${crownRating}`}
                           className={lessonProgress.completed ? 'lesson-dot done' : unlocked ? 'lesson-dot current' : 'lesson-dot locked'}
                           disabled={!unlocked}
                           key={lesson.id}

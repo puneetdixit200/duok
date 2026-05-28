@@ -368,31 +368,31 @@ function createFakeMicWav() {
 }
 
 async function completeLesson(page) {
-  await page.getByText('translate', { exact: true }).waitFor()
+  await page.getByText('Translate', { exact: true }).waitFor()
   await page.getByRole('button', { name: 'Hello sir' }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('arrange', { exact: true }).waitFor()
+  await page.getByText('Arrange words', { exact: true }).waitFor()
   await page.getByRole('button', { name: /ನಮಸ್ಕಾರ/ }).click()
   await page.getByRole('button', { name: /ಸಾರ್/ }).click()
   await page.getByRole('button', { name: /ಹೇಗಿದ್ದೀರಾ/ }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('fillBlank', { exact: true }).waitFor()
+  await page.getByText('Fill in the blank', { exact: true }).waitFor()
   await page.getByRole('button', { name: /ಹೋಗಬೇಕು/ }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('listening', { exact: true }).waitFor()
+  await page.getByText('Listening', { exact: true }).waitFor()
   await page.getByRole('button', { name: /play again/i }).click()
   await page.getByText(/Piper audio ready|Playing reference audio|Auto reference audio|Auto Piper audio ready/i).waitFor()
   await page.getByRole('button', { name: /ticket eshtu/i }).click()
   await page.getByRole('button', { name: /check/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('speaking', { exact: true }).waitFor()
+  await page.getByText('Speaking', { exact: true }).waitFor()
   await page.getByRole('button', { name: /record phrase/i }).click()
   try {
     await page.getByRole('button', { name: /stop recording/i }).waitFor({ timeout: 5000 })
@@ -405,7 +405,7 @@ async function completeLesson(page) {
   await page.getByRole('button', { name: /^Continue/i }).click()
   await page.getByRole('button', { name: /next exercise/i }).click()
 
-  await page.getByText('matchPairs', { exact: true }).waitFor()
+  await page.getByText('Match pairs', { exact: true }).waitFor()
   await page.getByRole('button', { name: /ನಮಸ್ಕಾರ/ }).click()
   await page.getByRole('button', { name: 'Hello', exact: true }).click()
   await page.getByRole('button', { name: /ಧನ್ಯವಾದ/ }).click()
