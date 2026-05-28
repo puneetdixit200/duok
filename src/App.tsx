@@ -627,12 +627,13 @@ function EnglishWordGuide({ words, context }: { words: string[]; context?: Lesso
 }
 
 function ReadableStatusText({ text, context }: { text: string; context?: LessonExercise }) {
-  const ariaLabel = containsKannada(text) ? getReadableKannadaAriaLabel(text, context) : undefined
+  const alreadyReadable = isStructuredReadableLine(text)
+  const ariaLabel = containsKannada(text) && !alreadyReadable ? getReadableKannadaAriaLabel(text, context) : undefined
 
   return (
     <>
       <span aria-label={ariaLabel}>{text}</span>
-      <SubtitleLines text={text} context={context} />
+      {!alreadyReadable && <SubtitleLines text={text} context={context} />}
     </>
   )
 }
@@ -781,6 +782,19 @@ function formatReadableKannadaChoice(text: string, subtitle: ReadableSubtitle): 
 
 function formatReadablePhrase(phrase: ReadablePhraseParts): string {
   return `${formatEnglishSubtitle(phrase.english)} ${phrase.kannada} ${formatRomanizationSubtitle(phrase.transliteration)}`
+}
+
+function formatEnglishFirstPhraseLine(phrase: ReadablePhraseParts): string {
+  return `${formatEnglishSubtitle(phrase.english)} | ${formatRomanizationSubtitle(phrase.transliteration)} | Kannada: ${phrase.kannada}`
+}
+
+function formatEnglishFirstSubtitleLine(kannada: string, subtitle: ReadableSubtitle): string {
+  const english = hasEnglishSubtitleText(subtitle) ? `${formatEnglishSubtitle(subtitle.english)} | ` : ''
+  return `${english}${formatRomanizationSubtitle(subtitle.romanization)} | Kannada: ${kannada}`
+}
+
+function isStructuredReadableLine(text: string): boolean {
+  return /\bEnglish:/i.test(text) && /\bSay:/i.test(text) && /\bKannada:/i.test(text)
 }
 
 function formatReadableStoryWord(word: StoryWord): string {
@@ -1269,11 +1283,21 @@ function getLessonProgressSegmentState(
 
 function getFeedbackAnswerSummary(exercise: LessonExercise): string {
   if (exercise.kannada && exercise.answer && !containsKannada(exercise.answer)) {
-    return `${exercise.kannada} = ${exercise.answer}`
+    return formatEnglishFirstSubtitleLine(exercise.kannada, {
+      english: exercise.answer,
+      romanization: exercise.transliteration ?? romanizeKannadaWords(exercise.kannada),
+    })
   }
 
   if (exercise.answer && exercise.english) {
-    return `${exercise.answer} = ${exercise.english}`
+    if (containsKannada(exercise.answer)) {
+      return formatEnglishFirstSubtitleLine(exercise.answer, {
+        english: exercise.english,
+        romanization: exercise.transliteration ?? romanizeKannadaWords(exercise.answer),
+      })
+    }
+
+    return `${formatEnglishSubtitle(exercise.english)} | Answer: ${exercise.answer}`
   }
 
   return `Correct answer: ${exercise.answer}`
@@ -6022,8 +6046,8 @@ function createOpeningMessage(scenario: Scenario): ChatMessage {
   return {
     id: `opening-${scenario.id}`,
     speaker: 'tutor',
-    text: scenario.openingLine.kannada,
-    subtext: `${scenario.openingLine.transliteration} = ${scenario.openingLine.english}`,
+    text: scenario.openingLine.english,
+    subtext: formatEnglishFirstPhraseLine(scenario.openingLine),
   }
 }
 
@@ -6085,7 +6109,7 @@ function getChatQuickReplies(scenario: Scenario): Phrase[] {
 }
 
 function formatTutorPhraseSupport(persona: TutorPersona, phrase: Phrase, note: string): string {
-  return `${persona.name}: ${note} Kannada: ${phrase.kannada} | Say: ${phrase.transliteration} | English: ${phrase.english}`
+  return `${persona.name}: ${note} ${formatEnglishFirstPhraseLine(phrase)}`
 }
 
 function toConversationCorrection(phrase: Phrase): PersistedConversationCorrection {
@@ -6271,7 +6295,13 @@ function getPronunciationParts(kannada: string): string[] {
 }
 
 function formatVoiceTranscriptStatus(transcript: string) {
-  return `Voice transcript ready: ${transcript} (${getTranscriptCompanion(transcript)})`
+  const companion = getTranscriptCompanion(transcript)
+
+  if (companion !== 'Kannada transcript') {
+    return `Voice transcript ready: ${companion}`
+  }
+
+  return `Voice transcript ready: ${transcript} (${companion})`
 }
 
 function getTranscriptCompanion(transcript: string) {
@@ -6279,7 +6309,7 @@ function getTranscriptCompanion(transcript: string) {
   const phrase = survivalPhrases.find((item) => item.kannada.normalize('NFC') === normalizedTranscript)
 
   if (phrase) {
-    return `${phrase.transliteration} = ${phrase.english}`
+    return formatEnglishFirstPhraseLine(phrase)
   }
 
   return 'Kannada transcript'
@@ -6350,15 +6380,14 @@ function formatReadableReviewLabel(vocabularyId: string) {
   const phrase = getPhraseByVocabularyId(vocabularyId)
 
   if (phrase) {
-    return `${phrase.kannada} - ${phrase.transliteration} - ${phrase.english}`
+    return formatEnglishFirstPhraseLine(phrase)
   }
 
   const fallbackLabel = vocabularyId.split(':').at(-1) ?? vocabularyId
   const subtitle = getKannadaSubtitle(fallbackLabel)
 
   if (subtitle) {
-    const english = hasEnglishSubtitleText(subtitle) ? ` - ${subtitle.english}` : ''
-    return `${fallbackLabel} - ${subtitle.romanization}${english}`
+    return formatEnglishFirstSubtitleLine(fallbackLabel, subtitle)
   }
 
   return fallbackLabel

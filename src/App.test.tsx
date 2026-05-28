@@ -706,7 +706,7 @@ describe('KannadaOS desktop app', () => {
     const feedbackPanel = screen.getByRole('status', { name: /Correct feedback/i })
     expect(within(feedbackPanel).getByText('Correct!')).toBeInTheDocument()
     expect(screen.getByText(/\+2 XP/i)).toBeInTheDocument()
-    expect(within(feedbackPanel).getByText('ನಮಸ್ಕಾರ ಸಾರ್ = Hello sir')).toBeInTheDocument()
+    expect(within(feedbackPanel).getByText('English: Hello sir | Say: namaskara saar | Kannada: ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
     expect(within(feedbackPanel).getAllByText('English: Hello sir').length).toBeGreaterThanOrEqual(1)
     expect(within(feedbackPanel).getAllByText('Say: namaskara saar').length).toBeGreaterThanOrEqual(1)
     expect(within(feedbackPanel).getByText(/respectful hello used across Bangalore/i)).toBeInTheDocument()
@@ -1385,7 +1385,7 @@ describe('KannadaOS desktop app', () => {
     expect(await screen.findByRole('button', { name: /stop recording/i })).toBeInTheDocument()
 
     fireEvent.keyDown(window, { key: 'm', metaKey: true })
-    expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Voice transcript ready: English: Hello sir/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /practice/i }))
 
@@ -1442,7 +1442,7 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /check/i }))
 
     expect(screen.getByRole('status', { name: /Correct feedback/i })).toHaveTextContent('+2 XP')
-    expect(screen.getByText(/ಹೇಗಿದ್ದೀರಾ\? = How are you\?/i)).toBeInTheDocument()
+    expect(screen.getByText(/English: How are you\? \| Say: hegiddira \| Kannada: ಹೇಗಿದ್ದೀರಾ\?/i)).toBeInTheDocument()
   })
 
   it('runs the regular How Are You dialogue exercise from the frontend spec', async () => {
@@ -2076,7 +2076,7 @@ describe('KannadaOS desktop app', () => {
     await user.selectOptions(screen.getByRole('combobox', { name: /^Scenario$/i }), 'bmtc-bus')
 
     expect(screen.getByRole('heading', { name: /BMTC Bus/i })).toBeInTheDocument()
-    expect(screen.getByText(/ಟಿಕೆಟ್! ಟಿಕೆಟ್!/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/ಟಿಕೆಟ್! ಟಿಕೆಟ್!/i).length).toBeGreaterThanOrEqual(1)
 
     await user.selectOptions(screen.getByRole('combobox', { name: /^Persona$/i }), 'grammar-teacher')
     const grammarPersonaCard = screen.getByLabelText(/Tutor persona: Grammar Teacher/i)
@@ -2096,8 +2096,8 @@ describe('KannadaOS desktop app', () => {
     expect(activeVoiceButton).toHaveAttribute('aria-pressed', 'true')
     await user.click(screen.getByRole('button', { name: /stop recording/i }))
 
-    expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/namaskara saar = Hello sir/i).length).toBeGreaterThanOrEqual(1)
+    expect(await screen.findByText(/Voice transcript ready: English: Hello sir/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/English: Hello sir \| Say: namaskara saar \| Kannada: ನಮಸ್ಕಾರ ಸಾರ್/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
   }, 30_000)
 
@@ -2682,7 +2682,7 @@ describe('KannadaOS desktop app', () => {
 
     const dueReviewCard = screen.getByText(/Due Review Queue/i).closest('article')
     expect(dueReviewCard).not.toBeNull()
-    expect(within(dueReviewCard as HTMLElement).getByText(/ಹೋಗಬೇಕು - hogbeku - need to go - Strength 20%/i)).toBeInTheDocument()
+    expect(within(dueReviewCard as HTMLElement).getByText(/English: need to go \| Say: hogbeku \| Kannada: ಹೋಗಬೇಕು - Strength 20%/i)).toBeInTheDocument()
   })
 
   it('shows exact readable labels for authored review words that only appear in match pairs', async () => {
@@ -2707,7 +2707,7 @@ describe('KannadaOS desktop app', () => {
 
     const dueReviewCard = screen.getByText(/Due Review Queue/i).closest('article')
     expect(dueReviewCard).not.toBeNull()
-    expect(within(dueReviewCard as HTMLElement).getByText(/ಯುಪಿಐ ಇದೆಯಾ\? - upi ideya - Do you have UPI\? - Strength 20%/i)).toBeInTheDocument()
+    expect(within(dueReviewCard as HTMLElement).getByText(/English: Do you have UPI\? \| Say: upi ideya \| Kannada: ಯುಪಿಐ ಇದೆಯಾ\? - Strength 20%/i)).toBeInTheDocument()
     expect(screen.getByRole('button', {
       name: /^English: Do you have UPI\?\s+ಯುಪಿಐ ಇದೆಯಾ\?\s+Say: upi ideya/i,
     })).toBeInTheDocument()
@@ -3067,8 +3067,8 @@ describe('KannadaOS desktop app', () => {
       audioBytes: [82, 73, 70, 70],
       source: 'pronunciation',
     })
-    expect(await screen.findByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
-    expect(screen.getByText(/namaskara saar = Hello sir/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Voice transcript ready: English: Hello sir/i)).toBeInTheDocument()
+    expect(screen.getByText(/English: Hello sir \| Say: namaskara saar \| Kannada: ನಮಸ್ಕಾರ ಸಾರ್/i)).toBeInTheDocument()
     expect(screen.getByDisplayValue('ನಮಸ್ಕಾರ ಸಾರ್')).toBeInTheDocument()
     expect(screen.getByLabelText(/Pronunciation result/i)).toHaveTextContent(/Score: 100 \/ 100/i)
   })

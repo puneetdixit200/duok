@@ -62,7 +62,7 @@ async function main() {
     await page.getByText(/Recording... click Stop Recording when done/i).waitFor()
     await page.waitForTimeout(1200)
     await page.getByRole('button', { name: /stop recording/i }).click()
-    await page.getByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i).waitFor()
+    await page.getByText(/Voice transcript ready: English: Hello sir/i).waitFor()
     await page.locator('.chat-stream').getByText('ನಮಸ್ಕಾರ ಸಾರ್', { exact: true }).waitFor()
 
     await page.getByRole('button', { name: /practice/i }).click()
@@ -187,7 +187,7 @@ async function main() {
     await page.getByText(/Recording... click Stop Recording when done/i).waitFor()
     await page.waitForTimeout(1200)
     await page.getByRole('button', { name: /stop recording/i }).click()
-    await page.getByText(/Voice transcript ready: ನಮಸ್ಕಾರ ಸಾರ್/i).waitFor()
+    await page.getByText(/Voice transcript ready: English: Hello sir/i).waitFor()
     await page.getByRole('button', { name: /play reference/i }).click()
     await page.getByText(/Piper audio ready:/i).waitFor()
 
