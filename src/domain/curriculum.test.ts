@@ -111,7 +111,14 @@ describe('KannadaOS level 1 curriculum', () => {
       expect(unit.lessons).toHaveLength(5)
       expect(unit.tips.length).toBeGreaterThanOrEqual(2)
       expect(unit.lessons.map((lesson) => lesson.exercises.length)).toEqual([6, 6, 6, 6, 8])
-      expect(unit.lessons.every((lesson) => new Set(lesson.exercises.map((exercise) => exercise.type)).size >= 6)).toBe(true)
+      for (const [lessonIndex, lesson] of unit.lessons.entries()) {
+        const uniqueExerciseTypes = new Set(lesson.exercises.map((exercise) => exercise.type)).size
+        if (unit.title === 'Greetings & Basics' && lessonIndex === 0) {
+          expect(uniqueExerciseTypes).toBe(5)
+        } else {
+          expect(uniqueExerciseTypes).toBeGreaterThanOrEqual(6)
+        }
+      }
     }
 
     const exercises = getAllLessonExercises(coreCurriculumUnits)
@@ -122,7 +129,7 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(new Set(exercises.map((exercise) => exercise.id)).size).toBe(exercises.length)
 
     const expectedMinimumVocabularyByUnit = new Map([
-      ['Greetings & Basics', 20],
+      ['Greetings & Basics', 17],
       ['Numbers & Prices', 18],
       ['Transport & Directions', 22],
       ['Food & Ordering', 20],
@@ -150,6 +157,48 @@ describe('KannadaOS level 1 curriculum', () => {
       english: 'How are you?',
       answer: 'ಹೇಗಿದ್ದೀರಾ?',
       options: expect.arrayContaining(['ಹೇಗಿದ್ದೀರಾ?', 'ಚೆನ್ನಾಗಿದ್ದೇನೆ', 'ನೀವು ಹೇಗಿದ್ದೀರಾ?']),
+    }))
+  })
+
+  it('matches the frontend spec exercise plan for Unit 1 Lesson 1', () => {
+    const helloAndThanks = coreCurriculumUnits[0].lessons[0]
+
+    expect(helloAndThanks.title).toBe('Hello & Thanks')
+    expect(helloAndThanks.exercises.map((exercise) => exercise.type)).toEqual([
+      'translate',
+      'translate',
+      'listening',
+      'matchPairs',
+      'speaking',
+      'arrange',
+    ])
+    expect(helloAndThanks.exercises.map((exercise) => exercise.xp)).toEqual([2, 2, 3, 4, 4, 3])
+    expect(helloAndThanks.exercises[1]).toEqual(expect.objectContaining({
+      id: 'survival-translate-2',
+      kannada: 'ಧನ್ಯವಾದ',
+      answer: 'Thank you',
+      options: ['Thank you', 'Hello', 'Sorry', 'Goodbye'],
+      vocabularyIds: ['dhanyavada'],
+    }))
+    expect(helloAndThanks.exercises[2]).toEqual(expect.objectContaining({
+      id: 'survival-listening-1',
+      kannada: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      answer: 'ನಮಸ್ಕಾರ ಸಾರ್',
+      options: ['ನಮಸ್ಕಾರ', 'ಧನ್ಯವಾದ', 'ನಮಸ್ಕಾರ ಸಾರ್', 'ಹೋಗಿ ಬನ್ನಿ'],
+      vocabularyIds: ['namaskara-saar'],
+    }))
+    expect(helloAndThanks.exercises[3]).toEqual(expect.objectContaining({
+      id: 'survival-match-1',
+      kannada: 'ನಮಸ್ಕಾರ, ಧನ್ಯವಾದ, ಹೋಗಿ ಬನ್ನಿ, ಬಾ',
+      answer: 'ನಮಸ್ಕಾರ=Hello;ಧನ್ಯವಾದ=Thank you;ಹೋಗಿ ಬನ್ನಿ=Goodbye;ಬಾ=Come',
+      vocabularyIds: ['namaskara-saar', 'dhanyavada'],
+    }))
+    expect(helloAndThanks.exercises[5]).toEqual(expect.objectContaining({
+      id: 'survival-arrange-1',
+      english: 'Hello sir, thank you',
+      answer: 'ನಮಸ್ಕಾರ ಸಾರ್ ಧನ್ಯವಾದ',
+      options: ['ಧನ್ಯವಾದ', 'ಸಾರ್', 'ನಮಸ್ಕಾರ', 'ಬೇಕು'],
+      vocabularyIds: ['namaskara-saar', 'dhanyavada'],
     }))
   })
 
@@ -200,9 +249,10 @@ describe('KannadaOS level 1 curriculum', () => {
     ])
     expect(Array.from(reviewVocabularyIds)).toEqual(expect.arrayContaining([
       'namaskara-saar',
-      'ticket-eshtu',
+      'dhanyavada',
       'unit-1-greetings-lesson-2-phrase-1',
-      'unit-1-greetings-lesson-3-phrase-2',
+      'unit-1-greetings-lesson-2-phrase-2',
+      'unit-1-greetings-lesson-3-phrase-1',
       'unit-1-greetings-lesson-4-phrase-1',
       'unit-1-greetings-lesson-5-phrase-1',
     ]))
@@ -635,10 +685,10 @@ describe('KannadaOS level 1 curriculum', () => {
       'Thank you sir',
     ])
     expect(crownTwoReplay.find((exercise) => exercise.id === 'survival-arrange-1')?.options).toEqual([
+      'ಧನ್ಯವಾದ',
       'ಸಾರ್',
-      'ಹೇಗಿದ್ದೀರಾ',
       'ನಮಸ್ಕಾರ',
-      'ಚೆನ್ನಾಗಿದ್ದೇನೆ',
+      'ಬೇಕು',
     ])
 
     const crownThreeReplay = getExercisesForMastery(lesson, 2)
