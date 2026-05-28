@@ -2022,6 +2022,11 @@ h2 {
   color: var(--color-accent-gold);
 }
 
+.difficulty-badge.advanced {
+  background: rgba(255, 75, 75, 0.18);
+  color: #fca5a5;
+}
+
 .locked-label {
   border: 1px solid var(--color-border);
   color: var(--text-secondary);

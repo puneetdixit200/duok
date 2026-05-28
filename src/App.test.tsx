@@ -3649,8 +3649,16 @@ describe('KannadaOS desktop app', () => {
       'src',
       'story-pg-problems.svg',
     )
-    expect(screen.getAllByText(/5 min read/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/12 new words/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByLabelText(/First Day in Bangalore: ⭐ Beginner - 5 min - 12 words/i)).toHaveTextContent(
+      '⭐ Beginner',
+    )
+    expect(screen.getByLabelText(/Office Lunch: ⭐ Beginner - 7 min - 16 words/i)).toHaveTextContent('16 words')
+    expect(screen.getByLabelText(/The Auto Ride: ⭐⭐ Intermediate - 7 min - 14 words/i)).toHaveTextContent(
+      '⭐⭐ Intermediate',
+    )
+    expect(screen.getByLabelText(/PG Problems: ⭐⭐⭐ Advanced - 8 min - 20 words/i)).toHaveTextContent(
+      '⭐⭐⭐ Advanced',
+    )
     expect(screen.getAllByText(/Office Lunch/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/Complete First Day in Bangalore first/i)).toBeInTheDocument()
 

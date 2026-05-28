@@ -4691,12 +4691,17 @@ function App() {
                 <article className={lockState.locked ? 'story-card locked' : 'story-card'} key={story.id}>
                   <img src={story.imagePath} alt={getStoryImageAlt(story)} />
                   <div className="story-card-body">
-                    <span className={`difficulty-badge ${story.difficulty.toLowerCase()}`}>{story.difficulty}</span>
                     <h3>{story.title}</h3>
                     <p>{story.subtitle}</p>
-                    <div className="story-meta">
-                      <span>{story.readTimeMinutes} min read</span>
-                      <span>{story.newWordCount} new words</span>
+                    <div
+                      aria-label={`${story.title}: ${formatStoryDifficultyLabel(story.difficulty)} - ${story.readTimeMinutes} min - ${story.newWordCount} words`}
+                      className="story-meta"
+                    >
+                      <span className={`difficulty-badge ${story.difficulty.toLowerCase()}`}>
+                        {formatStoryDifficultyLabel(story.difficulty)}
+                      </span>
+                      <span>{story.readTimeMinutes} min</span>
+                      <span>{story.newWordCount} words</span>
                     </div>
                     {lockState.locked ? (
                       <>
@@ -6234,6 +6239,11 @@ function formatFlashcardNextReview(
 
 function formatScenarioDifficultyLabel(difficulty: Scenario['difficulty']): string {
   const starCount = difficulty === 'Intermediate' ? 2 : 1
+  return `${'⭐'.repeat(starCount)} ${difficulty}`
+}
+
+function formatStoryDifficultyLabel(difficulty: Story['difficulty']): string {
+  const starCount = difficulty === 'Advanced' ? 3 : difficulty === 'Intermediate' ? 2 : 1
   return `${'⭐'.repeat(starCount)} ${difficulty}`
 }
 
