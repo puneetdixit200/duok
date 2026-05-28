@@ -14,9 +14,8 @@ vi.mock('./services/voiceCapture', () => ({
 }))
 
 async function completeOnboarding(user: ReturnType<typeof userEvent.setup>, dailyGoal: RegExp = /10 XP/i) {
-  await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+  await user.click(screen.getByRole('button', { name: /get started/i }))
   await user.click(screen.getByRole('button', { name: /moved to bangalore/i }))
-  await user.click(screen.getByRole('button', { name: /next: choose level/i }))
   await user.click(screen.getByRole('button', { name: /zero/i }))
   await user.click(screen.getByRole('button', { name: /next: set goal/i }))
   await user.click(screen.getByRole('button', { name: dailyGoal }))
@@ -84,9 +83,8 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+    await user.click(screen.getByRole('button', { name: /get started/i }))
     await user.click(screen.getByRole('button', { name: /moved to bangalore/i }))
-    await user.click(screen.getByRole('button', { name: /next: choose level/i }))
     await user.click(screen.getByRole('button', { name: /zero/i }))
     await user.click(screen.getByRole('button', { name: /next: set goal/i }))
     await user.click(screen.getByRole('button', { name: /20 XP/i }))
@@ -137,7 +135,7 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+    await user.click(screen.getByRole('button', { name: /get started/i }))
 
     const motivationChoices = screen.getByLabelText(/Choose learning motivation/i)
     expect(within(motivationChoices).getByRole('button', { name: /I just moved to Bangalore/i })).toBeInTheDocument()
@@ -145,15 +143,13 @@ describe('KannadaOS desktop app', () => {
     expect(within(motivationChoices).getByRole('button', { name: /I'm curious about the language/i })).toBeInTheDocument()
     expect(within(motivationChoices).getByRole('button', { name: /Work requires some Kannada/i })).toBeInTheDocument()
 
-    await user.click(within(motivationChoices).getByRole('button', { name: /Work requires some Kannada/i }))
-    await user.click(screen.getByRole('button', { name: /next: choose level/i }))
-
     const levelChoices = screen.getByLabelText(/Choose Kannada level/i)
     expect(within(levelChoices).getByRole('button', { name: /Zero.*Teach me everything/i })).toBeInTheDocument()
     expect(within(levelChoices).getByRole('button', { name: /I know a few words.*namaskara.*eshtu.*beku/i })).toBeInTheDocument()
     expect(within(levelChoices).getByRole('button', { name: /I can have basic conversations/i })).toBeInTheDocument()
     expect(within(levelChoices).getByRole('button', { name: /I can read Kannada script/i })).toBeInTheDocument()
 
+    await user.click(within(motivationChoices).getByRole('button', { name: /Work requires some Kannada/i }))
     await user.click(within(levelChoices).getByRole('button', { name: /I know a few words/i }))
     await user.click(screen.getByRole('button', { name: /next: set goal/i }))
 
@@ -1145,9 +1141,8 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+    await user.click(screen.getByRole('button', { name: /get started/i }))
     await user.click(screen.getByRole('button', { name: /moved to bangalore/i }))
-    await user.click(screen.getByRole('button', { name: /next: choose level/i }))
     await user.click(screen.getByRole('button', { name: /basic conversations/i }))
     await user.click(screen.getByRole('button', { name: /next: set goal/i }))
     await user.click(screen.getByRole('button', { name: /10 XP/i }))
@@ -1161,9 +1156,8 @@ describe('KannadaOS desktop app', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /continue onboarding/i }))
+    await user.click(screen.getByRole('button', { name: /get started/i }))
     await user.click(screen.getByRole('button', { name: /I just moved to Bangalore/i }))
-    await user.click(screen.getByRole('button', { name: /next: choose level/i }))
     await user.click(screen.getByRole('button', { name: /I can read Kannada script/i }))
     await user.click(screen.getByRole('button', { name: /next: set goal/i }))
     await user.click(screen.getByRole('button', { name: /10 XP/i }))

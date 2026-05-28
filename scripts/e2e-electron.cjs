@@ -32,13 +32,12 @@ async function main() {
       }
     })
 
-    await page.getByRole('button', { name: /continue onboarding/i }).waitFor()
+    await page.getByRole('button', { name: /get started/i }).waitFor()
     await page.waitForFunction(() =>
       localStorage.getItem('kannadaos:local-runtime')?.includes('whisper-small.bin'),
     )
-    await page.getByRole('button', { name: /continue onboarding/i }).click()
+    await page.getByRole('button', { name: /get started/i }).click()
     await page.getByRole('button', { name: /moved to bangalore/i }).click()
-    await page.getByRole('button', { name: /next: choose level/i }).click()
     await page.getByRole('button', { name: /zero/i }).click()
     await page.getByRole('button', { name: /next: set goal/i }).click()
     await page.getByRole('button', { name: /10 XP/i }).click()

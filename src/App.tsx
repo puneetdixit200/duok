@@ -96,7 +96,7 @@ import './styles.css'
 
 type Tab = 'home' | 'learn' | 'chat' | 'practice' | 'stories' | 'blr' | 'me'
 type Screen = 'onboarding' | 'app' | 'lesson' | 'models'
-type OnboardingStep = 'welcome' | 'motivation' | 'level' | 'goal'
+type OnboardingStep = 'welcome' | 'profile' | 'goal'
 type StoryMode = 'list' | 'reader' | 'quiz' | 'complete'
 type VoiceRecordingTarget = 'chat' | 'pronunciation' | 'lesson'
 type GeneratedExerciseSource = 'native' | 'ollama' | 'openrouter' | 'nvidia' | 'fallback'
@@ -3294,7 +3294,6 @@ function App() {
   }
 
   if (screen === 'onboarding') {
-    const selectedMotivationOption = motivationOptions.find((option) => option.id === selectedMotivation) ?? motivationOptions[0]
     const selectedStartingLevelOption = startingLevelOptions.find((option) => option.id === selectedStartingLevel) ?? startingLevelOptions[0]
 
     return (
@@ -3308,52 +3307,48 @@ function App() {
               <p className="lead">
                 Real Bangalore Kannada for buses, autos, darshinis, offices, and daily life.
               </p>
-              <button className="primary-action" onClick={() => setOnboardingStep('motivation')} type="button">
-                Continue onboarding
+              <button className="primary-action" onClick={() => setOnboardingStep('profile')} type="button">
+                Get Started →
               </button>
             </>
           )}
 
-          {onboardingStep === 'motivation' && (
+          {onboardingStep === 'profile' && (
             <>
-              <p className="eyebrow">Step 1 of 3</p>
-              <h1 id="onboarding-title">Why are you learning Kannada?</h1>
-              <div className="level-grid" aria-label="Choose learning motivation">
-                {motivationOptions.map((option) => (
-                  <button
-                    className={selectedMotivation === option.id ? 'choice-card selected' : 'choice-card'}
-                    key={option.id}
-                    onClick={() => setSelectedMotivation(option.id)}
-                    type="button"
-                  >
-                    <span>{option.label}</span>
-                    <small>{option.detail}</small>
-                  </button>
-                ))}
-              </div>
-              <button className="primary-action" onClick={() => setOnboardingStep('level')} type="button">
-                Next: choose level
-              </button>
-            </>
-          )}
-
-          {onboardingStep === 'level' && (
-            <>
-              <p className="eyebrow">Step 2 of 3 - {selectedMotivationOption.label}</p>
-              <h1 id="onboarding-title">What is your current level?</h1>
-              <div className="level-grid" aria-label="Choose Kannada level">
-                {startingLevelOptions.map((option) => (
-                  <button
-                    className={selectedStartingLevel === option.id ? 'choice-card selected' : 'choice-card'}
-                    key={option.id}
-                    onClick={() => setSelectedStartingLevel(option.id)}
-                    type="button"
-                  >
-                    <span>{option.label}</span>
-                    <small>{option.detail}</small>
-                  </button>
-                ))}
-              </div>
+              <p className="eyebrow">Step 2 of 3</p>
+              <h1 id="onboarding-title">Choose your Kannada path</h1>
+              <section className="onboarding-choice-section" aria-labelledby="motivation-title">
+                <h2 id="motivation-title">Why are you learning Kannada?</h2>
+                <div className="level-grid" aria-label="Choose learning motivation">
+                  {motivationOptions.map((option) => (
+                    <button
+                      className={selectedMotivation === option.id ? 'choice-card selected' : 'choice-card'}
+                      key={option.id}
+                      onClick={() => setSelectedMotivation(option.id)}
+                      type="button"
+                    >
+                      <span>{option.label}</span>
+                      <small>{option.detail}</small>
+                    </button>
+                  ))}
+                </div>
+              </section>
+              <section className="onboarding-choice-section" aria-labelledby="starting-level-title">
+                <h2 id="starting-level-title">What is your current Kannada level?</h2>
+                <div className="level-grid" aria-label="Choose Kannada level">
+                  {startingLevelOptions.map((option) => (
+                    <button
+                      className={selectedStartingLevel === option.id ? 'choice-card selected' : 'choice-card'}
+                      key={option.id}
+                      onClick={() => setSelectedStartingLevel(option.id)}
+                      type="button"
+                    >
+                      <span>{option.label}</span>
+                      <small>{option.detail}</small>
+                    </button>
+                  ))}
+                </div>
+              </section>
               <button className="primary-action" onClick={() => setOnboardingStep('goal')} type="button">
                 Next: set goal
               </button>
