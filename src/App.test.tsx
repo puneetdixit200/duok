@@ -374,6 +374,10 @@ describe('KannadaOS desktop app', () => {
     )
     expect(within(greetingsUnit!).getByRole('button', { name: /Hello & Thanks, 1 crowns, ★☆☆☆☆/i })).toBeInTheDocument()
     expect(within(greetingsUnit!).getByRole('button', { name: /Small Talk, 0 crowns, ☆☆☆☆☆/i })).toBeInTheDocument()
+    expect(within(greetingsUnit!).getByText('Lesson 1: Hello & Thanks')).toBeInTheDocument()
+    expect(within(greetingsUnit!).getByText('Start conversations safely')).toBeInTheDocument()
+    expect(within(greetingsUnit!).getByText('Lesson 4: Small Talk')).toBeInTheDocument()
+    expect(within(greetingsUnit!).getAllByText('★☆☆☆☆').length).toBeGreaterThanOrEqual(1)
   })
 
   it('runs Kannada Script Academy letter and transliteration drills', async () => {

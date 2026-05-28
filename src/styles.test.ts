@@ -77,6 +77,13 @@ describe('KannadaOS frontend motion and accessibility styles', () => {
     expect(styles).toMatch(/\.top-counters \.heart-counter\.empty\s*{[^}]*opacity:\s*0\.56/s)
   })
 
+  it('styles the Learn tab lesson list as readable lesson rows', () => {
+    expect(styles).toMatch(/\.lesson-dot-row\s*{[^}]*display:\s*grid/s)
+    expect(styles).toMatch(/\.lesson-dot\s*{[^}]*grid-template-columns:\s*34px minmax\(0,\s*1fr\) auto/s)
+    expect(styles).toContain('.lesson-row-copy')
+    expect(styles).toContain('.lesson-crown-rating')
+  })
+
   it('uses scalable text sizing without viewport-based font scaling', () => {
     expect(styles).not.toMatch(/font-size:\s*[^;]*(?:px|vw)/)
     expect(styles).toMatch(/\.phrase-card strong\s*{[^}]*font-size:\s*2\.5rem/s)

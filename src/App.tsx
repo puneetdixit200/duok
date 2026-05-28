@@ -3956,7 +3956,16 @@ function App() {
                           onClick={() => openUnitLesson(unit, lesson, unitLessonIndex)}
                           type="button"
                         >
-                          {lessonProgress.masteryLevel || (unlocked ? '•' : 'x')}
+                          <span className="lesson-state-icon" aria-hidden="true">
+                            {unlocked ? (lessonProgress.masteryLevel || '•') : '🔒'}
+                          </span>
+                          <span className="lesson-row-copy">
+                            <strong>Lesson {unitLessonIndex + 1}: {lesson.title}</strong>
+                            <small>{lesson.subtitle}</small>
+                          </span>
+                          <span className="lesson-crown-rating" aria-hidden="true">
+                            {unlocked ? crownRating : '🔒'}
+                          </span>
                         </button>
                       )
                     })}

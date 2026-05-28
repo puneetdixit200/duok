@@ -2595,9 +2595,9 @@ h2 {
 }
 
 .lesson-dot-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 8px;
+  width: 100%;
   margin-top: 10px;
 }
 
@@ -2629,13 +2629,51 @@ h2 {
 }
 
 .lesson-dot {
-  width: 34px;
-  height: 34px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 8px 10px;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--color-background);
   color: var(--text-primary);
   font-weight: 800;
+  text-align: left;
+}
+
+.lesson-state-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-surface-light);
+}
+
+.lesson-row-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.lesson-row-copy strong,
+.lesson-row-copy small {
+  overflow-wrap: anywhere;
+}
+
+.lesson-row-copy small {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.lesson-crown-rating {
+  color: var(--color-accent-gold);
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .lesson-dot.done {
@@ -2645,10 +2683,16 @@ h2 {
 
 .lesson-dot.current {
   border-color: var(--color-accent-gold);
+  box-shadow: 0 0 0 1px rgba(255, 200, 0, 0.12);
 }
 
 .lesson-dot.locked {
   color: #7d7a92;
+  opacity: 0.72;
+}
+
+.lesson-dot.locked .lesson-crown-rating {
+  color: var(--text-muted);
 }
 
 .tips-modal {
