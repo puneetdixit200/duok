@@ -1559,6 +1559,8 @@ function App() {
     pronunciationPhrases.find((phrase) => phrase.id === pronunciationPhraseId) ?? pronunciationPhrases[0]
   const activeReviewPhrase = getPhraseByVocabularyId(reviewSessionIds[reviewIndex] ?? '')
   const activeReviewExercise = activeReviewPhrase ? buildReviewMiniExercise(activeReviewPhrase, reviewIndex) : null
+  const activeReviewTypingPreview =
+    activeReviewExercise?.kind === 'typeKannada' ? transliterateLatinToKannada(reviewTypedAnswer) : ''
   const latestPronunciationAttempt = pronunciationHistory[0]
   const reminderStatus = reminderDeliveryStatus || getReminderStatusText(reminder)
   const completedInCurrentLesson = Math.min(
@@ -4175,30 +4177,38 @@ function App() {
                       <strong className="review-english-prompt">{activeReviewExercise.displayText}</strong>
                     )}
                     <span className="kannada-subtitles">
-                      <small className="romanization">{activeReviewExercise.phrase.transliteration}</small>
-                      <small className="english-subtitle">{activeReviewExercise.phrase.english}</small>
+                      <small className="english-subtitle">{formatEnglishSubtitle(activeReviewExercise.phrase.english)}</small>
+                      <small className="romanization">{formatRomanizationSubtitle(activeReviewExercise.phrase.transliteration)}</small>
                       <small>{activeReviewExercise.phrase.context}</small>
                     </span>
                   </div>
                   {activeReviewExercise.kind === 'typeKannada' ? (
-                    <label className="transcript-field typing-helper">
-                      <span>Review Kannada typing answer</span>
-                      <input
-                        aria-label="Review Kannada typing answer"
-                        disabled={reviewFeedback !== null}
-                        onChange={(event) => {
-                          setReviewTypedAnswer(event.target.value)
-                          setReviewSelectedAnswer(transliterateLatinToKannada(event.target.value))
-                        }}
-                        placeholder={`Type ${activeReviewExercise.phrase.transliteration}`}
-                        value={reviewTypedAnswer}
-                      />
-                      <small>
-                        <ReadableStatusText
-                          text={reviewTypedAnswer ? transliterateLatinToKannada(reviewTypedAnswer) : 'namaskara saar -> ನಮಸ್ಕಾರ ಸಾರ್'}
+                    <>
+                      <label className="transcript-field typing-helper">
+                        <span>Review Kannada typing answer</span>
+                        <input
+                          aria-label="Review Kannada typing answer"
+                          disabled={reviewFeedback !== null}
+                          onChange={(event) => {
+                            setReviewTypedAnswer(event.target.value)
+                            setReviewSelectedAnswer(transliterateLatinToKannada(event.target.value))
+                          }}
+                          placeholder={`Type ${activeReviewExercise.phrase.transliteration}`}
+                          value={reviewTypedAnswer}
                         />
-                      </small>
-                    </label>
+                      </label>
+                      <article className="typing-preview-card review-typing-preview" role="region" aria-label="Review Kannada live preview">
+                        <span>{reviewTypedAnswer || 'Type Latin letters'}</span>
+                        <strong>
+                          {activeReviewTypingPreview ? (
+                            <ReadableStatusText text={activeReviewTypingPreview} />
+                          ) : (
+                            'Live preview appears here'
+                          )}
+                        </strong>
+                        <small>Live preview</small>
+                      </article>
+                    </>
                   ) : (
                     <div className="option-stack review-session-options" aria-label="Review answers">
                       {activeReviewExercise.options.map((option) => (
