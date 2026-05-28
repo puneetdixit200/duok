@@ -193,7 +193,7 @@ describe('KannadaOS level 1 curriculum', () => {
       kannada: 'ಹೇಗಿದ್ದೀರಾ?',
       transliteration: 'hegiddira',
       english: 'How are you?',
-      context: 'ಹೇಗಿದ್ದೀರಾ? means "How are you?" in How Are You.',
+      context: 'Respectful daily greeting.',
     })
   })
 
@@ -411,6 +411,30 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(helpPairs.answer).toContain('ಪೋಲೀಸ್=Police')
     expect(helpPairs.answer).toContain('ಪೋಲೀಸ್‌ಗೆ ಕಾಲ್ ಮಾಡಿ=Please call the police')
     expect(healthPairs.answer).toContain('ಆಸ್ಪತ್ರೆ ಎಲ್ಲಿ?=Where is the hospital?')
+  })
+
+  it('resolves match-pair-only authored phrases as exact review vocabulary', () => {
+    expect(getPhraseByVocabularyId('unit-2-prices-lesson-4-phrase-4')).toMatchObject({
+      kannada: 'ಯುಪಿಐ ಇದೆಯಾ?',
+      transliteration: 'upi ideya',
+      english: 'Do you have UPI?',
+      context: 'Common payment question.',
+      skillTag: 'prices',
+    })
+    expect(getPhraseByVocabularyId('unit-4-food-lesson-1-phrase-4')).toMatchObject({
+      kannada: 'ಚಹಾ ಕೊಡಿ',
+      transliteration: 'chahaa kodi',
+      english: 'Please give tea',
+      context: 'Counter request.',
+      skillTag: 'food',
+    })
+    expect(getPhraseByVocabularyId('unit-8-emergency-lesson-1-phrase-5')).toMatchObject({
+      kannada: 'ಆಂಬುಲೆನ್ಸ್ ಬೇಕು',
+      transliteration: 'ambulance beku',
+      english: 'Need an ambulance',
+      context: 'Medical emergency.',
+      skillTag: 'emergency',
+    })
   })
 
   it('includes the optional nine-lesson Kannada Script Academy from the frontend spec', () => {

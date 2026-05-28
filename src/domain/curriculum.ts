@@ -1518,6 +1518,24 @@ function exercise(
 function buildLessonPhraseMap(units: CurriculumUnit[]): Map<string, Phrase> {
   const phraseMap = new Map<string, Phrase>()
 
+  for (const [unitIndex, unitSeed] of unitSeeds.entries()) {
+    for (const [lessonIndex, lessonSeed] of unitSeed.lessons.entries()) {
+      if (unitIndex === 0 && lessonIndex === 0) {
+        continue
+      }
+
+      const lessonId = `${unitSeed.id}-lesson-${lessonIndex + 1}`
+      for (const [phraseIndex, phraseSeed] of lessonSeed.phrases.entries()) {
+        const id = `${lessonId}-phrase-${phraseIndex + 1}`
+        phraseMap.set(id, {
+          ...phraseSeed,
+          id,
+          skillTag: lessonSeed.skillTag,
+        })
+      }
+    }
+  }
+
   for (const unit of units) {
     for (const lesson of unit.lessons) {
       for (const exercise of lesson.exercises) {

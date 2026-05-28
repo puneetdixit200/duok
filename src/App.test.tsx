@@ -2384,6 +2384,34 @@ describe('KannadaOS desktop app', () => {
     expect(within(dueReviewCard as HTMLElement).getByText(/ಹೋಗಬೇಕು - hogbeku - need to go - Strength 20%/i)).toBeInTheDocument()
   })
 
+  it('shows exact readable labels for authored review words that only appear in match pairs', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      reviewQueue: {
+        'unit-2-prices-lesson-4-phrase-4': {
+          vocabularyId: 'unit-2-prices-lesson-4-phrase-4',
+          dueAt: '2026-05-20T09:00:00.000Z',
+          strength: 0.2,
+          attempts: 1,
+          leitnerBox: 1,
+        },
+      },
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /practice/i }))
+
+    const dueReviewCard = screen.getByText(/Due Review Queue/i).closest('article')
+    expect(dueReviewCard).not.toBeNull()
+    expect(within(dueReviewCard as HTMLElement).getByText(/ಯುಪಿಐ ಇದೆಯಾ\? - upi ideya - Do you have UPI\? - Strength 20%/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', {
+      name: /^English: Do you have UPI\?\s+ಯುಪಿಐ ಇದೆಯಾ\?\s+Say: upi ideya/i,
+    })).toBeInTheDocument()
+  })
+
   it('runs due review items as a heart-safe mini session', async () => {
     const user = userEvent.setup()
     localStorage.setItem('kannadaos:onboarded', 'true')

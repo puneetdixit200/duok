@@ -5894,7 +5894,7 @@ function formatDueReviewSummary(dueReviewIds: string[], progress: ProgressState)
 }
 
 function formatReadableReviewLabel(vocabularyId: string) {
-  const phrase = survivalPhrases.find((item) => item.id === vocabularyId)
+  const phrase = getPhraseByVocabularyId(vocabularyId)
 
   if (phrase) {
     return `${phrase.kannada} - ${phrase.transliteration} - ${phrase.english}`
