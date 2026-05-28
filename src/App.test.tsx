@@ -2090,6 +2090,37 @@ describe('KannadaOS desktop app', () => {
     expect(screen.getByText(/Level 4 Learner/i)).toBeInTheDocument()
   })
 
+  it('shows spec start and continue states on Bangalore scenario cards', async () => {
+    const user = userEvent.setup()
+    localStorage.setItem('kannadaos:onboarded', 'true')
+    localStorage.setItem('kannadaos:progress', serializeProgress({
+      ...createInitialProgress(),
+      scenarioChecklist: {
+        'auto-ride': ['Say destination', 'Ask fare'],
+      },
+    }))
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /blr/i }))
+
+    const bmtcCard = screen.getByText(/You boarded 500D at Majestic/i).closest('article')
+    expect(bmtcCard).not.toBeNull()
+    expect(within(bmtcCard!).getByLabelText(/BMTC Bus difficulty: Beginner/i)).toHaveTextContent('⭐ Beginner')
+    expect(within(bmtcCard!).getByText(/Checklist: 0\/4/i)).toBeInTheDocument()
+    expect(within(bmtcCard!).getByRole('button', { name: /Start BMTC Bus scenario/i })).toHaveTextContent(
+      'Start Scenario',
+    )
+
+    const autoCard = screen.getByText(/negotiating an auto from Indiranagar/i).closest('article')
+    expect(autoCard).not.toBeNull()
+    expect(within(autoCard!).getByLabelText(/Auto Ride difficulty: Beginner/i)).toHaveTextContent('⭐ Beginner')
+    expect(within(autoCard!).getByText(/Checklist: 2\/4/i)).toBeInTheDocument()
+    expect(within(autoCard!).getByRole('button', { name: /Continue Auto Ride scenario/i })).toHaveTextContent(
+      'Continue',
+    )
+  })
+
   it('generates an AI practice exercise from the Practice tab', async () => {
     const user = userEvent.setup()
     render(<App />)

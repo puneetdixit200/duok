@@ -4866,15 +4866,23 @@ function App() {
           <div className="scenario-grid">
             {bangaloreScenarios.map((scenario) => {
               const checkedCount = (progress.scenarioChecklist[scenario.id] ?? []).length
+              const hasScenarioProgress = checkedCount > 0
               return (
                 <article className="scenario-card" key={scenario.id}>
                   <span role="img" aria-label={getScenarioIconLabel(scenario)}>{scenario.icon}</span>
                   <strong>{scenario.title}</strong>
-                  <small>{scenario.difficulty}</small>
+                  <small aria-label={`${scenario.title} difficulty: ${scenario.difficulty}`}>
+                    {formatScenarioDifficultyLabel(scenario.difficulty)}
+                  </small>
                   <p>{scenario.situation}</p>
                   <small>Checklist: {checkedCount}/{scenario.checklist.length}</small>
-                  <button className="secondary-action" onClick={() => openBangaloreScenario(scenario.id)} type="button">
-                    Start {scenario.title}
+                  <button
+                    aria-label={`${hasScenarioProgress ? 'Continue' : 'Start'} ${scenario.title} scenario`}
+                    className="secondary-action"
+                    onClick={() => openBangaloreScenario(scenario.id)}
+                    type="button"
+                  >
+                    {hasScenarioProgress ? 'Continue' : 'Start Scenario'}
                   </button>
                   <button
                     className="secondary-action compact-action"
@@ -6182,6 +6190,11 @@ function formatFlashcardNextReview(
   }
 
   return `${daysUntilDue} ${daysUntilDue === 1 ? 'day' : 'days'}`
+}
+
+function formatScenarioDifficultyLabel(difficulty: Scenario['difficulty']): string {
+  const starCount = difficulty === 'Intermediate' ? 2 : 1
+  return `${'⭐'.repeat(starCount)} ${difficulty}`
 }
 
 function formatSkillTagLabel(skillTag: string): string {
