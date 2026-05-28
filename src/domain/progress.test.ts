@@ -18,6 +18,7 @@ import {
   refillHeartsWithGems,
   serializeProgress,
   toggleScenarioChecklistItem,
+  unlockCurriculumUnits,
 } from './progress'
 
 const now = '2026-05-23T09:00:00.000Z'
@@ -86,6 +87,23 @@ describe('learner progress', () => {
       ['Complete 3 activities', 0, false],
       ['Keep every heart', 0, false],
     ])
+  })
+
+  it('persists explicit curriculum unit unlocks without marking lesson mastery complete', () => {
+    const progress = unlockCurriculumUnits(createInitialProgress(), [
+      'unit-1-greetings',
+      'unit-2-prices',
+      'unit-3-transport',
+      'unit-3-transport',
+    ])
+    const restored = hydrateProgress(serializeProgress(progress))
+
+    expect(restored.unlockedUnitIds).toEqual([
+      'unit-1-greetings',
+      'unit-2-prices',
+      'unit-3-transport',
+    ])
+    expect(restored.lessonProgress).toEqual({})
   })
 
   it('awards streak milestone gems once at 7 and 30 practice days', () => {

@@ -39,6 +39,7 @@ import {
   refillHeartsWithGems,
   serializeProgress,
   toggleScenarioChecklistItem,
+  unlockCurriculumUnits,
   unlockStoryWithGems,
   type AdaptiveDifficultyLevel,
   type DailyQuest,
@@ -1218,8 +1219,10 @@ function applyStartingLevelPlacement(
   }
 
   if (startingLevel === 'basic-conversations') {
-    const prerequisiteLessons = coreCurriculumUnits.slice(0, 2).flatMap((unit) => unit.lessons)
-    nextProgress = markPlacementLessonsCompleted(nextProgress, prerequisiteLessons, completedAt)
+    nextProgress = unlockCurriculumUnits(
+      nextProgress,
+      coreCurriculumUnits.slice(0, 3).map((unit) => unit.id),
+    )
   }
 
   return nextProgress

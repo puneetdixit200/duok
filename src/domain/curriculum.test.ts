@@ -573,6 +573,27 @@ describe('KannadaOS level 1 curriculum', () => {
     expect(getUnlockedCurriculumUnits([...coreCurriculumUnits, getScriptCurriculumUnit()], afterThreeLessons).map((unit) => unit.id)).not.toContain(thirdUnit.id)
   })
 
+  it('uses explicit placement unlocks without completing lessons inside those units', () => {
+    const [firstUnit, secondUnit, thirdUnit, fourthUnit] = coreCurriculumUnits
+    const placementProgress = {
+      ...createInitialProgress(),
+      unlockedUnitIds: [firstUnit.id, secondUnit.id, thirdUnit.id],
+    }
+
+    expect(getUnlockedCurriculumUnits([...coreCurriculumUnits, getScriptCurriculumUnit()], placementProgress).map((unit) => unit.id)).toEqual([
+      firstUnit.id,
+      secondUnit.id,
+      thirdUnit.id,
+      'unit-script',
+    ])
+    expect(isLessonUnlocked(secondUnit.lessons[0].id, placementProgress)).toBe(true)
+    expect(isLessonUnlocked(secondUnit.lessons[1].id, placementProgress)).toBe(false)
+    expect(isLessonUnlocked(thirdUnit.lessons[0].id, placementProgress)).toBe(true)
+    expect(isLessonUnlocked(thirdUnit.lessons[1].id, placementProgress)).toBe(false)
+    expect(isLessonUnlocked(fourthUnit.lessons[0].id, placementProgress)).toBe(false)
+    expect(getNextAvailableLesson(coreCurriculumUnits, placementProgress)?.id).toBe(firstUnit.lessons[0].id)
+  })
+
   it('recommends the lowest-mastery unlocked lesson after every core lesson has one crown', () => {
     const allCoreLessons = coreCurriculumUnits.flatMap((unit) => unit.lessons)
     const oneCrownProgress = allCoreLessons.reduce(

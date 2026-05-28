@@ -26,6 +26,7 @@ export interface ProgressState {
   todayActivityIds: string[]
   completedStoryIds: string[]
   unlockedStoryIds: string[]
+  unlockedUnitIds: string[]
   weakAreas: Record<string, number>
   reviewQueue: Record<string, ReviewItem>
   lessonProgress: Record<string, LessonProgress>
@@ -120,6 +121,7 @@ export function createInitialProgress(): ProgressState {
     todayActivityIds: [],
     completedStoryIds: [],
     unlockedStoryIds: [],
+    unlockedUnitIds: [],
     weakAreas: {},
     reviewQueue: {},
     lessonProgress: {},
@@ -590,10 +592,26 @@ export function hydrateProgress(serialized: string | null, now?: string): Progre
     hydrated.reviewQueue = hydrateReviewQueue(hydrated.reviewQueue)
     hydrated.lessonProgress = hydrateLessonProgress(hydrated.lessonProgress)
     hydrated.unlockedStoryIds = hydrateStringList(hydrated.unlockedStoryIds)
+    hydrated.unlockedUnitIds = hydrateStringList(hydrated.unlockedUnitIds)
     hydrated.achievementRewardIds = hydrateStringList(hydrated.achievementRewardIds)
     return now ? regenerateHearts(resetDailyCountersForDate(hydrated, now), now) : hydrated
   } catch {
     return createInitialProgress()
+  }
+}
+
+export function unlockCurriculumUnits(state: ProgressState, unitIds: string[]): ProgressState {
+  const uniqueUnitIds = Array.from(new Set(unitIds.filter(Boolean)))
+  const unlockedUnitIds = new Set(state.unlockedUnitIds)
+  const newUnitIds = uniqueUnitIds.filter((unitId) => !unlockedUnitIds.has(unitId))
+
+  if (!newUnitIds.length) {
+    return state
+  }
+
+  return {
+    ...state,
+    unlockedUnitIds: [...state.unlockedUnitIds, ...newUnitIds],
   }
 }
 

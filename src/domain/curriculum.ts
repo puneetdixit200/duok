@@ -1141,6 +1141,10 @@ export function isLessonUnlocked(lessonId: string, progress: ProgressState): boo
 }
 
 function isCoreUnitUnlocked(units: CurriculumUnit[], unitIndex: number, progress: ProgressState): boolean {
+  if (progress.unlockedUnitIds?.includes(units[unitIndex].id)) {
+    return true
+  }
+
   if (unitIndex === 0) {
     return true
   }

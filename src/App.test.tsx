@@ -1222,6 +1222,15 @@ describe('KannadaOS desktop app', () => {
     await user.click(screen.getByRole('button', { name: /learn/i }))
 
     expect(screen.getByRole('button', { name: /Auto Ride Basics/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Learn unit 1 lesson 1: Hello & Thanks, 0 crowns/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Learn unit 2 lesson 1: Numbers 1-5, 0 crowns/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Learn unit 3 lesson 1: Auto Ride Basics, 0 crowns/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Learn unit 3 lesson 2: Bus Phrases, 0 crowns/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Learn unit 4 lesson 1: Darshini Basics, 0 crowns/i })).toBeDisabled()
+
+    const savedProgress = localStorage.getItem('kannadaos:progress') ?? ''
+    expect(savedProgress).toContain('"unlockedUnitIds":["unit-1-greetings","unit-2-prices","unit-3-transport"]')
+    expect(savedProgress).not.toContain('"unit-1-greetings-lesson-1"')
   })
 
   it('marks script academy lessons complete for learners who can read Kannada script', async () => {
