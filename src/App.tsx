@@ -3694,82 +3694,95 @@ function App() {
 
   return (
     <main className="desktop-frame">
-      <aside className="sidebar" aria-label="Primary navigation">
-        <div>
-          <div className="brand-lockup">
-            <ReadableKannadaMark className="brand-mark" english="Kannada letter ka" text="ಕ" transliteration="ka" />
-            <div>
-              <strong>KannadaOS</strong>
-              <p>
-                <EnglishFirstKannadaText
-                  phrase={{
-                    english: 'Learn Kannada',
-                    kannada: 'ಕನ್ನಡ ಕಲಿಯಿರಿ',
-                    transliteration: 'kannada kaliyiri',
-                  }}
-                />
-              </p>
-            </div>
-          </div>
-          <nav className="nav-stack">
-            {navigationItems.map(({ id, icon, label }, index) => {
-              const showStreakBadge = id === 'home' && progress.streakDays > 0
-              const showReviewBadge = id === 'practice' && navDueReviewCount > 0
-              const navLabel = [
-                label,
-                showStreakBadge ? 'streak active' : '',
-                showReviewBadge ? `${navDueReviewCount} due ${navDueReviewCount === 1 ? 'review' : 'reviews'}` : '',
-              ].filter(Boolean).join(', ')
-
-              return (
-                <button
-                  aria-label={navLabel}
-                  aria-keyshortcuts={`Meta+${index + 1} Control+${index + 1}`}
-                  className={tab === id ? 'nav-button active' : 'nav-button'}
-                  key={id}
-                  onClick={() => setTab(id)}
-                  type="button"
-                >
-                  <span className="nav-icon" aria-hidden="true">{icon}</span>
-                  <span className="nav-label">{label}</span>
-                  {showStreakBadge && <span aria-hidden="true" className="nav-flame">🔥</span>}
-                  {showReviewBadge && <span aria-hidden="true" className="nav-badge">{navDueReviewCount}</span>}
-                </button>
-              )
-            })}
-          </nav>
+      <header className="app-titlebar" aria-label="App title bar">
+        <div className="titlebar-copy">
+          <strong>KannadaOS</strong>
+          <span>Desktop Kannada learning</span>
         </div>
-        <section className="model-status">
-          <span>AI model</span>
-          <strong>{formatCurrentAiModelStatus(aiProviderSettings, ollamaStatus)}</strong>
-          <button className="secondary-action" onClick={generateAiExercise} type="button">
-            Generate AI Exercise
-          </button>
-          <button className="secondary-action" onClick={() => setScreen('models')} type="button">
-            Manage Models
-          </button>
-          {generatedExercise && <p><ReadableStatusText text={generatedExercise} /></p>}
-          {latestGeneratedExercise && (
-            <GeneratedExerciseSummary exercise={latestGeneratedExercise} source={latestGeneratedExerciseSource} />
-          )}
-          {aiExpansionDeck.length > 0 && (
-            <div className="ai-expansion-queue" aria-label="AI curriculum expansion">
-              <strong>AI Expansion Queue</strong>
-              <span>
-                {aiExpansionDeck.length} saved {aiExpansionDeck.length === 1 ? 'drill' : 'drills'} for curriculum review
-              </span>
-              <ul>
-                {aiExpansionDeck.slice(0, 3).map((exercise, index) => (
-                  <li key={`${exercise.prompt}-${index}`}>
-                    <GeneratedExerciseSummary exercise={exercise} />
-                  </li>
-                ))}
-              </ul>
+        <div className="titlebar-status" aria-label="Current app state">
+          <span>{navigationItems.find((item) => item.id === tab)?.label ?? 'Home'}</span>
+          <span>{formatStreakCounter(progress.streakDays)}</span>
+          <span>❤️ {progress.hearts}</span>
+        </div>
+      </header>
+      <div className="desktop-body">
+        <aside className="sidebar" aria-label="Primary navigation">
+          <div>
+            <div className="brand-lockup">
+              <ReadableKannadaMark className="brand-mark" english="Kannada letter ka" text="ಕ" transliteration="ka" />
+              <div>
+                <strong>KannadaOS</strong>
+                <p>
+                  <EnglishFirstKannadaText
+                    phrase={{
+                      english: 'Learn Kannada',
+                      kannada: 'ಕನ್ನಡ ಕಲಿಯಿರಿ',
+                      transliteration: 'kannada kaliyiri',
+                    }}
+                  />
+                </p>
+              </div>
             </div>
-          )}
-        </section>
-      </aside>
-      <section className="workspace">{renderTab()}</section>
+            <nav className="nav-stack">
+              {navigationItems.map(({ id, icon, label }, index) => {
+                const showStreakBadge = id === 'home' && progress.streakDays > 0
+                const showReviewBadge = id === 'practice' && navDueReviewCount > 0
+                const navLabel = [
+                  label,
+                  showStreakBadge ? 'streak active' : '',
+                  showReviewBadge ? `${navDueReviewCount} due ${navDueReviewCount === 1 ? 'review' : 'reviews'}` : '',
+                ].filter(Boolean).join(', ')
+
+                return (
+                  <button
+                    aria-label={navLabel}
+                    aria-keyshortcuts={`Meta+${index + 1} Control+${index + 1}`}
+                    className={tab === id ? 'nav-button active' : 'nav-button'}
+                    key={id}
+                    onClick={() => setTab(id)}
+                    type="button"
+                  >
+                    <span className="nav-icon" aria-hidden="true">{icon}</span>
+                    <span className="nav-label">{label}</span>
+                    {showStreakBadge && <span aria-hidden="true" className="nav-flame">🔥</span>}
+                    {showReviewBadge && <span aria-hidden="true" className="nav-badge">{navDueReviewCount}</span>}
+                  </button>
+                )
+              })}
+            </nav>
+          </div>
+          <section className="model-status">
+            <span>AI model</span>
+            <strong>{formatCurrentAiModelStatus(aiProviderSettings, ollamaStatus)}</strong>
+            <button className="secondary-action" onClick={generateAiExercise} type="button">
+              Generate AI Exercise
+            </button>
+            <button className="secondary-action" onClick={() => setScreen('models')} type="button">
+              Manage Models
+            </button>
+            {generatedExercise && <p><ReadableStatusText text={generatedExercise} /></p>}
+            {latestGeneratedExercise && (
+              <GeneratedExerciseSummary exercise={latestGeneratedExercise} source={latestGeneratedExerciseSource} />
+            )}
+            {aiExpansionDeck.length > 0 && (
+              <div className="ai-expansion-queue" aria-label="AI curriculum expansion">
+                <strong>AI Expansion Queue</strong>
+                <span>
+                  {aiExpansionDeck.length} saved {aiExpansionDeck.length === 1 ? 'drill' : 'drills'} for curriculum review
+                </span>
+                <ul>
+                  {aiExpansionDeck.slice(0, 3).map((exercise, index) => (
+                    <li key={`${exercise.prompt}-${index}`}>
+                      <GeneratedExerciseSummary exercise={exercise} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        </aside>
+        <section className="workspace">{renderTab()}</section>
+      </div>
     </main>
   )
 

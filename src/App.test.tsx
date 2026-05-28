@@ -238,6 +238,13 @@ describe('KannadaOS desktop app', () => {
 
     await completeOnboarding(user)
 
+    const titlebar = screen.getByLabelText(/App title bar/i)
+    expect(titlebar).toHaveTextContent('KannadaOS')
+    expect(titlebar).toHaveTextContent('Desktop Kannada learning')
+    expect(within(screen.getByLabelText(/Current app state/i)).getByText('Home')).toBeInTheDocument()
+    expect(within(screen.getByLabelText(/Current app state/i)).getByText('🔥 Start a streak!')).toBeInTheDocument()
+    expect(within(screen.getByLabelText(/Current app state/i)).getByText('❤️ 5')).toBeInTheDocument()
+
     const navigation = screen.getByLabelText(/Primary navigation/i)
     for (const [icon, label] of [
       ['🏠', 'Home'],
@@ -258,6 +265,10 @@ describe('KannadaOS desktop app', () => {
     expect(resources).toHaveTextContent('❤️ 5')
     expect(resources).toHaveTextContent('💎 120')
 
+    await user.click(within(navigation).getByRole('button', { name: /Practice/i }))
+    expect(within(screen.getByLabelText(/Current app state/i)).getByText('Practice')).toBeInTheDocument()
+
+    await user.click(within(navigation).getByRole('button', { name: /^Home$/i }))
     await user.click(screen.getByRole('button', { name: /Continue: Hello & Thanks/i }))
     expect(screen.getByLabelText(/Lesson hearts/i)).toHaveTextContent('❤️ 5')
   })

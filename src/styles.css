@@ -234,15 +234,80 @@ h2 {
 }
 
 .desktop-frame {
+  --titlebar-height: 44px;
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-rows: var(--titlebar-height) minmax(0, 1fr);
+}
+
+.app-titlebar {
+  -webkit-app-region: drag;
+  display: flex;
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--titlebar-height);
+  padding: 0 18px 0 88px;
+  border-bottom: 1px solid rgba(45, 74, 85, 0.76);
+  background: rgba(16, 24, 29, 0.94);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  user-select: none;
+}
+
+.titlebar-copy,
+.titlebar-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.titlebar-copy {
+  gap: 10px;
+}
+
+.titlebar-copy strong {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1;
+}
+
+.titlebar-copy span {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.titlebar-status {
+  -webkit-app-region: no-drag;
+  gap: 8px;
+}
+
+.titlebar-status span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border: 1px solid rgba(45, 74, 85, 0.78);
+  border-radius: 999px;
+  padding: 0 10px;
+  background: rgba(35, 58, 68, 0.72);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.desktop-body {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: calc(100vh - var(--titlebar-height));
 }
 
 .sidebar {
   display: flex;
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: var(--titlebar-height);
+  height: calc(100vh - var(--titlebar-height));
   flex-direction: column;
   justify-content: space-between;
   padding: 24px;
@@ -436,7 +501,7 @@ h2 {
 }
 
 .panel {
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - var(--titlebar-height) - 56px);
   padding: 24px;
 }
 
@@ -2561,9 +2626,13 @@ h2 {
 }
 
 @media (max-width: 900px) {
-  .desktop-frame,
+  .desktop-body,
   .review-layout {
     grid-template-columns: 1fr;
+  }
+
+  .app-titlebar {
+    padding-left: 18px;
   }
 
   .sidebar {

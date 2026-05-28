@@ -53,6 +53,8 @@ function createWindow() {
     minWidth: 960,
     minHeight: 640,
     title: 'KannadaOS',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    trafficLightPosition: { x: 18, y: 18 },
     backgroundColor: '#101018',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
